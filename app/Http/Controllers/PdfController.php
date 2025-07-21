@@ -19,6 +19,15 @@ class PdfController extends Controller
         return $pdf->stream("factura-{$venta->numero}.pdf");
     }
 
+    public function boletaVenta($id)
+    {
+        $venta = Venta::with(['detalles.producto', 'cliente', 'user', 'pagos.metodoPago'])->findOrFail($id);
+        $empresa = Setting::obtenerGrupo('empresa');
+        $moneda = Setting::obtener('sistema_simbolo_moneda', '$');
+        $pdf = Pdf::loadView('pdf.boleta-venta', compact('venta', 'empresa', 'moneda'));
+        return $pdf->stream("boleta-{$venta->numero}.pdf");
+    }
+
     public function facturaCompra($id)
     {
         $compra = Compra::with(['detalles.producto', 'proveedor', 'user'])->findOrFail($id);
