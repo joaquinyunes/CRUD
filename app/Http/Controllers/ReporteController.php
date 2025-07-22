@@ -94,11 +94,14 @@ class ReporteController extends Controller
     public function productosMasVendidos(Request $request): View
     {
         $limit = $request->get('limit', 10);
+        $fechaDesde = $request->get('fecha_desde', now()->startOfYear()->toDateString());
+        $fechaHasta = $request->get('fecha_hasta', now()->toDateString());
 
         $datos = DB::table('ventas_detalle')
             ->join('productos', 'ventas_detalle.producto_id', '=', 'productos.id')
             ->join('ventas', 'ventas_detalle.venta_id', '=', 'ventas.id')
             ->where('ventas.estado', 'completada')
+            ->whereBetween('ventas.fecha', [$fechaDesde, $fechaHasta])
             ->select(
                 'productos.nombre',
                 'productos.codigo',
@@ -110,12 +113,14 @@ class ReporteController extends Controller
             ->limit($limit)
             ->get();
 
-        return view('reportes.productos-vendidos', compact('datos', 'limit'));
+        return view('reportes.productos-vendidos', compact('datos', 'limit', 'fechaDesde', 'fechaHasta'));
     }
 
     public function mejoresClientes(Request $request): View
     {
         $limit = $request->get('limit', 10);
+        $fechaDesde = $request->get('fecha_desde', now()->startOfYear()->toDateString());
+        $fechaHasta = $request->get('fecha_hasta', now()->toDateString());
 
         $datos = Venta::select(
                 'clientes.nombre',
@@ -126,12 +131,13 @@ class ReporteController extends Controller
             )
             ->join('clientes', 'ventas.cliente_id', '=', 'clientes.id')
             ->where('ventas.estado', 'completada')
+            ->whereBetween('ventas.fecha', [$fechaDesde, $fechaHasta])
             ->groupBy('clientes.id', 'clientes.nombre', 'clientes.apellido', 'clientes.email')
             ->orderBy('total_gastado', 'desc')
             ->limit($limit)
             ->get();
 
-        return view('reportes.mejores-clientes', compact('datos', 'limit'));
+        return view('reportes.mejores-clientes', compact('datos', 'limit', 'fechaDesde', 'fechaHasta'));
     }
 
     public function stockCritico(): View
