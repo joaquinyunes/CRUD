@@ -23,4 +23,16 @@ Route::middleware(['auth', 'verified'])->prefix('reportes')->name('reportes.')->
     Route::get('/stock-critico', [ReporteController::class, 'stockCritico'])
         ->middleware('permiso:reportes.ver')
         ->name('stock-critico');
+
+    Route::get('/ganancias', [ReporteController::class, 'ganancias'])
+        ->middleware('permiso:reportes.ver')
+        ->name('ganancias');
+
+    Route::get('/compras-por-periodo', [ReporteController::class, 'comprasPeriodo'])
+        ->middleware('permiso:reportes.ver')
+        ->name('compras-periodo');
+
+    Route::get('/proveedores-ranking', [ReporteController::class, 'proveedoresRanking'])
+        ->middleware('permiso:reportes.ver')
+        ->name('proveedores-ranking');
 });
