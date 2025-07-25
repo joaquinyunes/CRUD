@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard — ' . config('app.name'))
-@section('page_title', 'Dashboard')
+@section('title', 'Panel — ' . config('app.name'))
+@section('page_title', 'Panel')
 
 @section('content')
 
@@ -43,50 +43,75 @@
 </div>
 
 {{-- KPIs Principales --}}
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-6);" class="r-mb-8">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4);" class="r-mb-8">
 
     <div class="r-kpi" data-reveal="fade-up" data-reveal-delay="0">
         <div class="r-kpi-value counter-animate" data-target="{{ $ventasHoy }}">{{ $ventasHoy }}</div>
         <div class="r-kpi-label">Ventas Hoy</div>
     </div>
 
-    <div class="r-kpi" data-reveal="fade-up" data-reveal-delay="0.08">
+    <div class="r-kpi" data-reveal="fade-up" data-reveal-delay="0.05">
         <div class="r-kpi-value r-kpi-marigold counter-animate" data-target="{{ $ingresoHoy }}">${{ number_format($ingresoHoy, 0, ',', '.') }}</div>
         <div class="r-kpi-label">Ingresos Hoy</div>
     </div>
 
-    <div class="r-kpi" data-reveal="fade-up" data-reveal-delay="0.16">
+    <div class="r-kpi" data-reveal="fade-up" data-reveal-delay="0.1">
         <div class="r-kpi-value r-kpi-moss counter-animate" data-target="{{ $ventasMes }}">${{ number_format($ventasMes, 0, ',', '.') }}</div>
         <div class="r-kpi-label">Ventas del Mes</div>
+        @if($variacionVentas != 0)
+            <span style="font-size:0.75rem; color:{{ $variacionVentas > 0 ? '#059669' : '#dc2626' }};">
+                {{ $variacionVentas > 0 ? '↑' : '↓' }} {{ number_format(abs($variacionVentas), 1) }}% vs mes anterior
+            </span>
+        @endif
     </div>
 
-    <div class="r-kpi" data-reveal="fade-up" data-reveal-delay="0.24">
-        <div class="r-kpi-value r-kpi-marigold counter-animate" data-target="{{ $comprasMes }}">${{ number_format($comprasMes, 0, ',', '.') }}</div>
-        <div class="r-kpi-label">Compras del Mes</div>
+    <div class="r-kpi" data-reveal="fade-up" data-reveal-delay="0.15">
+        <div class="r-kpi-value r-kpi-moss" style="font-size:1.75rem; color:#059669;">${{ number_format($gananciaMes, 0, ',', '.') }}</div>
+        <div class="r-kpi-label">Ganancia del Mes</div>
+        @if($variacionGanancia != 0)
+            <span style="font-size:0.75rem; color:{{ $variacionGanancia > 0 ? '#059669' : '#dc2626' }};">
+                {{ $variacionGanancia > 0 ? '↑' : '↓' }} {{ number_format(abs($variacionGanancia), 1) }}% vs mes anterior
+            </span>
+        @endif
+    </div>
+
+    <div class="r-kpi" data-reveal="fade-up" data-reveal-delay="0.2">
+        <div class="r-kpi-value r-kpi-marigold" style="font-size:1.75rem;">{{ number_format($margenMes, 1, ',', '.') }}%</div>
+        <div class="r-kpi-label">Margen de Ganancia</div>
+    </div>
+
+    <div class="r-kpi" data-reveal="fade-up" data-reveal-delay="0.25">
+        <div class="r-kpi-value" style="font-size:1.75rem;">${{ number_format($ticketPromedio, 0, ',', '.') }}</div>
+        <div class="r-kpi-label">Ticket Promedio</div>
     </div>
 
 </div>
 
 {{-- KPIs Secundarios --}}
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-4);" class="r-mb-8">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-3);" class="r-mb-8">
 
     <div class="r-card r-text-center" data-reveal="scale" data-reveal-delay="0">
-        <div class="r-kpi-value" style="font-size: 1.75rem;">{{ $totalProductos }}</div>
+        <div class="r-kpi-value" style="font-size: 1.5rem;">{{ $totalProductos }}</div>
         <div class="r-kpi-label">Productos</div>
     </div>
 
-    <div class="r-card r-text-center" data-reveal="scale" data-reveal-delay="0.05">
-        <div class="r-kpi-value" style="font-size: 1.75rem;">{{ $totalClientes }}</div>
+    <div class="r-card r-text-center" data-reveal="scale" data-reveal-delay="0.03">
+        <div class="r-kpi-value" style="font-size: 1.5rem;">{{ $totalClientes }}</div>
         <div class="r-kpi-label">Clientes</div>
     </div>
 
-    <div class="r-card r-text-center" data-reveal="scale" data-reveal-delay="0.1">
-        <div class="r-kpi-value {{ $stockCritico > 0 ? '' : '' }}" style="font-size: 1.75rem; {{ $stockCritico > 0 ? 'color: #dc2626;' : '' }}">{{ $stockCritico }}</div>
+    <div class="r-card r-text-center" data-reveal="scale" data-reveal-delay="0.06">
+        <div class="r-kpi-value" style="font-size: 1.5rem;">{{ $totalVentasMes }}</div>
+        <div class="r-kpi-label">Ventas Mes</div>
+    </div>
+
+    <div class="r-card r-text-center" data-reveal="scale" data-reveal-delay="0.09">
+        <div class="r-kpi-value" style="font-size: 1.5rem; {{ $stockCritico > 0 ? 'color: #dc2626;' : '' }}">{{ $stockCritico }}</div>
         <div class="r-kpi-label">Stock Crítico</div>
     </div>
 
-    <div class="r-card r-text-center" data-reveal="scale" data-reveal-delay="0.15">
-        <div class="r-kpi-value" style="font-size: 1.75rem;">{{ $totalUsuarios }}</div>
+    <div class="r-card r-text-center" data-reveal="scale" data-reveal-delay="0.12">
+        <div class="r-kpi-value" style="font-size: 1.5rem;">{{ $totalUsuarios }}</div>
         <div class="r-kpi-label">Usuarios</div>
     </div>
 
@@ -98,6 +123,38 @@
         <path class="r-divider-line" d="M0,12 Q10,4 20,12 T40,12 T60,12 T80,12 T100,12 T120,12" />
     </svg>
 </div>
+
+{{-- Top Productos Rentables --}}
+@if($topRentables->count())
+<div class="r-card-flat r-mb-8" data-reveal="fade-up" data-reveal-delay="0">
+    <h3 class="r-body" style="font-weight:600; margin-bottom:var(--space-4);">
+        <span style="display:inline-block; width:8px; height:8px; background:#059669; border-radius:50; margin-right:8px;"></span>
+        Top Productos Más Rentables del Mes
+    </h3>
+    <div style="overflow-x:auto;">
+        <table class="r-table">
+            <thead>
+                <tr>
+                    <th style="width:3rem; text-align:center;">#</th>
+                    <th>Producto</th>
+                    <th style="text-align:right;">Unidades</th>
+                    <th style="text-align:right;">Ganancia</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($topRentables as $i => $prod)
+                    <tr>
+                        <td style="text-align:center; color:var(--color-ink-soft);">{{ $i + 1 }}</td>
+                        <td style="font-weight:500;">{{ $prod->nombre }}</td>
+                        <td style="text-align:right;">{{ $prod->vendidos }}</td>
+                        <td style="text-align:right; font-weight:600; color:#059669;">${{ number_format($prod->ganancia, 2, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
 
 {{-- Charts --}}
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: var(--space-6);">

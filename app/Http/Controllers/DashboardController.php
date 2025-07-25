@@ -39,6 +39,44 @@ class DashboardController extends Controller
             ->whereYear('fecha', now()->year)
             ->sum('total');
 
+        $gananciaMes = $ventasMes - $comprasMes;
+        $margenMes = $ventasMes > 0 ? ($gananciaMes / $ventasMes) * 100 : 0;
+
+        $ventasMesAnterior = Venta::where('estado', 'completada')
+            ->whereMonth('fecha', now()->subMonth()->month)
+            ->whereYear('fecha', now()->subMonth()->year)
+            ->sum('total');
+        $comprasMesAnterior = Compra::where('estado', 'completada')
+            ->whereMonth('fecha', now()->subMonth()->month)
+            ->whereYear('fecha', now()->subMonth()->year)
+            ->sum('total');
+        $gananciaMesAnterior = $ventasMesAnterior - $comprasMesAnterior;
+
+        $variacionVentas = $ventasMesAnterior > 0 ? (($ventasMes - $ventasMesAnterior) / $ventasMesAnterior) * 100 : 0;
+        $variacionGanancia = $gananciaMesAnterior != 0 ? (($gananciaMes - $gananciaMesAnterior) / abs($gananciaMesAnterior)) * 100 : 0;
+
+        $totalVentasMes = Venta::where('estado', 'completada')
+            ->whereMonth('fecha', now()->month)
+            ->whereYear('fecha', now()->year)
+            ->count();
+        $ticketPromedio = $totalVentasMes > 0 ? $ventasMes / $totalVentasMes : 0;
+
+        $topRentables = DB::table('ventas_detalle')
+            ->join('ventas', 'ventas.id', '=', 'ventas_detalle.venta_id')
+            ->join('productos', 'productos.id', '=', 'ventas_detalle.producto_id')
+            ->where('ventas.estado', 'completada')
+            ->whereMonth('ventas.fecha', now()->month)
+            ->whereYear('ventas.fecha', now()->year)
+            ->select(
+                'productos.nombre',
+                DB::raw('SUM(ventas_detalle.cantidad) as vendidos'),
+                DB::raw('SUM(ventas_detalle.subtotal) - SUM(ventas_detalle.cantidad * productos.precio_compra) as ganancia')
+            )
+            ->groupBy('productos.id', 'productos.nombre')
+            ->orderByDesc('ganancia')
+            ->limit(5)
+            ->get();
+
         $chartVentasDiarias = Venta::where('estado', 'completada')
             ->whereBetween('fecha', [$fechaDesde, $fechaHasta])
             ->selectRaw('DATE(fecha) as fecha, SUM(total) as total')
@@ -80,6 +118,13 @@ class DashboardController extends Controller
             'stockCritico',
             'ventasMes',
             'comprasMes',
+            'gananciaMes',
+            'margenMes',
+            'variacionVentas',
+            'variacionGanancia',
+            'ticketPromedio',
+            'totalVentasMes',
+            'topRentables',
             'chartVentasDiarias',
             'chartTopProductos',
             'chartStockBajo',
