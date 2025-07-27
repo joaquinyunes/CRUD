@@ -22,6 +22,11 @@ class ReporteController extends Controller
                           ->where('estado', 'completada')
                           ->sum('total');
 
+        $comprasMes = \App\Models\Compra::whereMonth('fecha', $hoy->month)
+                          ->whereYear('fecha', $hoy->year)
+                          ->where('estado', 'completada')
+                          ->sum('total');
+
         $totalVentasMes = Venta::whereMonth('fecha', $hoy->month)
                                ->whereYear('fecha', $hoy->year)
                                ->where('estado', 'completada')
@@ -37,13 +42,19 @@ class ReporteController extends Controller
 
         $totalClientes = Cliente::where('estado', 'activo')->count();
 
+        $totalProveedores = \App\Models\Proveedor::whereHas('compras', function ($q) {
+            $q->where('estado', 'completada');
+        })->count();
+
         return view('reportes.index', compact(
             'ventasHoy',
             'ventasMes',
+            'comprasMes',
             'totalVentasMes',
             'productosStockCritico',
             'productosAgotados',
-            'totalClientes'
+            'totalClientes',
+            'totalProveedores'
         ));
     }
 

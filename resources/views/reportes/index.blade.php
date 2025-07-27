@@ -12,17 +12,32 @@
         <div class="r-kpi-value r-mt-2" style="font-size:1.75rem;">${{ number_format($ventasHoy, 2, ',', '.') }}</div>
         <span class="r-kpi-label">Hoy</span>
     </a>
-    <a href="{{ route('reportes.productos-vendidos') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0.05">
+    <a href="{{ route('reportes.ganancias') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0.05">
+        <span class="r-caption">Ganancias</span>
+        <div class="r-kpi-value r-kpi-moss r-mt-2" style="font-size:1.75rem;">${{ number_format($ventasMes - $comprasMes ?? 0, 2, ',', '.') }}</div>
+        <span class="r-kpi-label">Ganancia neta del mes</span>
+    </a>
+    <a href="{{ route('reportes.compras-periodo') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0.1">
+        <span class="r-caption">Compras por período</span>
+        <div class="r-kpi-value r-kpi-marigold r-mt-2" style="font-size:1.75rem;">${{ number_format($comprasMes ?? 0, 2, ',', '.') }}</div>
+        <span class="r-kpi-label">Compras este mes</span>
+    </a>
+    <a href="{{ route('reportes.productos-vendidos') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0.15">
         <span class="r-caption">Productos más vendidos</span>
         <div class="r-kpi-value r-mt-2" style="font-size:1.75rem;">${{ number_format($ventasMes, 2, ',', '.') }}</div>
         <span class="r-kpi-label">Este mes · {{ $totalVentasMes }} ventas</span>
     </a>
-    <a href="{{ route('reportes.mejores-clientes') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0.1">
+    <a href="{{ route('reportes.mejores-clientes') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0.2">
         <span class="r-caption">Mejores clientes</span>
         <div class="r-kpi-value r-kpi-moss r-mt-2" style="font-size:1.75rem;">{{ $totalClientes ?? 0 }}</div>
         <span class="r-kpi-label">Clientes activos</span>
     </a>
-    <a href="{{ route('reportes.stock-critico') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0.15">
+    <a href="{{ route('reportes.proveedores-ranking') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0.25">
+        <span class="r-caption">Ranking proveedores</span>
+        <div class="r-kpi-value r-kpi-marigold r-mt-2" style="font-size:1.75rem;">{{ $totalProveedores ?? 0 }}</div>
+        <span class="r-kpi-label">Proveedores con compras</span>
+    </a>
+    <a href="{{ route('reportes.stock-critico') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0.3">
         <span class="r-caption">Stock crítico</span>
         <div class="r-kpi-value r-mt-2" style="font-size:1.75rem; color:#dc2626;">{{ $productosAgotados }}</div>
         <span class="r-kpi-label">Productos agotados</span>
@@ -33,6 +48,9 @@
     <div class="r-card-flat" data-reveal="fade-up" data-reveal-delay="0.2">
         <h3 class="r-display-m" style="font-size:1rem; margin-bottom:var(--space-4);">Accesos rápidos</h3>
         <div style="display:flex; flex-direction:column; gap:var(--space-1);">
+            <a href="{{ route('reportes.ganancias') }}" class="r-sidebar-link" style="color:#059669; padding:8px 12px; font-weight:600;">→ Reporte de Ganancias (nuevo)</a>
+            <a href="{{ route('reportes.compras-periodo', ['periodo' => 'diario']) }}" class="r-sidebar-link" style="color:var(--color-ink); padding:8px 12px;">→ Compras diarias</a>
+            <a href="{{ route('reportes.proveedores-ranking') }}" class="r-sidebar-link" style="color:var(--color-ink); padding:8px 12px;">→ Ranking de proveedores</a>
             <a href="{{ route('reportes.ventas-periodo', ['periodo' => 'diario']) }}" class="r-sidebar-link" style="color:var(--color-ink); padding:8px 12px;">→ Ventas diarias (últimos 30 días)</a>
             <a href="{{ route('reportes.ventas-periodo', ['periodo' => 'semanal']) }}" class="r-sidebar-link" style="color:var(--color-ink); padding:8px 12px;">→ Ventas semanales (últimas 12 semanas)</a>
             <a href="{{ route('reportes.ventas-periodo', ['periodo' => 'mensual']) }}" class="r-sidebar-link" style="color:var(--color-ink); padding:8px 12px;">→ Ventas mensuales (últimos 12 meses)</a>
