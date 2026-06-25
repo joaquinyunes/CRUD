@@ -12,7 +12,7 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
   Login, logout, recuperar contraseña, verificación de email.
   Archivos típicos: migración `users`, `AuthController`, rutas `auth.php`, vistas login/registro, `.env` config mail.
 
-- [ ] **1.2 Roles y Permisos granulares**
+- [x] **1.2 Roles y Permisos granulares**
   Roles (Administrador, Supervisor, Empleado, Cliente). Permisos del tipo `modulo.accion`
   (ej: `productos.crear`, `productos.editar`), no permisos genéricos.
   Archivos típicos: migraciones `roles`/`permissions`, modelos, middleware de permisos, seeder.
@@ -119,5 +119,5 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
 ## Estado general del proyecto
 *(Actualizar esta línea cada sesión, o dejar que se actualice solo desde `05_handoff.md`)*
 
-**Última microfase completada:** 1.1 Setup + Autenticación.
-**Microfase en curso:** 1.2 Roles y Permisos granulares.
+**Última microfase completada:** 1.2 — Roles y Permisos granulares (completa).
+**Microfase en curso:** 1.3 — Dashboard base + Layout.

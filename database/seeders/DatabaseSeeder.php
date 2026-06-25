@@ -22,5 +22,9 @@ class DatabaseSeeder extends Seeder
             'role_id' => $adminRole->id,
             'email_verified_at' => now(),
         ]);
+
+        $this->call([
+            PermissionSeeder::class,
+        ]);
     }
 }

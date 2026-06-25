@@ -3,7 +3,7 @@
 > Este archivo es una FOTO, no un historial. Cada sesión que modifique la base de datos debe
 > reescribir este archivo completo con el estado real, no agregar un changelog al final.
 
-**Última actualización:** Microfase 1.1 completada — migraciones ejecutadas.
+**Última actualización:** Microfase 1.2 completada — middleware y vistas de roles implementados.
 
 ---
 
