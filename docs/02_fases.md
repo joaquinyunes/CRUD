@@ -17,12 +17,12 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
   (ej: `productos.crear`, `productos.editar`), no permisos genéricos.
   Archivos típicos: migraciones `roles`/`permissions`, modelos, middleware de permisos, seeder.
 
-- [ ] **1.3 Dashboard base + Layout**
+- [x] **1.3 Dashboard base + Layout**
   Layout general (sidebar, navbar), dashboard con métricas de "hoy" (ventas, ganancias,
   clientes nuevos) y métricas generales (productos, usuarios, stock crítico).
   Archivos típicos: `DashboardController`, layout Blade, vista dashboard, rutas, CSS base.
 
-- [ ] **1.4 Productos + Categorías**
+- [~] **1.4 Productos + Categorías** (1.4a categorías lista, falta 1.4b productos)
   CRUD de productos (código, nombre, descripción, categoría, marca, precio compra/venta, stock,
   stock mínimo, imagen, estado) con eliminado lógico, buscar/filtrar, duplicar producto.
   Archivos típicos: migraciones `productos`/`categorias`, modelos, `ProductoController`, vistas.
@@ -119,5 +119,5 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
 ## Estado general del proyecto
 *(Actualizar esta línea cada sesión, o dejar que se actualice solo desde `05_handoff.md`)*
 
-**Última microfase completada:** 1.2 — Roles y Permisos granulares (completa).
-**Microfase en curso:** 1.3 — Dashboard base + Layout.
+**Última microfase completada:** 1.4a — Categorías (CRUD completo).
+**Microfase en curso:** 1.4b — Productos (CRUD, búsqueda, duplicar, imagen).

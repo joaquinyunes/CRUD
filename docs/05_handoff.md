@@ -7,20 +7,12 @@
 ---
 
 ## Estado Final
-- **Microfase completada:** 1.2 — Roles y Permisos granulares (completa)
-- **Objetivo alcanzado:** Migraciones `permissions` y `role_has_permissions` ejecutadas con 45 permisos. Modelos `Permission` y `Role` (con relaciones y helpers). Seeder asigna permisos por rol (Admin:45, Supervisor:28, Empleado:10, Cliente:0). Middleware `CheckPermission` registrado como alias `permiso` con bypass para Administrador. `RoleController` con índice, edición de permisos por módulo y asignación de roles a usuarios. Tres vistas Blade funcionales. 5 rutas protegidas por `auth` + `verified` + `permiso`.
+- **Microfase completada:** 1.4a — Categorías (CRUD completo)
+- **Objetivo alcanzado:** Migración `categorias` ejecutada. CRUD completo con buscar/filtrar, paginación, eliminado lógico. Vista form reutilizable. 6 rutas protegidas por permisos. Enlace en sidebar.
 - **Bloqueos/Problemas:** Ninguno. MySQL se inicia manualmente.
 
 ## Contexto técnico entregado
-- **Decisiones clave:** Administrador bypasa middleware. Edición de Admin bloqueada. Multi-permiso como OR. Usuario no puede quitarse su propio rol.
-- **Archivos creados (1.2a + 1.2b):**
-  Migraciones: `2026_06_25_000001_create_permissions_table`, `2026_06_25_000002_create_role_has_permissions_table`
-  Modelos: `Permission.php`, `Role.php` (actualizado)
-  Middleware: `CheckPermission.php`
-  Controlador: `RoleController.php`
-  Rutas: `roles.php`
-  Vistas: `roles/index.blade.php`, `roles/edit.blade.php`, `roles/usuarios.blade.php`
-  Seeders: `PermissionSeeder.php`
-- **Última instrucción ejecutada:** `php artisan route:clear`
-- **Próximo paso inmediato:** **Microfase 1.3 — Dashboard base + Layout**
-  (crear `DashboardController`, layout con sidebar/navbar, vista dashboard con métricas de "hoy" y métricas generales, rutas y CSS base).
+- **Archivos creados:** `Categoria.php`, `CategoriaController.php`, `routes/categorias.php`, `views/categorias/index.blade.php`, `views/categorias/form.blade.php`, `migrations/2026_06_25_000003_create_categorias_table.php`
+- **Archivos modificados:** `routes/web.php`, `sidebar.blade.php`
+- **Última instrucción ejecutada:** `php artisan migrate` + `php artisan route:clear`
+- **Próximo paso inmediato:** **Microfase 1.4b — Productos** (CRUD, búsqueda/filtro, duplicar, subida de imagen)

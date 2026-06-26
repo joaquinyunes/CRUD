@@ -1,36 +1,60 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', config('app.name', 'Sistema Administrativo'))</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body class="h-full bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+    <div class="flex h-full">
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        @include('layouts.partials.sidebar')
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
-            @include('layouts.navigation')
+        <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
 
-            <!-- Page Heading -->
-            @isset($header)
-                <header class="bg-white dark:bg-gray-800 shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endisset
+            <header class="flex items-center justify-between bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 h-16 shrink-0">
+                <h1 class="text-lg font-semibold truncate">@yield('page_title', 'Dashboard')</h1>
 
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-500 dark:text-gray-400 hidden sm:inline">
+                        {{ Auth::user()->name }}
+                        @if(Auth::user()->role)
+                            <span class="ml-1 text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full">
+                                {{ Auth::user()->role->nombre }}
+                            </span>
+                        @endif
+                    </span>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit"
+                            class="text-sm text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                            Salir
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            @if(session('success'))
+                <div class="mx-6 mt-4 p-3 bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-700 text-green-800 dark:text-green-200 rounded-lg text-sm">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="mx-6 mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 rounded-lg text-sm">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            <main class="flex-1 overflow-y-auto p-6">
+                @yield('content')
             </main>
         </div>
-    </body>
+    </div>
+
+</body>
 </html>
