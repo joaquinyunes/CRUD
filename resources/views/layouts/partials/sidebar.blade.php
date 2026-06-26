@@ -23,7 +23,7 @@
         <p class="sidebar-section-label">Catálogo</p>
 
         @if(Auth::user()->role && Auth::user()->role->tienePermiso('productos.ver'))
-        <a href="#"
+        <a href="{{ route('productos.index') }}"
            class="sidebar-link {{ request()->routeIs('productos.*') ? 'active' : '' }}">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -47,7 +47,7 @@
         <p class="sidebar-section-label">Clientes</p>
 
         @if(Auth::user()->role && Auth::user()->role->tienePermiso('clientes.ver'))
-        <a href="#"
+        <a href="{{ route('clientes.index') }}"
            class="sidebar-link {{ request()->routeIs('clientes.*') ? 'active' : '' }}">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

@@ -3,7 +3,8 @@
 > Este archivo es una FOTO, no un historial. Cada sesión que modifique la base de datos debe
 > reescribir este archivo completo con el estado real, no agregar un changelog al final.
 
-**Última actualización:** Microfase 1.4a completada — tabla `categorias` migrada + CRUD.
+**Última actualización:** Microfase 1.5 completada — tabla `clientes` migrada + CRUD, campo
+`estado` agregado.
 
 ---
 
@@ -94,16 +95,18 @@
 | estado | enum('activo','inactivo','eliminado') | default 'activo' (eliminado lógico) |
 
 ### `clientes`
-| Campo | Tipo |
-|---|---|
-| id | bigint PK |
-| nombre | string |
-| apellido | string |
-| documento | string nullable |
-| email | string nullable |
-| telefono | string nullable |
-| direccion | string nullable |
-| observaciones | text nullable |
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| nombre | string | |
+| apellido | string | |
+| documento | string nullable | |
+| email | string nullable | |
+| telefono | string nullable | |
+| direccion | string nullable | |
+| observaciones | text nullable | |
+| estado | enum('activo','archivado','eliminado') | default 'activo' (eliminado lógico) |
+| created_at / updated_at | timestamp | |
 
 ### `proveedores`
 | Campo | Tipo |

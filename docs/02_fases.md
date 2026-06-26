@@ -22,12 +22,12 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
   clientes nuevos) y métricas generales (productos, usuarios, stock crítico).
   Archivos típicos: `DashboardController`, layout Blade, vista dashboard, rutas, CSS base.
 
-- [~] **1.4 Productos + Categorías** (1.4a categorías lista, falta 1.4b productos)
+- [x] **1.4 Productos + Categorías** (1.4a categorías + 1.4b productos)
   CRUD de productos (código, nombre, descripción, categoría, marca, precio compra/venta, stock,
   stock mínimo, imagen, estado) con eliminado lógico, buscar/filtrar, duplicar producto.
   Archivos típicos: migraciones `productos`/`categorias`, modelos, `ProductoController`, vistas.
 
-- [ ] **1.5 Clientes**
+- [x] **1.5 Clientes**
   CRUD de clientes (nombre, apellido, documento, email, teléfono, dirección, observaciones).
   Archivos típicos: migración `clientes`, modelo, `ClienteController`, vistas.
 
@@ -119,5 +119,5 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
 ## Estado general del proyecto
 *(Actualizar esta línea cada sesión, o dejar que se actualice solo desde `05_handoff.md`)*
 
-**Última microfase completada:** 1.4a — Categorías (CRUD completo).
-**Microfase en curso:** 1.4b — Productos (CRUD, búsqueda, duplicar, imagen).
+**Última microfase completada:** 1.5 — Clientes (CRUD completo).
+**Microfase en curso:** 1.6 — Auditoría.

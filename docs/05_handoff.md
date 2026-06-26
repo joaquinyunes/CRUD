@@ -7,12 +7,19 @@
 ---
 
 ## Estado Final
-- **Microfase completada:** 1.4a — Categorías (CRUD completo)
-- **Objetivo alcanzado:** Migración `categorias` ejecutada. CRUD completo con buscar/filtrar, paginación, eliminado lógico. Vista form reutilizable. 6 rutas protegidas por permisos. Enlace en sidebar.
+- **Microfase completada:** 1.5 — Clientes (CRUD completo)
+- **Objetivo alcanzado:** Migración `clientes` ejecutada. CRUD completo con búsqueda/filtro,
+  paginación, eliminado lógico (estado=archivado). 6 rutas protegidas con middleware granular
+  `permiso:clientes.*`. Enlace activo en sidebar. Se agregó campo `estado` al schema de clientes
+  para cumplir regla 8 de eliminado lógico.
 - **Bloqueos/Problemas:** Ninguno. MySQL se inicia manualmente.
 
 ## Contexto técnico entregado
-- **Archivos creados:** `Categoria.php`, `CategoriaController.php`, `routes/categorias.php`, `views/categorias/index.blade.php`, `views/categorias/form.blade.php`, `migrations/2026_06_25_000003_create_categorias_table.php`
-- **Archivos modificados:** `routes/web.php`, `sidebar.blade.php`
+- **Archivos creados:** `migrations/2026_06_25_000005_create_clientes_table.php`, `app/Models/Cliente.php`,
+  `app/Http/Controllers/ClienteController.php`, `routes/clientes.php`,
+  `resources/views/clientes/index.blade.php`, `resources/views/clientes/form.blade.php`
+- **Archivos modificados:** `routes/web.php` (require), `sidebar.blade.php` (href clientes),
+  `docs/03_schemas.md` (tabla clientes con estado)
 - **Última instrucción ejecutada:** `php artisan migrate` + `php artisan route:clear`
-- **Próximo paso inmediato:** **Microfase 1.4b — Productos** (CRUD, búsqueda/filtro, duplicar, subida de imagen)
+- **Próximo paso inmediato:** **Microfase 1.6 — Auditoría** (registro de logs de seguridad y
+  actividad: IP, usuario, fecha, acción)
