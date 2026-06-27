@@ -3,8 +3,7 @@
 > Este archivo es una FOTO, no un historial. Cada sesión que modifique la base de datos debe
 > reescribir este archivo completo con el estado real, no agregar un changelog al final.
 
-**Última actualización:** Microfase 1.5 completada — tabla `clientes` migrada + CRUD, campo
-`estado` agregado.
+**Última actualización:** Microfase 1.6a completada — tabla `auditoria` migrada.
 
 ---
 

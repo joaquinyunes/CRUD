@@ -31,7 +31,7 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
   CRUD de clientes (nombre, apellido, documento, email, teléfono, dirección, observaciones).
   Archivos típicos: migración `clientes`, modelo, `ClienteController`, vistas.
 
-- [ ] **1.6 Auditoría**
+- [~] **1.6 Auditoría** (1.6a backend listo, falta 1.6b vista)
   Registro de logs de seguridad y actividad: IP, usuario, fecha, acción. Base para el historial
   de actividad ("Juan creó venta #145").
   Archivos típicos: migración `auditoria`, modelo `Auditoria`, trait/observer de logging, vista de consulta.
@@ -119,5 +119,5 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
 ## Estado general del proyecto
 *(Actualizar esta línea cada sesión, o dejar que se actualice solo desde `05_handoff.md`)*
 
-**Última microfase completada:** 1.5 — Clientes (CRUD completo).
-**Microfase en curso:** 1.6 — Auditoría.
+**Última microfase completada:** 1.6a — Auditoría (backend: migration, modelo, trait, controller, routes).
+**Microfase en curso:** 1.6b — Auditoría (vista index + sidebar).

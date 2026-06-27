@@ -7,19 +7,18 @@
 ---
 
 ## Estado Final
-- **Microfase completada:** 1.5 — Clientes (CRUD completo)
-- **Objetivo alcanzado:** Migración `clientes` ejecutada. CRUD completo con búsqueda/filtro,
-  paginación, eliminado lógico (estado=archivado). 6 rutas protegidas con middleware granular
-  `permiso:clientes.*`. Enlace activo en sidebar. Se agregó campo `estado` al schema de clientes
-  para cumplir regla 8 de eliminado lógico.
+- **Microfase completada:** 1.6a — Auditoría (backend)
+- **Objetivo alcanzado:** Migración `auditoria` ejecutada. Modelo + Trait `Auditable` + Controller
+  con filtros. 1 ruta protegida con `permiso:auditoria.ver`. Enlace en sidebar.
+- **Pendiente:** Falta vista `auditoria/index.blade.php` (1.6b) y aplicar `use Auditable` a los
+  modelos existentes (Producto, Categoria, Cliente).
 - **Bloqueos/Problemas:** Ninguno. MySQL se inicia manualmente.
 
 ## Contexto técnico entregado
-- **Archivos creados:** `migrations/2026_06_25_000005_create_clientes_table.php`, `app/Models/Cliente.php`,
-  `app/Http/Controllers/ClienteController.php`, `routes/clientes.php`,
-  `resources/views/clientes/index.blade.php`, `resources/views/clientes/form.blade.php`
-- **Archivos modificados:** `routes/web.php` (require), `sidebar.blade.php` (href clientes),
-  `docs/03_schemas.md` (tabla clientes con estado)
+- **Archivos creados:** `migrations/2026_06_25_000006_create_auditoria_table.php`,
+  `app/Models/Auditoria.php`, `app/Traits/Auditable.php`,
+  `app/Http/Controllers/AuditoriaController.php`, `routes/auditoria.php`
+- **Archivos modificados:** `routes/web.php`, `sidebar.blade.php`, `docs/03_schemas.md`
 - **Última instrucción ejecutada:** `php artisan migrate` + `php artisan route:clear`
-- **Próximo paso inmediato:** **Microfase 1.6 — Auditoría** (registro de logs de seguridad y
-  actividad: IP, usuario, fecha, acción)
+- **Próximo paso inmediato:** **Microfase 1.6b — Vista de auditoría** (index.blade.php con
+  tabla, filtros, detalle JSON)
