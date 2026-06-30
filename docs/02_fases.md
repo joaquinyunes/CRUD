@@ -40,7 +40,7 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
 
 ## NIVEL 2 — Operación del negocio
 
-- [ ] **2.1 Ventas**
+- [x] **2.1 Ventas**
   Cabecera (número, cliente, fecha, total, estado, usuario) + detalle (producto, cantidad,
   precio, subtotal).
   Archivos típicos: migraciones `ventas`/`ventas_detalle`, modelos, `VentaController`, vista.
@@ -119,5 +119,5 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
 ## Estado general del proyecto
 *(Actualizar esta línea cada sesión, o dejar que se actualice solo desde `05_handoff.md`)*
 
-**Última microfase completada:** 1.6a — Auditoría (backend: migration, modelo, trait, controller, routes).
-**Microfase en curso:** 1.6b — Auditoría (vista index + sidebar).
+**Última microfase completada:** 2.1 — Ventas (cabecera + detalle con migraciones, modelos, controller, vistas).
+**Microfase en curso:** 2.2 — Compras + Proveedores.

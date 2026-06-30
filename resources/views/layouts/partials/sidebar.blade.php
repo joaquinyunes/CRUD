@@ -60,7 +60,7 @@
         <p class="sidebar-section-label">Ventas</p>
 
         @if(Auth::user()->role && Auth::user()->role->tienePermiso('ventas.ver'))
-        <a href="#"
+        <a href="{{ route('ventas.index') }}"
            class="sidebar-link {{ request()->routeIs('ventas.*') ? 'active' : '' }}">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

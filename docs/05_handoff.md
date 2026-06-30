@@ -1,24 +1,14 @@
 # 05_handoff.md — Estado Actual del Proyecto
 
-> Este archivo es una FOTO del estado actual, no un historial acumulado. Cada sesión lo
-> sobreescribe completo. No agregues "Handoff sesión 1.1", "Handoff sesión 1.2", etc. uno debajo
-> del otro: siempre hay un único handoff vigente.
-
 ---
 
 ## Estado Final
-- **Microfase completada:** 1.6a — Auditoría (backend)
-- **Objetivo alcanzado:** Migración `auditoria` ejecutada. Modelo + Trait `Auditable` + Controller
-  con filtros. 1 ruta protegida con `permiso:auditoria.ver`. Enlace en sidebar.
-- **Pendiente:** Falta vista `auditoria/index.blade.php` (1.6b) y aplicar `use Auditable` a los
-  modelos existentes (Producto, Categoria, Cliente).
+- **Microfase completada:** 2.1 — Ventas (cabecera + detalle)
+- **Objetivo alcanzado:** Tablas `ventas` y `ventas_detalle` creadas. Modelos Venta y VentaDetalle con relaciones. VentaController con CRUD completo y store transactional. Vistas index (filtros, tabla, paginación) y form (cabecera + detalle dinámico con JavaScript). Sidebar actualizado.
+- **Archivos creados:** `database/migrations/2026_06_30_000001_create_ventas_table.php`, `database/migrations/2026_06_30_000002_create_ventas_detalle_table.php`, `app/Models/Venta.php`, `app/Models/VentaDetalle.php`, `app/Http/Controllers/VentaController.php`, `routes/ventas.php`, `resources/views/ventas/index.blade.php`, `resources/views/ventas/form.blade.php`
+- **Archivos modificados:** `routes/web.php` (require ventas.php), `resources/views/layouts/partials/sidebar.blade.php` (link ventas), `docs/03_schemas.md`, `docs/05_handoff.md`
 - **Bloqueos/Problemas:** Ninguno. MySQL se inicia manualmente.
+- **Nota importante:** El stock NO se modifica en esta microfase. La modificación de stock pasa por `movimientos_stock` (microfase 2.3).
 
-## Contexto técnico entregado
-- **Archivos creados:** `migrations/2026_06_25_000006_create_auditoria_table.php`,
-  `app/Models/Auditoria.php`, `app/Traits/Auditable.php`,
-  `app/Http/Controllers/AuditoriaController.php`, `routes/auditoria.php`
-- **Archivos modificados:** `routes/web.php`, `sidebar.blade.php`, `docs/03_schemas.md`
-- **Última instrucción ejecutada:** `php artisan migrate` + `php artisan route:clear`
-- **Próximo paso inmediato:** **Microfase 1.6b — Vista de auditoría** (index.blade.php con
-  tabla, filtros, detalle JSON)
+## Próximo paso
+- **Microfase 2.2 — Compras + Proveedores** (proveedores CRUD + compras con detalle)

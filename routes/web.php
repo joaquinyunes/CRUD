@@ -24,3 +24,6 @@ require __DIR__.'/categorias.php';
 require __DIR__.'/productos.php';
 require __DIR__.'/clientes.php';
 require __DIR__.'/auditoria.php';
+require __DIR__.'/ventas.php';
+require __DIR__.'/proveedores.php';
+require __DIR__.'/compras.php';
