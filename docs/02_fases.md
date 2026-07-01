@@ -55,12 +55,12 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
   ajuste, devolución), disparado por ventas/compras.
   Archivos típicos: migración `movimientos_stock`, modelo, servicio `StockService`, listener/observer.
 
-- [ ] **2.4 Reportes**
+- [x] **2.4 Reportes**
   Ventas por día/semana/mes, productos más/menos vendidos, mejores clientes, stock
   crítico/agotado.
   Archivos típicos: `ReporteController`, queries/consultas, vistas, rutas.
 
-- [ ] **2.5 Exportación**
+- [x] **2.5 Exportación**
   Exportar a Excel, CSV, PDF desde los módulos de reportes/productos/ventas.
   Archivos típicos: clases `Export` (Laravel Excel), `PdfController` o similar, botones en vistas.
 
@@ -119,5 +119,5 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
 ## Estado general del proyecto
 *(Actualizar esta línea cada sesión, o dejar que se actualice solo desde `05_handoff.md`)*
 
-**Última microfase completada:** 2.3 — Stock (movimientos_stock, StockService, observers).
-**Microfase en curso:** 2.4 — Reportes.
+**Última microfase completada:** 2.5 — Exportación (Excel con Maatwebsite/Excel).
+**Microfase en curso:** 3.1 — Sistema de Archivos.

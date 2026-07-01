@@ -9,12 +9,21 @@
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Ventas</h1>
 
-            @if (auth()->user()->role?->tienePermiso('ventas.crear'))
-                <a href="{{ route('ventas.create') }}"
-                   class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-500">
-                    Nueva venta
-                </a>
-            @endif
+            <div class="flex items-center gap-2">
+                @if (auth()->user()->role?->tienePermiso('ventas.exportar'))
+                    <a href="{{ route('exportar.ventas', array_merge(['formato' => 'xlsx'], request()->only(['fecha_desde', 'fecha_hasta', 'estado']))) }}"
+                       class="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-500">
+                        Exportar Excel
+                    </a>
+                @endif
+
+                @if (auth()->user()->role?->tienePermiso('ventas.crear'))
+                    <a href="{{ route('ventas.create') }}"
+                       class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-500">
+                        Nueva venta
+                    </a>
+                @endif
+            </div>
         </div>
 
         @if (session('success'))

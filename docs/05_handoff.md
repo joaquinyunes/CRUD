@@ -3,12 +3,16 @@
 ---
 
 ## Estado Final
-- **Microfase completada:** 2.3 — Stock (movimientos_stock)
-- **Objetivo alcanzado:** Tabla `movimientos_stock` creada. Modelo MovimientoStock con scopes. Servicio StockService con registrarSalida, registrarEntrada, registrarAjuste, registrarDevolucion. Observers VentaObserver y CompraObserver que disparan movimientos automáticamente al crear/actualizar/eliminar ventas/completadas. StockController (solo index para consulta). Vista index con filtros por producto, tipo y fecha.
-- **Archivos creados:** 1 migración, 1 modelo (MovimientoStock), 1 servicio (StockService), 2 observers (Venta/Compra), 1 controlador (StockController), 1 ruta, 1 vista
-- **Archivos modificados:** `app/Providers/AppServiceProvider.php` (registro observers + singleton StockService), `routes/web.php`, `sidebar`, docs
+- **Microfase completada:** 2.5 — Exportación
+- **Objetivo alcanzado:** Exportación a Excel con Maatwebsite/Excel. Clases ProductosExport y VentasExport con headings, mapping y estilos. ExportController con métodos productos() y ventas(). Rutas protegidas con permisos `productos.exportar` y `ventas.exportar`. Botones de exportación agregados en vistas de productos, ventas y reportes de ventas por período.
+- **Archivos creados:** `app/Exports/ProductosExport.php`, `app/Exports/VentasExport.php`, `app/Http/Controllers/ExportController.php`, `routes/exportar.php`
+- **Archivos modificados:** `routes/web.php`, `resources/views/productos/index.blade.php`, `resources/views/ventas/index.blade.php`, `resources/views/reportes/ventas-periodo.blade.php`, docs
 - **Bloqueos/Problemas:** Ninguno.
-- **Regla clave aplicada:** Stock NUNCA se modifica directamente. Todo pasa por movimientos_stock. Los observers disparan automáticamente al cambiar estado de venta/compra a completada o cancelada.
+
+## Estado del proyecto
+- **Nivel 1 (Fundaciones):** COMPLETO (1.1 a 1.6)
+- **Nivel 2 (Operación del negocio):** COMPLETO (2.1 a 2.5)
+- **Progreso general:** 11 de 20 microfases completadas (55%)
 
 ## Próximo paso
-- **Microfase 2.4 — Reportes** (ventas por periodo, productos más vendidos, mejores clientes, stock crítico)
+- **Microfase 3.1 — Sistema de Archivos** (subida de JPG/PNG/PDF)

@@ -9,12 +9,21 @@
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Productos</h1>
 
-            @if (auth()->user()->role?->tienePermiso('productos.crear'))
-                <a href="{{ route('productos.create') }}"
-                   class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-500">
-                    Nuevo producto
-                </a>
-            @endif
+            <div class="flex items-center gap-2">
+                @if (auth()->user()->role?->tienePermiso('productos.exportar'))
+                    <a href="{{ route('exportar.productos', ['formato' => 'xlsx']) }}"
+                       class="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-500">
+                        Exportar Excel
+                    </a>
+                @endif
+
+                @if (auth()->user()->role?->tienePermiso('productos.crear'))
+                    <a href="{{ route('productos.create') }}"
+                       class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-500">
+                        Nuevo producto
+                    </a>
+                @endif
+            </div>
         </div>
 
         @if (session('success'))
