@@ -3,12 +3,12 @@
 ---
 
 ## Estado Final
-- **Microfase completada:** 2.1 — Ventas (cabecera + detalle)
-- **Objetivo alcanzado:** Tablas `ventas` y `ventas_detalle` creadas. Modelos Venta y VentaDetalle con relaciones. VentaController con CRUD completo y store transactional. Vistas index (filtros, tabla, paginación) y form (cabecera + detalle dinámico con JavaScript). Sidebar actualizado.
-- **Archivos creados:** `database/migrations/2026_06_30_000001_create_ventas_table.php`, `database/migrations/2026_06_30_000002_create_ventas_detalle_table.php`, `app/Models/Venta.php`, `app/Models/VentaDetalle.php`, `app/Http/Controllers/VentaController.php`, `routes/ventas.php`, `resources/views/ventas/index.blade.php`, `resources/views/ventas/form.blade.php`
-- **Archivos modificados:** `routes/web.php` (require ventas.php), `resources/views/layouts/partials/sidebar.blade.php` (link ventas), `docs/03_schemas.md`, `docs/05_handoff.md`
-- **Bloqueos/Problemas:** Ninguno. MySQL se inicia manualmente.
-- **Nota importante:** El stock NO se modifica en esta microfase. La modificación de stock pasa por `movimientos_stock` (microfase 2.3).
+- **Microfase completada:** 2.3 — Stock (movimientos_stock)
+- **Objetivo alcanzado:** Tabla `movimientos_stock` creada. Modelo MovimientoStock con scopes. Servicio StockService con registrarSalida, registrarEntrada, registrarAjuste, registrarDevolucion. Observers VentaObserver y CompraObserver que disparan movimientos automáticamente al crear/actualizar/eliminar ventas/completadas. StockController (solo index para consulta). Vista index con filtros por producto, tipo y fecha.
+- **Archivos creados:** 1 migración, 1 modelo (MovimientoStock), 1 servicio (StockService), 2 observers (Venta/Compra), 1 controlador (StockController), 1 ruta, 1 vista
+- **Archivos modificados:** `app/Providers/AppServiceProvider.php` (registro observers + singleton StockService), `routes/web.php`, `sidebar`, docs
+- **Bloqueos/Problemas:** Ninguno.
+- **Regla clave aplicada:** Stock NUNCA se modifica directamente. Todo pasa por movimientos_stock. Los observers disparan automáticamente al cambiar estado de venta/compra a completada o cancelada.
 
 ## Próximo paso
-- **Microfase 2.2 — Compras + Proveedores** (proveedores CRUD + compras con detalle)
+- **Microfase 2.4 — Reportes** (ventas por periodo, productos más vendidos, mejores clientes, stock crítico)

@@ -45,12 +45,12 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
   precio, subtotal).
   Archivos típicos: migraciones `ventas`/`ventas_detalle`, modelos, `VentaController`, vista.
 
-- [ ] **2.2 Compras + Proveedores**
+- [x] **2.2 Compras + Proveedores**
   Proveedores (nombre, CUIT, teléfono, email, dirección) y compras (proveedor, fecha, total,
   estado) con su detalle.
   Archivos típicos: migraciones `proveedores`/`compras`/`compras_detalle`, modelos, controladores, vistas.
 
-- [ ] **2.3 Stock (movimientos_stock)**
+- [x] **2.3 Stock (movimientos_stock)**
   Nunca modificar stock directamente: todo pasa por `movimientos_stock` (entrada, salida,
   ajuste, devolución), disparado por ventas/compras.
   Archivos típicos: migración `movimientos_stock`, modelo, servicio `StockService`, listener/observer.
@@ -119,5 +119,5 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
 ## Estado general del proyecto
 *(Actualizar esta línea cada sesión, o dejar que se actualice solo desde `05_handoff.md`)*
 
-**Última microfase completada:** 2.1 — Ventas (cabecera + detalle con migraciones, modelos, controller, vistas).
-**Microfase en curso:** 2.2 — Compras + Proveedores.
+**Última microfase completada:** 2.3 — Stock (movimientos_stock, StockService, observers).
+**Microfase en curso:** 2.4 — Reportes.
