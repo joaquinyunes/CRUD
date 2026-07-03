@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\VentaCreada;
 use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\Venta;
@@ -89,6 +90,8 @@ class VentaController extends Controller
                 $venta->detalles()->create($detalle);
             }
         });
+
+        VentaCreada::dispatch($venta);
 
         return redirect()->route('ventas.index')
                          ->with('success', 'Venta registrada correctamente.');

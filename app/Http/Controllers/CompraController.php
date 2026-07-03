@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\CompraCreada;
 use App\Models\Compra;
 use App\Models\Producto;
 use App\Models\Proveedor;
@@ -84,6 +85,8 @@ class CompraController extends Controller
                 $compra->detalles()->create($detalle);
             }
         });
+
+        CompraCreada::dispatch($compra);
 
         return redirect()->route('compras.index')
                          ->with('success', 'Compra registrada correctamente.');

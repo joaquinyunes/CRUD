@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\StockBajo;
 use App\Models\MovimientoStock;
 use App\Models\Producto;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,12 @@ class StockService
 
             $producto->update(['stock' => $producto->stock - $cantidad]);
         });
+
+        $producto->refresh();
+
+        if ($producto->stock <= $producto->stock_minimo) {
+            StockBajo::dispatch($producto);
+        }
     }
 
     public function registrarEntrada(Producto $producto, int $cantidad, string $referenciaTipo, int $referenciaId): void
