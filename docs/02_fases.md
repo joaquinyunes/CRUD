@@ -76,7 +76,7 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
   Centro de notificaciones: stock bajo, venta realizada, nuevo cliente, nuevo pedido, nueva compra.
   Archivos típicos: migración `notificaciones`, modelo, listener/evento, vista de campana.
 
-- [ ] **3.3 Tareas**
+- [x] **3.3 Tareas**
   Tareas asignables a usuarios ("llamar proveedor", "revisar stock").
   Archivos típicos: migración `tareas`, modelo, `TareaController`, vista kanban/lista.
 
@@ -119,5 +119,5 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
 ## Estado general del proyecto
 *(Actualizar esta línea cada sesión, o dejar que se actualice solo desde `05_handoff.md`)*
 
-**Última microfase completada:** 3.2 — Notificaciones (eventos, listeners, campana).
-**Microfase en curso:** 3.3 — Tareas.
+**Última microfase completada:** 3.3 — Tareas (CRUD, vista lista y kanban).
+**Microfase en curso:** 3.4 — Calendario.

@@ -32,3 +32,4 @@ require __DIR__.'/reportes.php';
 require __DIR__.'/exportar.php';
 require __DIR__.'/archivos.php';
 require __DIR__.'/notificaciones.php';
+require __DIR__.'/tareas.php';
