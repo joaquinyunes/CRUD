@@ -3,7 +3,7 @@
 > Este archivo es una FOTO, no un historial. Cada sesión que modifique la base de datos debe
 > reescribir este archivo completo con el estado real, no agregar un changelog al final.
 
-**Última actualización:** Microfase 3.3 completada — tabla `tareas`, TareaController, vista lista y kanban.
+**Última actualización:** Microfase 3.4 completada — tabla `eventos`, CalendarioController, vista FullCalendar con drag & drop.
 
 ---
 

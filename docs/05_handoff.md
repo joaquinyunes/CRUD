@@ -3,11 +3,11 @@
 ---
 
 ## Estado Final
-- **Microfase completada:** 3.3 — Tareas
-- **Objetivo alcanzado:** Tabla `tareas` con campos titulo, descripcion, prioridad (baja/media/alta), estado (pendiente/en_progreso/completada), fecha_limite, asignada_a, user_id. Modelo Tarea con scopes y atributo estaVencida. TareaController con CRUD + cambiarEstado. Vista lista con filtros y vista kanban (3 columnas: pendientes/en progreso/completadas). Sidebar actualizado.
-- **Archivos creados:** 1 migración, 1 modelo, 1 controlador, 1 ruta, 3 vistas (index, kanban, form)
+- **Microfase completada:** 3.4 — Calendario
+- **Objetivo alcanzado:** Tabla `eventos` con campos titulo, descripcion, color, inicio, fin, todo_el_dia, user_id. Modelo Evento con atributos para FullCalendar. CalendarioController con index, eventosJson (API para FullCalendar), store, update, destroy, mover (drag & drop). Vista con FullCalendar v6, modal para crear/editar, drag & drop para mover eventos.
+- **Archivos creados:** 1 migración, 1 modelo, 1 controlador, 1 ruta, 1 vista
 - **Archivos modificados:** `routes/web.php`, sidebar, docs
-- **Bloqueos/Problemas:** Ninguno.
+- **Bloqueos/Problemas:** Ninguno. FullCalendar se carga vía CDN.
 
 ## Próximo paso
-- **Microfase 3.4 — Calendario** (entregas, reuniones, reparaciones con FullCalendar)
+- **Microfase 3.5 — API completa** (endpoints REST con JWT/Sanctum)

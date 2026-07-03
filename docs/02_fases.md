@@ -80,7 +80,7 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
   Tareas asignables a usuarios ("llamar proveedor", "revisar stock").
   Archivos típicos: migración `tareas`, modelo, `TareaController`, vista kanban/lista.
 
-- [ ] **3.4 Calendario**
+- [x] **3.4 Calendario**
   Entregas, reuniones, reparaciones, reservas.
   Archivos típicos: migración `eventos`, modelo, `CalendarioController`, vista (FullCalendar u otro).
 
@@ -119,5 +119,5 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
 ## Estado general del proyecto
 *(Actualizar esta línea cada sesión, o dejar que se actualice solo desde `05_handoff.md`)*
 
-**Última microfase completada:** 3.3 — Tareas (CRUD, vista lista y kanban).
-**Microfase en curso:** 3.4 — Calendario.
+**Última microfase completada:** 3.4 — Calendario (FullCalendar con drag & drop).
+**Microfase en curso:** 3.5 — API completa.
