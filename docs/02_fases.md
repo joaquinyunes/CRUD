@@ -68,7 +68,7 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
 
 ## NIVEL 3 — Extensiones
 
-- [ ] **3.1 Sistema de Archivos**
+- [x] **3.1 Sistema de Archivos**
   Subida de JPG/PNG/PDF, guardando nombre, ruta, tipo, tamaño.
   Archivos típicos: migración `archivos`, modelo, `ArchivoController`, componente de upload.
 
@@ -119,5 +119,5 @@ estado a mano: `[ ]` pendiente, `[~]` en curso, `[x]` terminada.
 ## Estado general del proyecto
 *(Actualizar esta línea cada sesión, o dejar que se actualice solo desde `05_handoff.md`)*
 
-**Última microfase completada:** 2.5 — Exportación (Excel con Maatwebsite/Excel).
-**Microfase en curso:** 3.1 — Sistema de Archivos.
+**Última microfase completada:** 3.1 — Sistema de Archivos (subida JPG/PNG/PDF).
+**Microfase en curso:** 3.2 — Notificaciones.

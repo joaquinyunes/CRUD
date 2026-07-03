@@ -3,7 +3,7 @@
 > Este archivo es una FOTO, no un historial. Cada sesión que modifique la base de datos debe
 > reescribir este archivo completo con el estado real, no agregar un changelog al final.
 
-**Última actualización:** Microfase 2.5 completada — Exportación Excel con Maatwebsite/Excel (productos, ventas).
+**Última actualización:** Microfase 3.1 completada — tabla `archivos`, ArchivoController, componente file-upload.
 
 ---
 

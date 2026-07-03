@@ -30,3 +30,4 @@ require __DIR__.'/compras.php';
 require __DIR__.'/stock.php';
 require __DIR__.'/reportes.php';
 require __DIR__.'/exportar.php';
+require __DIR__.'/archivos.php';
