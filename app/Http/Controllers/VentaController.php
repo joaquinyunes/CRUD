@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Events\VentaCreada;
 use App\Models\Cliente;
+use App\Models\MetodoPago;
 use App\Models\Producto;
+use App\Models\Setting;
 use App\Models\Venta;
+use App\Models\VentaPago;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +18,7 @@ class VentaController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Venta::with('cliente', 'user');
+        $query = Venta::with('cliente', 'user', 'pagos.metodoPago');
 
         if ($request->filled('buscar')) {
             $query->buscar($request->buscar);
@@ -41,8 +44,9 @@ class VentaController extends Controller
     {
         $clientes = Cliente::where('estado', 'activo')->orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
+        $metodosPago = MetodoPago::activos()->get();
 
-        return view('ventas.form', compact('clientes', 'productos'));
+        return view('ventas.form', compact('clientes', 'productos', 'metodosPago'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -89,6 +93,38 @@ class VentaController extends Controller
             foreach ($detalles as $detalle) {
                 $venta->detalles()->create($detalle);
             }
+
+            $subtotal = $detalles->sum('subtotal');
+            $descuentoTipo = $request->input('descuento_tipo');
+            $descuentoValor = (float) $request->input('descuento', 0);
+            $descuento = $descuentoTipo === 'porcentaje' ? ($subtotal * $descuentoValor / 100) : $descuentoValor;
+
+            $ivaHabilitado = Setting::obtener('sistema_impuesto_habilitado', '1') === '1';
+            $ivaPorcentaje = (float) Setting::obtener('sistema_iva', '21');
+            $baseImponible = $subtotal - $descuento;
+            $impuesto = $ivaHabilitado ? ($baseImponible * $ivaPorcentaje / 100) : 0;
+            $totalFinal = $baseImponible + $impuesto;
+
+            $venta->update([
+                'subtotal' => $subtotal,
+                'descuento' => $descuento,
+                'descuento_tipo' => $descuentoTipo,
+                'impuesto' => $impuesto,
+                'total_final' => $totalFinal,
+                'total' => $totalFinal,
+            ]);
+
+            if ($request->filled('metodos_pago')) {
+                foreach ($request->metodos_pago as $pago) {
+                    if (!empty($pago['metodo_pago_id']) && !empty($pago['monto']) && $pago['monto'] > 0) {
+                        $venta->pagos()->create([
+                            'metodo_pago_id' => $pago['metodo_pago_id'],
+                            'monto' => $pago['monto'],
+                            'referencia' => $pago['referencia'] ?? null,
+                        ]);
+                    }
+                }
+            }
         });
 
         VentaCreada::dispatch($venta);
@@ -99,12 +135,13 @@ class VentaController extends Controller
 
     public function edit(Venta $venta): View
     {
-        $venta->load('detalles.producto');
+        $venta->load(['detalles.producto', 'pagos.metodoPago']);
 
         $clientes = Cliente::where('estado', 'activo')->orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
+        $metodosPago = MetodoPago::activos()->get();
 
-        return view('ventas.form', compact('venta', 'clientes', 'productos'));
+        return view('ventas.form', compact('venta', 'clientes', 'productos', 'metodosPago'));
     }
 
     public function update(Request $request, Venta $venta): RedirectResponse
@@ -137,10 +174,26 @@ class VentaController extends Controller
 
             $total = $detalles->sum('subtotal');
 
+            $subtotal = $detalles->sum('subtotal');
+            $descuentoTipo = $request->input('descuento_tipo');
+            $descuentoValor = (float) $request->input('descuento', 0);
+            $descuento = $descuentoTipo === 'porcentaje' ? ($subtotal * $descuentoValor / 100) : $descuentoValor;
+
+            $ivaHabilitado = Setting::obtener('sistema_impuesto_habilitado', '1') === '1';
+            $ivaPorcentaje = (float) Setting::obtener('sistema_iva', '21');
+            $baseImponible = $subtotal - $descuento;
+            $impuesto = $ivaHabilitado ? ($baseImponible * $ivaPorcentaje / 100) : 0;
+            $totalFinal = $baseImponible + $impuesto;
+
             $venta->update([
                 'cliente_id' => $request->cliente_id,
                 'fecha'      => $request->fecha,
-                'total'      => $total,
+                'total'      => $totalFinal,
+                'subtotal'   => $subtotal,
+                'descuento'  => $descuento,
+                'descuento_tipo' => $descuentoTipo,
+                'impuesto'   => $impuesto,
+                'total_final' => $totalFinal,
                 'estado'     => $request->estado,
             ]);
 
@@ -148,6 +201,20 @@ class VentaController extends Controller
 
             foreach ($detalles as $detalle) {
                 $venta->detalles()->create($detalle);
+            }
+
+            $venta->pagos()->delete();
+
+            if ($request->filled('metodos_pago')) {
+                foreach ($request->metodos_pago as $pago) {
+                    if (!empty($pago['metodo_pago_id']) && !empty($pago['monto']) && $pago['monto'] > 0) {
+                        $venta->pagos()->create([
+                            'metodo_pago_id' => $pago['metodo_pago_id'],
+                            'monto' => $pago['monto'],
+                            'referencia' => $pago['referencia'] ?? null,
+                        ]);
+                    }
+                }
             }
         });
 
@@ -172,17 +239,20 @@ class VentaController extends Controller
 
     private function generarNumero(): string
     {
-        $ultima = Venta::where('numero', 'like', 'VTA-%')
-                       ->orderByRaw("CAST(SUBSTRING(numero, 5) AS UNSIGNED) DESC")
+        $prefijo = Setting::obtener('ventas_prefijo_numero', 'VTA');
+        $digitos = (int) Setting::obtener('ventas_cantidad_digitos', '5');
+
+        $ultima = Venta::where('numero', 'like', "{$prefijo}-%")
+                       ->orderByRaw("CAST(SUBSTRING(numero, " . (strlen($prefijo) + 2) . ") AS UNSIGNED) DESC")
                        ->first();
 
         if ($ultima) {
-            $ultimoNumero = (int) substr($ultima->numero, 4);
+            $ultimoNumero = (int) substr($ultima->numero, strlen($prefijo) + 1);
             $nuevoNumero = $ultimoNumero + 1;
         } else {
             $nuevoNumero = 1;
         }
 
-        return 'VTA-' . str_pad($nuevoNumero, 5, '0', STR_PAD_LEFT);
+        return $prefijo . '-' . str_pad($nuevoNumero, $digitos, '0', STR_PAD_LEFT);
     }
 }

@@ -16,13 +16,22 @@ class Venta extends Model
         'cliente_id',
         'fecha',
         'total',
+        'subtotal',
+        'descuento',
+        'descuento_tipo',
+        'impuesto',
+        'total_final',
         'estado',
         'user_id',
     ];
 
     protected $casts = [
-        'fecha' => 'date',
-        'total' => 'decimal:2',
+        'fecha'       => 'date',
+        'total'       => 'decimal:2',
+        'subtotal'    => 'decimal:2',
+        'descuento'   => 'decimal:2',
+        'impuesto'    => 'decimal:2',
+        'total_final' => 'decimal:2',
     ];
 
     public function cliente(): BelongsTo
@@ -38,6 +47,11 @@ class Venta extends Model
     public function detalles(): HasMany
     {
         return $this->hasMany(VentaDetalle::class);
+    }
+
+    public function pagos(): HasMany
+    {
+        return $this->hasMany(VentaPago::class);
     }
 
     public function scopeBuscar($query, ?string $buscar)

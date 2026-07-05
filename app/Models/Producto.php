@@ -20,6 +20,7 @@ class Producto extends Model
         'precio_venta',
         'stock',
         'stock_minimo',
+        'unidad_medida_id',
         'imagen',
         'estado',
     ];
@@ -45,6 +46,11 @@ class Producto extends Model
     public function categoria(): BelongsTo
     {
         return $this->belongsTo(Categoria::class);
+    }
+
+    public function unidadMedida(): BelongsTo
+    {
+        return $this->belongsTo(UnidadMedida::class);
     }
 
     public function getImagenUrlAttribute(): string

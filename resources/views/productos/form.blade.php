@@ -139,6 +139,20 @@
                     </div>
 
                     <div>
+                        <label for="unidad_medida_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unidad de Medida</label>
+                        <select name="unidad_medida_id" id="unidad_medida_id"
+                                class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">— Sin unidad —</option>
+                            @foreach($unidadesMedida as $um)
+                                <option value="{{ $um->id }}"
+                                    {{ old('unidad_medida_id', $producto->unidad_medida_id ?? '') == $um->id ? 'selected' : '' }}>
+                                    {{ $um->nombre }} ({{ $um->abreviacion }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
                         <label for="estado" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado <span class="text-red-500">*</span></label>
                         <select name="estado" id="estado"
                                 class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"

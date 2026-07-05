@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Categoria;
 use App\Models\Producto;
+use App\Models\UnidadMedida;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +16,7 @@ class ProductoController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Producto::with('categoria')->activos();
+        $query = Producto::with('categoria', 'unidadMedida')->activos();
 
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
@@ -43,8 +44,9 @@ class ProductoController extends Controller
     public function create(): View
     {
         $categorias = Categoria::where('estado', true)->orderBy('nombre')->get();
+        $unidadesMedida = UnidadMedida::where('estado', true)->orderBy('nombre')->get();
 
-        return view('productos.form', compact('categorias'));
+        return view('productos.form', compact('categorias', 'unidadesMedida'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -66,8 +68,9 @@ class ProductoController extends Controller
         }
 
         $categorias = Categoria::where('estado', true)->orderBy('nombre')->get();
+        $unidadesMedida = UnidadMedida::where('estado', true)->orderBy('nombre')->get();
 
-        return view('productos.form', compact('producto', 'categorias'));
+        return view('productos.form', compact('producto', 'categorias', 'unidadesMedida'));
     }
 
     public function update(Request $request, Producto $producto): RedirectResponse
@@ -131,6 +134,7 @@ class ProductoController extends Controller
             'precio_compra' => ['required', 'numeric', 'min:0'],
             'precio_venta'  => ['required', 'numeric', 'min:0'],
             'stock_minimo'  => ['required', 'integer', 'min:0'],
+            'unidad_medida_id' => ['nullable', 'exists:unidades_medida,id'],
             'estado'        => ['required', 'in:activo,inactivo'],
             'imagen'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);

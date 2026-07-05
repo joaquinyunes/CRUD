@@ -26,7 +26,7 @@ class CheckPermission
             abort(403, 'Tu cuenta no tiene un rol asignado. Contactá al administrador.');
         }
 
-        if ($rol->nombre === \App\Models\Role::ADMINISTRADOR) {
+        if ($rol->nombre === \App\Models\Role::ADMINISTRADOR || $rol->nombre === 'admin') {
             return $next($request);
         }
 

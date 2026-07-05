@@ -55,6 +55,7 @@
                     <th>Cliente</th>
                     <th>Fecha</th>
                     <th style="text-align:right;">Total</th>
+                    <th>Medio de Pago</th>
                     <th style="text-align:center;">Estado</th>
                     <th>Vendedor</th>
                     <th style="text-align:right;">Acciones</th>
@@ -66,7 +67,17 @@
                         <td><span class="r-mono" style="font-size:0.8125rem; color:var(--color-ink-soft);">{{ $venta->numero }}</span></td>
                         <td style="font-weight:500;">{{ $venta->cliente->nombre ?? '—' }} {{ $venta->cliente->apellido ?? '' }}</td>
                         <td style="color:var(--color-ink-soft);">{{ $venta->fecha->format('d/m/Y') }}</td>
-                        <td style="text-align:right; font-weight:500;">${{ number_format($venta->total, 2, ',', '.') }}</td>
+                        <td style="text-align:right; font-weight:500;">${{ number_format($venta->total_final ?: $venta->total, 2, ',', '.') }}</td>
+                        <td style="font-size:0.8125rem; color:var(--color-ink-soft);">
+                            @if($venta->pagos && $venta->pagos->count())
+                                @foreach($venta->pagos as $pago)
+                                    <span class="r-tag r-tag-sm" style="font-size:0.6875rem;">{{ $pago->metodoPago->nombre ?? '—' }}: ${{ number_format($pago->monto, 2, ',', '.') }}</span>
+                                    @if(!$loop->last) @endif
+                                @endforeach
+                            @else
+                                —
+                            @endif
+                        </td>
                         <td style="text-align:center;">
                             @if($venta->estado === 'completada')
                                 <span class="r-tag r-tag-success">Completada</span>
@@ -96,7 +107,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" style="text-align:center; padding:var(--space-8); color:var(--color-ink-soft);">No se encontraron ventas.</td>
+                        <td colspan="8" style="text-align:center; padding:var(--space-8); color:var(--color-ink-soft);">No se encontraron ventas.</td>
                     </tr>
                 @endforelse
             </tbody>

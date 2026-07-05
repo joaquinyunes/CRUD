@@ -38,3 +38,5 @@ require __DIR__.'/pdf.php';
 require __DIR__.'/configuracion.php';
 require __DIR__.'/importar.php';
 require __DIR__.'/backup.php';
+require __DIR__.'/unidades_medida.php';
+require __DIR__.'/metodos_pago.php';
