@@ -399,8 +399,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const descuentoValor = parseFloat(document.getElementById('descuento').value) || 0;
         const descuento = descuentoTipo === 'porcentaje' ? (subtotal * descuentoValor / 100) : descuentoValor;
 
-        const ivaHabilitado = true;
-        const ivaPorcentaje = 21;
+        const ivaPorcentaje = {{ \App\Models\Setting::obtener('sistema_iva', '21') }};
+        const ivaHabilitado = {{ \App\Models\Setting::obtener('sistema_impuesto_habilitado', '1') === '1' ? 'true' : 'false' }};
         const baseImponible = subtotal - descuento;
         const impuesto = ivaHabilitado ? (baseImponible * ivaPorcentaje / 100) : 0;
         const totalFinal = baseImponible + impuesto;

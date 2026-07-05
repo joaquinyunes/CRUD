@@ -232,7 +232,7 @@ class VentaController extends Controller
 
     public function show(Venta $venta): View
     {
-        $venta->load(['detalles.producto', 'cliente', 'user']);
+        $venta->load(['detalles.producto', 'cliente', 'user', 'pagos.metodoPago']);
 
         return view('ventas.show', compact('venta'));
     }

@@ -3,88 +3,83 @@
 @section('page_title', 'Stock crítico')
 
 @section('content')
-<div class="py-6">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+<div class="r-mb-lg">
+    <div class="r-mb-lg">
 
-        <div class="flex items-center justify-between">
-            <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Stock crítico</h1>
-            <a href="{{ route('reportes.index') }}"
-               class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+        <div class="r-flex r-items-center r-justify-between r-mb-lg">
+            <h1 class="r-display-l">Stock crítico</h1>
+            <a href="{{ route('reportes.index') }}" class="r-caption">
                 &larr; Volver
             </a>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h2 class="text-sm font-semibold text-red-700 dark:text-red-400 mb-4">
+        <div class="r-card-flat r-mb-lg" data-reveal>
+            <h2 class="r-label r-mb-md" style="color: var(--r-color-red-600, #dc2626)">
                 Productos agotados ({{ $agotados->count() }})
             </h2>
 
             @if($agotados->count())
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-900">
+                <table class="r-table">
+                    <thead>
                         <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Código</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Producto</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Categoría</th>
-                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Stock</th>
-                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Mínimo</th>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th class="r-text-center">Stock</th>
+                            <th class="r-text-center">Mínimo</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody>
                         @foreach($agotados as $prod)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
-                                <td class="px-4 py-2 text-sm font-mono text-gray-500 dark:text-gray-400">{{ $prod->codigo }}</td>
-                                <td class="px-4 py-2 text-sm text-gray-800 dark:text-gray-100">{{ $prod->nombre }}</td>
-                                <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{{ $prod->categoria->nombre ?? '—' }}</td>
-                                <td class="px-4 py-2 text-sm text-center">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                        0
-                                    </span>
+                            <tr>
+                                <td class="r-caption"><code>{{ $prod->codigo }}</code></td>
+                                <td>{{ $prod->nombre }}</td>
+                                <td class="r-caption">{{ $prod->categoria->nombre ?? '—' }}</td>
+                                <td class="r-text-center">
+                                    <span class="r-tag r-tag--danger">0</span>
                                 </td>
-                                <td class="px-4 py-2 text-sm text-center text-gray-500 dark:text-gray-400">{{ $prod->stock_minimo }}</td>
+                                <td class="r-text-center r-caption">{{ $prod->stock_minimo }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             @else
-                <p class="text-sm text-gray-500 dark:text-gray-400">No hay productos agotados.</p>
+                <p class="r-caption">No hay productos agotados.</p>
             @endif
         </div>
 
-        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h2 class="text-sm font-semibold text-yellow-700 dark:text-yellow-400 mb-4">
+        <div class="r-card-flat" data-reveal>
+            <h2 class="r-label r-mb-md" style="color: var(--r-color-yellow-600, #ca8a04)">
                 Productos con stock bajo ({{ $criticos->count() }})
             </h2>
 
             @if($criticos->count())
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-900">
+                <table class="r-table">
+                    <thead>
                         <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Código</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Producto</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Categoría</th>
-                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Stock</th>
-                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Mínimo</th>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th class="r-text-center">Stock</th>
+                            <th class="r-text-center">Mínimo</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody>
                         @foreach($criticos as $prod)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
-                                <td class="px-4 py-2 text-sm font-mono text-gray-500 dark:text-gray-400">{{ $prod->codigo }}</td>
-                                <td class="px-4 py-2 text-sm text-gray-800 dark:text-gray-100">{{ $prod->nombre }}</td>
-                                <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{{ $prod->categoria->nombre ?? '—' }}</td>
-                                <td class="px-4 py-2 text-sm text-center">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                        {{ $prod->stock }}
-                                    </span>
+                            <tr>
+                                <td class="r-caption"><code>{{ $prod->codigo }}</code></td>
+                                <td>{{ $prod->nombre }}</td>
+                                <td class="r-caption">{{ $prod->categoria->nombre ?? '—' }}</td>
+                                <td class="r-text-center">
+                                    <span class="r-tag r-tag--warning">{{ $prod->stock }}</span>
                                 </td>
-                                <td class="px-4 py-2 text-sm text-center text-gray-500 dark:text-gray-400">{{ $prod->stock_minimo }}</td>
+                                <td class="r-text-center r-caption">{{ $prod->stock_minimo }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             @else
-                <p class="text-sm text-gray-500 dark:text-gray-400">No hay productos con stock crítico.</p>
+                <p class="r-caption">No hay productos con stock crítico.</p>
             @endif
         </div>
 

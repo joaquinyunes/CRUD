@@ -19,8 +19,8 @@
     </a>
     <a href="{{ route('reportes.mejores-clientes') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0.1">
         <span class="r-caption">Mejores clientes</span>
-        <div class="r-kpi-value r-mt-2" style="font-size:1.75rem;">{{ $productosStockCritico + $productosAgotados }}</div>
-        <span class="r-kpi-label">Productos con stock bajo</span>
+        <div class="r-kpi-value r-kpi-moss r-mt-2" style="font-size:1.75rem;">{{ $totalClientes ?? 0 }}</div>
+        <span class="r-kpi-label">Clientes activos</span>
     </a>
     <a href="{{ route('reportes.stock-critico') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0.15">
         <span class="r-caption">Stock crítico</span>

@@ -3,22 +3,21 @@
 @section('page_title', isset($producto) ? 'Editar producto' : 'Nuevo producto')
 
 @section('content')
-<div class="py-6">
+<div class="r-mb-8" data-reveal="fade-up">
     <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
 
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">
+        <div class="r-flex r-items-center r-justify-between r-mb-6">
+            <h1 class="r-display-m">
                 {{ isset($producto) ? 'Editar producto' : 'Nuevo producto' }}
             </h1>
-            <a href="{{ route('productos.index') }}"
-               class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <a href="{{ route('productos.index') }}" class="r-btn r-btn-ghost r-caption">
                 &larr; Volver
             </a>
         </div>
 
         @if($errors->any())
-            <div class="mb-4 rounded-md bg-red-50 dark:bg-red-900/40 px-4 py-3 text-sm text-red-700 dark:text-red-300">
-                <ul class="list-disc list-inside">
+            <div class="r-card-flat r-mb-4 r-body" style="border-left: 3px solid var(--r-color-danger);">
+                <ul class="list-disc list-inside r-gap-2">
                     @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -29,49 +28,49 @@
         <form method="POST"
               action="{{ isset($producto) ? route('productos.update', $producto) : route('productos.store') }}"
               enctype="multipart/form-data"
-              class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+              class="r-card-flat r-mb-6">
             @csrf
             @isset($producto)
                 @method('PUT')
             @endisset
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="r-flex r-gap-6" style="flex-wrap: wrap;">
 
                 {{-- Columna izquierda: campos principales --}}
-                <div class="lg:col-span-2 space-y-4">
+                <div style="flex: 2; min-width: 300px;" class="r-gap-4" data-reveal="fade-up">
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label for="codigo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Código <span class="text-red-500">*</span></label>
+                    <div class="r-flex r-gap-4" style="flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 180px;">
+                            <label for="codigo" class="r-label">Código <span class="r-tag" style="background: var(--r-color-danger); color: #fff;">*</span></label>
                             <input type="text" name="codigo" id="codigo"
                                    value="{{ old('codigo', $producto->codigo ?? '') }}"
-                                   class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('codigo') border-red-500 @enderror"
+                                   class="r-input @error('codigo') is-invalid @enderror"
                                    required>
-                            @error('codigo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            @error('codigo') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
                         </div>
 
-                        <div class="sm:col-span-2">
-                            <label for="nombre" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre <span class="text-red-500">*</span></label>
+                        <div style="flex: 2; min-width: 220px;">
+                            <label for="nombre" class="r-label">Nombre <span class="r-tag" style="background: var(--r-color-danger); color: #fff;">*</span></label>
                             <input type="text" name="nombre" id="nombre"
                                    value="{{ old('nombre', $producto->nombre ?? '') }}"
-                                   class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('nombre') border-red-500 @enderror"
+                                   class="r-input @error('nombre') is-invalid @enderror"
                                    required>
-                            @error('nombre') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            @error('nombre') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
                     <div>
-                        <label for="descripcion" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción</label>
+                        <label for="descripcion" class="r-label">Descripción</label>
                         <textarea name="descripcion" id="descripcion" rows="3"
-                                  class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('descripcion', $producto->descripcion ?? '') }}</textarea>
-                        @error('descripcion') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                  class="r-input">{{ old('descripcion', $producto->descripcion ?? '') }}</textarea>
+                        @error('descripcion') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="categoria_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Categoría <span class="text-red-500">*</span></label>
+                    <div class="r-flex r-gap-4" style="flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="categoria_id" class="r-label">Categoría <span class="r-tag" style="background: var(--r-color-danger); color: #fff;">*</span></label>
                             <select name="categoria_id" id="categoria_id"
-                                    class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('categoria_id') border-red-500 @enderror"
+                                    class="r-select @error('categoria_id') is-invalid @enderror"
                                     required>
                                 <option value="">— Seleccioná una categoría —</option>
                                 @foreach($categorias as $cat)
@@ -81,67 +80,62 @@
                                     </option>
                                 @endforeach
                             </select>
-                            @error('categoria_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            @error('categoria_id') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
                         </div>
 
-                        <div>
-                            <label for="marca" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Marca</label>
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="marca" class="r-label">Marca</label>
                             <input type="text" name="marca" id="marca"
                                    value="{{ old('marca', $producto->marca ?? '') }}"
-                                   class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            @error('marca') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                   class="r-input">
+                            @error('marca') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label for="precio_compra" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Precio compra <span class="text-red-500">*</span></label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <span class="text-gray-500 sm:text-sm">$</span>
-                                </div>
+                    <div class="r-flex r-gap-4" style="flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 160px;">
+                            <label for="precio_compra" class="r-label">Precio compra <span class="r-tag" style="background: var(--r-color-danger); color: #fff;">*</span></label>
+                            <div class="r-flex r-items-center r-gap-2">
+                                <span class="r-caption">$</span>
                                 <input type="number" name="precio_compra" id="precio_compra"
                                        value="{{ old('precio_compra', $producto->precio_compra ?? '') }}"
                                        step="0.01" min="0"
-                                       class="block w-full pl-7 rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 text-sm focus:border-indigo-500 focus:ring-indigo-500 @error('precio_compra') border-red-500 @enderror"
-                                       required>
+                                       class="r-input @error('precio_compra') is-invalid @enderror"
+                                       required style="flex:1;">
                             </div>
-                            @error('precio_compra') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            @error('precio_compra') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
                         </div>
 
-                        <div>
-                            <label for="precio_venta" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Precio venta <span class="text-red-500">*</span></label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <span class="text-gray-500 sm:text-sm">$</span>
-                                </div>
+                        <div style="flex: 1; min-width: 160px;">
+                            <label for="precio_venta" class="r-label">Precio venta <span class="r-tag" style="background: var(--r-color-danger); color: #fff;">*</span></label>
+                            <div class="r-flex r-items-center r-gap-2">
+                                <span class="r-caption">$</span>
                                 <input type="number" name="precio_venta" id="precio_venta"
                                        value="{{ old('precio_venta', $producto->precio_venta ?? '') }}"
                                        step="0.01" min="0"
-                                       class="block w-full pl-7 rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 text-sm focus:border-indigo-500 focus:ring-indigo-500 @error('precio_venta') border-red-500 @enderror"
-                                       required>
+                                       class="r-input @error('precio_venta') is-invalid @enderror"
+                                       required style="flex:1;">
                             </div>
-                            @error('precio_venta') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            @error('precio_venta') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
                         </div>
 
-                        <div>
-                            <label for="stock_minimo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Stock mínimo <span class="text-red-500">*</span></label>
+                        <div style="flex: 1; min-width: 160px;">
+                            <label for="stock_minimo" class="r-label">Stock mínimo <span class="r-tag" style="background: var(--r-color-danger); color: #fff;">*</span></label>
                             <input type="number" name="stock_minimo" id="stock_minimo"
                                    value="{{ old('stock_minimo', $producto->stock_minimo ?? 0) }}"
                                    min="0"
-                                   class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('stock_minimo') border-red-500 @enderror"
+                                   class="r-input @error('stock_minimo') is-invalid @enderror"
                                    required>
-                            @error('stock_minimo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            @error('stock_minimo') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
                             @isset($producto)
-                                <p class="mt-1 text-xs text-gray-500">Stock actual: <strong>{{ $producto->stock }}</strong> (se modifica vía movimientos de stock)</p>
+                                <p class="r-caption">Stock actual: <strong>{{ $producto->stock }}</strong> (se modifica vía movimientos de stock)</p>
                             @endisset
                         </div>
                     </div>
 
                     <div>
-                        <label for="unidad_medida_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unidad de Medida</label>
-                        <select name="unidad_medida_id" id="unidad_medida_id"
-                                class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <label for="unidad_medida_id" class="r-label">Unidad de Medida</label>
+                        <select name="unidad_medida_id" id="unidad_medida_id" class="r-select">
                             <option value="">— Sin unidad —</option>
                             @foreach($unidadesMedida as $um)
                                 <option value="{{ $um->id }}"
@@ -153,10 +147,8 @@
                     </div>
 
                     <div>
-                        <label for="estado" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado <span class="text-red-500">*</span></label>
-                        <select name="estado" id="estado"
-                                class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                required>
+                        <label for="estado" class="r-label">Estado <span class="r-tag" style="background: var(--r-color-danger); color: #fff;">*</span></label>
+                        <select name="estado" id="estado" class="r-select" required>
                             <option value="activo"   {{ old('estado', $producto->estado ?? 'activo') === 'activo'   ? 'selected' : '' }}>Activo</option>
                             <option value="inactivo" {{ old('estado', $producto->estado ?? '')       === 'inactivo' ? 'selected' : '' }}>Inactivo</option>
                         </select>
@@ -165,37 +157,35 @@
                 </div>
 
                 {{-- Columna derecha: imagen --}}
-                <div class="space-y-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Imagen del producto</label>
+                <div style="flex: 1; min-width: 240px;" class="r-gap-4" data-reveal="fade-up">
+                    <label class="r-label">Imagen del producto</label>
 
-                    <div class="text-center">
+                    <div class="r-text-right">
                         <img id="preview-imagen"
                              src="{{ isset($producto) && $producto->imagen ? asset('storage/' . $producto->imagen) : '' }}"
                              alt="Preview"
-                             class="img-thumbnail mx-auto rounded border border-gray-300 dark:border-gray-600 {{ isset($producto) && $producto->imagen ? '' : 'hidden' }}"
-                             style="max-height:200px;object-fit:contain;">
-                        <div id="sin-imagen" class="{{ isset($producto) && $producto->imagen ? 'hidden' : '' }} bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center mx-auto"
-                             style="height:200px;max-width:200px;">
-                            <span class="text-sm text-gray-400">Sin imagen</span>
+                             class="mx-auto rounded {{ isset($producto) && $producto->imagen ? '' : 'hidden' }}"
+                             style="max-height:200px; object-fit:contain; border: 1px solid var(--r-color-border);">
+                        <div id="sin-imagen" class="{{ isset($producto) && $producto->imagen ? 'hidden' : '' }} r-flex r-items-center r-justify-between mx-auto"
+                             style="height:200px; max-width:200px; background: var(--r-color-bg-alt); border-radius: var(--r-radius);">
+                            <span class="r-caption">Sin imagen</span>
                         </div>
                     </div>
 
                     <input type="file" name="imagen" id="imagen"
                            accept="image/jpeg,image/png,image/webp"
-                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900 dark:file:text-indigo-300">
-                    <p class="text-xs text-gray-500">JPG, PNG o WEBP. Máx. 2 MB.</p>
-                    @error('imagen') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                           class="r-input">
+                    <p class="r-caption">JPG, PNG o WEBP. Máx. 2 MB.</p>
+                    @error('imagen') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
                 </div>
 
             </div>
 
-            <div class="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
-                <a href="{{ route('productos.index') }}"
-                   class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <div class="r-flex r-items-center r-justify-between r-mt-6" style="border-top: 1px solid var(--r-color-border); padding-top: 1.5rem;">
+                <a href="{{ route('productos.index') }}" class="r-btn r-btn-ghost r-caption">
                     Cancelar
                 </a>
-                <button type="submit"
-                        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-500">
+                <button type="submit" class="r-btn r-btn-primary">
                     {{ isset($producto) ? 'Guardar cambios' : 'Crear producto' }}
                 </button>
             </div>

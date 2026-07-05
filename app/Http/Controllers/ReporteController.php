@@ -35,12 +35,15 @@ class ReporteController extends Controller
                                       ->where('stock', 0)
                                       ->count();
 
+        $totalClientes = Cliente::where('estado', 'activo')->count();
+
         return view('reportes.index', compact(
             'ventasHoy',
             'ventasMes',
             'totalVentasMes',
             'productosStockCritico',
-            'productosAgotados'
+            'productosAgotados',
+            'totalClientes'
         ));
     }
 

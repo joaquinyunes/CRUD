@@ -59,6 +59,7 @@
                     <th style="text-align:right;">P. Compra</th>
                     <th style="text-align:right;">P. Venta</th>
                     <th style="text-align:center;">Stock</th>
+                    <th>Unidad</th>
                     <th style="text-align:center;">Estado</th>
                     <th style="text-align:right;">Acciones</th>
                 </tr>
@@ -89,6 +90,7 @@
                             @endif
                             <span class="r-mono" style="font-size:0.6875rem; color:var(--color-ink-soft); margin-left:4px;">mín: {{ $producto->stock_minimo }}</span>
                         </td>
+                        <td style="color:var(--color-ink-soft);">{{ $producto->unidadMedida->abreviacion ?? '—' }}</td>
                         <td style="text-align:center;">
                             @if($producto->estado === 'activo')
                                 <span class="r-tag r-tag-success">Activo</span>
