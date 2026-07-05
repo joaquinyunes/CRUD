@@ -1,80 +1,60 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                {{ __('Gestión de Roles') }}
-            </h2>
-            <a href="{{ route('roles.usuarios') }}"
-               class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
-                Ver Usuarios y Roles
-            </a>
-        </div>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+@section('page_title', 'Gestión de Roles')
 
-            @if (session('success'))
-                <div class="mb-4 rounded-md bg-green-100 p-4 text-sm text-green-800 dark:bg-green-900 dark:text-green-200">
-                    {{ session('success') }}
-                </div>
-            @endif
+@section('content')
 
-            @if (session('error'))
-                <div class="mb-4 rounded-md bg-red-100 p-4 text-sm text-red-800 dark:bg-red-900 dark:text-red-200">
-                    {{ session('error') }}
-                </div>
-            @endif
+<div class="r-flex r-justify-between r-items-center r-mb-8" data-reveal="fade-up">
+    <h2 class="r-display-l">Gestión de Roles</h2>
+    <a href="{{ route('roles.usuarios') }}" class="r-btn r-btn-primary r-btn-sm">Ver Usuarios y Roles</a>
+</div>
 
-            <div class="overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg">
-                <div class="p-6">
-                    <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
-                        <thead>
-                            <tr class="border-b border-gray-200 dark:border-gray-700">
-                                <th class="pb-3 pr-6 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Rol</th>
-                                <th class="pb-3 pr-6 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Permisos asignados</th>
-                                <th class="pb-3 pr-6 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Usuarios con este rol</th>
-                                <th class="pb-3 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                            @foreach ($roles as $role)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
-                                    <td class="py-3 pr-6 font-medium text-gray-900 dark:text-gray-100">
-                                        {{ $role->nombre }}
-                                        @if ($role->nombre === \App\Models\Role::ADMINISTRADOR)
-                                            <span class="ml-2 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                                Acceso total
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="py-3 pr-6">
-                                        <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                            {{ $role->nombre === \App\Models\Role::ADMINISTRADOR ? 'Todos' : $role->permissions_count }}
-                                        </span>
-                                    </td>
-                                    <td class="py-3 pr-6">
-                                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                                            {{ $role->users_count }}
-                                        </span>
-                                    </td>
-                                    <td class="py-3">
-                                        @if ($role->nombre !== \App\Models\Role::ADMINISTRADOR)
-                                            <a href="{{ route('roles.edit', $role) }}"
-                                               class="inline-flex items-center text-indigo-600 hover:underline dark:text-indigo-400">
-                                                Editar permisos
-                                            </a>
-                                        @else
-                                            <span class="text-xs text-gray-400">No editable</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+@if (session('success'))
+    <div class="r-flash-success r-mb-6" data-reveal="fade-up">{{ session('success') }}</div>
+@endif
 
-        </div>
+@if (session('error'))
+    <div class="r-flash-error r-mb-6" data-reveal="fade-up">{{ session('error') }}</div>
+@endif
+
+<div class="r-card-flat" data-reveal="fade-up" data-reveal-delay="0.1">
+    <div style="overflow-x: auto;">
+        <table class="r-table">
+            <thead>
+                <tr>
+                    <th>Rol</th>
+                    <th>Permisos asignados</th>
+                    <th>Usuarios con este rol</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($roles as $role)
+                    <tr>
+                        <td style="font-weight:600;">
+                            {{ $role->nombre }}
+                            @if ($role->nombre === \App\Models\Role::ADMINISTRADOR)
+                                <span class="r-tag r-tag-marigold" style="margin-left:8px;">Acceso total</span>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="r-tag">{{ $role->nombre === \App\Models\Role::ADMINISTRADOR ? 'Todos' : $role->permissions_count }}</span>
+                        </td>
+                        <td>
+                            <span class="r-tag">{{ $role->users_count }}</span>
+                        </td>
+                        <td>
+                            @if ($role->nombre !== \App\Models\Role::ADMINISTRADOR)
+                                <a href="{{ route('roles.edit', $role) }}" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px;">Editar permisos</a>
+                            @else
+                                <span class="r-mono" style="font-size:0.6875rem; color:var(--color-ink-soft);">No editable</span>
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
-</x-app-layout>
+</div>
+
+@endsection

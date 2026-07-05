@@ -10,6 +10,8 @@ class CompraDetalle extends Model
 {
     use HasFactory;
 
+    protected $table = 'compras_detalle';
+
     protected $fillable = [
         'compra_id',
         'producto_id',

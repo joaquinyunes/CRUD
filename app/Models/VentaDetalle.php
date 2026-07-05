@@ -10,6 +10,8 @@ class VentaDetalle extends Model
 {
     use HasFactory;
 
+    protected $table = 'ventas_detalle';
+
     protected $fillable = [
         'venta_id',
         'producto_id',

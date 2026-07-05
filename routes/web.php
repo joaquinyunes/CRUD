@@ -34,3 +34,7 @@ require __DIR__.'/archivos.php';
 require __DIR__.'/notificaciones.php';
 require __DIR__.'/tareas.php';
 require __DIR__.'/calendario.php';
+require __DIR__.'/pdf.php';
+require __DIR__.'/configuracion.php';
+require __DIR__.'/importar.php';
+require __DIR__.'/backup.php';
