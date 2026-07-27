@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Compra;
 use App\Models\Producto;
+use App\Models\Setting;
 use App\Models\Venta;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -11,8 +12,10 @@ class PdfController extends Controller
 {
     public function facturaVenta($id)
     {
-        $venta = Venta::with(['detalles.producto', 'cliente', 'user'])->findOrFail($id);
-        $pdf = Pdf::loadView('pdf.factura-venta', compact('venta'));
+        $venta = Venta::with(['detalles.producto', 'cliente', 'user', 'pagos.metodoPago'])->findOrFail($id);
+        $empresa = Setting::obtenerGrupo('empresa');
+        $moneda = Setting::obtener('sistema_simbolo_moneda', '$');
+        $pdf = Pdf::loadView('pdf.factura-venta', compact('venta', 'empresa', 'moneda'));
         return $pdf->stream("factura-{$venta->numero}.pdf");
     }
 

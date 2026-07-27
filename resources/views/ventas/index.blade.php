@@ -93,6 +93,7 @@
                                 @if (auth()->user()->role?->tienePermiso('ventas.ver'))
                                     <a href="{{ route('ventas.show', $venta) }}" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px;">Ver</a>
                                 @endif
+                                <a href="{{ route('pdf.venta', $venta) }}" target="_blank" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px; color:#4f46e5;">Factura</a>
                                 @if (auth()->user()->role?->tienePermiso('ventas.editar'))
                                     <a href="{{ route('ventas.edit', $venta) }}" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px;">Editar</a>
                                 @endif

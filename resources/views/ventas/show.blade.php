@@ -12,7 +12,7 @@
             <span class="r-mono" style="font-size:0.8125rem; color:var(--color-ink-soft);">{{ $venta->numero }}</span>
             <div class="r-body r-mt-1">{{ $venta->fecha->format('d/m/Y') }}</div>
         </div>
-        <div>
+        <div class="r-flex r-gap-3" style="flex-wrap:wrap;">
             @if($venta->estado === 'completada')
                 <span class="r-tag r-tag-success">Completada</span>
             @elseif($venta->estado === 'pendiente')
@@ -20,6 +20,10 @@
             @else
                 <span class="r-tag r-tag-danger">Cancelada</span>
             @endif
+            <a href="{{ route('pdf.venta', $venta) }}" target="_blank" class="r-btn r-btn-primary r-btn-sm">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Descargar Factura
+            </a>
         </div>
     </div>
 </div>

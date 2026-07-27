@@ -23,7 +23,7 @@ class ConfiguracionController extends Controller
     {
         $camposEmpresa = ['empresa_nombre', 'empresa_ruc', 'empresa_direccion', 'empresa_telefono', 'empresa_email', 'empresa_logo'];
         $camposSistema = ['sistema_moneda', 'sistema_simbolo_moneda', 'sistema_iva'];
-        $camposVentas  = ['ventas_prefijo_numero', 'ventas_cantidad_digitos'];
+        $camposVentas  = ['ventas_prefijo_numero', 'ventas_cantidad_digitos', 'ventas_permite_descuento', 'ventas_limite_descuento', 'ventas_numero_comprobante'];
 
         $todos = array_merge($camposEmpresa, $camposSistema, $camposVentas);
 
@@ -35,6 +35,8 @@ class ConfiguracionController extends Controller
                 Setting::establecer($campo, $request->input($campo), $grupo);
             }
         }
+
+        Setting::establecer('sistema_impuesto_habilitado', $request->boolean('sistema_impuesto_habilitado') ? '1' : '0', 'sistema');
 
         return Redirect::route('configuracion.index')->with('success', 'Configuración actualizada correctamente.');
     }
