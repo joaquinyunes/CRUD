@@ -65,7 +65,7 @@
                 <div><label class="r-label">RUC / NIT</label><input type="text" name="empresa_ruc" value="{{ $configuracion['empresa']['empresa_ruc'] ?? '' }}" class="r-input"></div>
                 <div><label class="r-label">Dirección</label><input type="text" name="empresa_direccion" value="{{ $configuracion['empresa']['empresa_direccion'] ?? '' }}" class="r-input"></div>
                 <div><label class="r-label">Teléfono</label><input type="text" name="empresa_telefono" value="{{ $configuracion['empresa']['empresa_telefono'] ?? '' }}" class="r-input"></div>
-                <div><label class="r-label">Email</label><input type="email" name="empresa_email" value="{{ $configuracion['empresa']['empresa_email'] ?? '' }}" class="r-input"></div>
+                <div><label class="r-label">Correo electrónico</label><input type="email" name="empresa_email" value="{{ $configuracion['empresa']['empresa_email'] ?? '' }}" class="r-input"></div>
                 <div><label class="r-label">Logo (URL)</label><input type="text" name="empresa_logo" value="{{ $configuracion['empresa']['empresa_logo'] ?? '' }}" class="r-input" placeholder="https://..."></div>
             </div>
         </div>

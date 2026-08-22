@@ -10,13 +10,13 @@
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        <label class="r-label" for="email">Email</label>
+        <label class="r-label" for="email">Correo electrónico</label>
         <input id="email" class="r-input" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" placeholder="admin@admin.com">
         @error('email')
             <p class="r-error">{{ $message }}</p>
         @enderror
 
-        <label class="r-label" for="password">Password</label>
+        <label class="r-label" for="password">Contraseña</label>
         <input id="password" class="r-input" type="password" name="password" required autocomplete="current-password" placeholder="••••••••">
         @error('password')
             <p class="r-error">{{ $message }}</p>

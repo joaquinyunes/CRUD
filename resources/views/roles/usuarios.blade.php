@@ -32,7 +32,7 @@
                         <thead>
                             <tr class="border-b border-gray-200 dark:border-gray-700">
                                 <th class="pb-3 pr-6 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Usuario</th>
-                                <th class="pb-3 pr-6 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Email</th>
+                                <th class="pb-3 pr-6 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Correo</th>
                                 <th class="pb-3 pr-6 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Rol actual</th>
                                 <th class="pb-3 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Asignar rol</th>
                             </tr>

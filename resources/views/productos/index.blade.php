@@ -4,15 +4,56 @@
 
 @section('content')
 
-<div class="r-flex r-justify-between r-items-center r-mb-8" data-reveal="fade-up">
+<div class="r-flex r-justify-between r-items-center r-mb-8" data-reveal="fade-up" x-data="{ rapido: false }">
     <h2 class="r-display-l">Productos</h2>
     <div class="r-flex r-gap-3">
         @if (auth()->user()->role?->tienePermiso('productos.exportar'))
             <a href="{{ route('exportar.productos', ['formato' => 'xlsx']) }}" class="r-btn r-btn-ghost r-btn-sm">Exportar Excel</a>
         @endif
         @if (auth()->user()->role?->tienePermiso('productos.crear'))
+            <button type="button" class="r-btn r-btn-accent r-btn-sm" @click="rapido = true">Alta rápida</button>
             <a href="{{ route('productos.create') }}" class="r-btn r-btn-primary r-btn-sm">Nuevo producto</a>
         @endif
+    </div>
+
+    <!-- Modal de alta rápida -->
+    <div x-show="rapido" x-cloak class="r-modal-overlay" @click.self="rapido = false">
+        <div class="r-modal" x-show="rapido"
+             x-transition:enter="r-modal-enter" x-transition:enter-start="r-modal-enter-start" x-transition:enter-end="r-modal-enter-end"
+             x-transition:leave="r-modal-leave" x-transition:leave-start="r-modal-leave-start" x-transition:leave-end="r-modal-leave-end">
+            <div class="r-flex r-justify-between r-items-center r-mb-6">
+                <h3 class="r-display-m">Alta rápida de producto</h3>
+                <button type="button" class="r-btn-ghost r-btn-sm" style="border:none; font-size:1.2rem; cursor:pointer;" @click="rapido = false">×</button>
+            </div>
+            <p class="r-body" style="margin-bottom:var(--space-6);">Solo necesitás el nombre. El código, la categoría y los precios se completan automáticamente y los podés editar después.</p>
+
+            <form method="POST" action="{{ route('productos.store') }}" class="r-flex-col r-gap-4">
+                @csrf
+                <div>
+                    <label class="r-label">Nombre *</label>
+                    <input type="text" name="nombre" required autofocus placeholder="Ej: Coca Cola 2L" class="r-input">
+                </div>
+                <div class="r-flex r-gap-4" style="flex-wrap:wrap;">
+                    <div style="flex:1; min-width:160px;">
+                        <label class="r-label">Código (opcional)</label>
+                        <input type="text" name="codigo" placeholder="Autogenerado" class="r-input">
+                    </div>
+                    <div style="flex:1; min-width:160px;">
+                        <label class="r-label">Categoría (opcional)</label>
+                        <select name="categoria_id" class="r-select r-w-full">
+                            <option value="">Primera disponible</option>
+                            @foreach($categorias as $cat)
+                                <option value="{{ $cat->id }}">{{ $cat->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="r-flex r-gap-3 r-mt-2" style="justify-content:flex-end;">
+                    <button type="button" class="r-btn r-btn-ghost r-btn-sm" @click="rapido = false">Cancelar</button>
+                    <button type="submit" class="r-btn r-btn-primary r-btn-sm">Guardar producto</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

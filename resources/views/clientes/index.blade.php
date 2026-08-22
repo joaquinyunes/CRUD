@@ -37,7 +37,7 @@
                 <tr>
                     <th>Nombre y Apellido</th>
                     <th>Documento</th>
-                    <th>Email</th>
+                    <th>Correo</th>
                     <th>Teléfono</th>
                     <th>Estado</th>
                     <th style="text-align:right;">Acciones</th>

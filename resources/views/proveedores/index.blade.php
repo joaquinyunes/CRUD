@@ -32,7 +32,7 @@
                     <th>Nombre</th>
                     <th>CUIT</th>
                     <th>Teléfono</th>
-                    <th>Email</th>
+                    <th>Correo</th>
                     <th>Dirección</th>
                     <th style="text-align:right;">Acciones</th>
                 </tr>

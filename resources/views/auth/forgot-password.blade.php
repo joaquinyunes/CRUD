@@ -14,7 +14,7 @@
     <form method="POST" action="{{ route('password.email') }}">
         @csrf
 
-        <label class="r-label" for="email">Email</label>
+        <label class="r-label" for="email">Correo electrónico</label>
         <input id="email" class="r-input" type="email" name="email" value="{{ old('email') }}" required autofocus placeholder="admin@admin.com">
         @error('email')
             <p class="r-error">{{ $message }}</p>

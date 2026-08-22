@@ -61,7 +61,7 @@
                 </div>
 
                 <div style="flex: 1; min-width: 200px;">
-                    <label for="email" class="r-label">Email</label>
+                    <label for="email" class="r-label">Correo electrónico</label>
                     <input type="email" name="email" id="email"
                            value="{{ old('email', $proveedor->email ?? '') }}"
                            class="r-input">

@@ -6,7 +6,7 @@
 
         <input type="hidden" name="token" value="{{ $request->route('token') }}">
 
-        <label class="r-label" for="email">Email</label>
+        <label class="r-label" for="email">Correo electrónico</label>
         <input id="email" class="r-input" type="email" name="email" value="{{ old('email', $request->email) }}" required autofocus autocomplete="username">
         @error('email')
             <p class="r-error">{{ $message }}</p>
