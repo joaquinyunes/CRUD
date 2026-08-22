@@ -7,21 +7,8 @@
     <title>@yield('title', config('app.name', 'Sistema Administrativo'))</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <!-- Rhythm Design System -->
+    <!-- Rhythm Design System (estilos locales) -->
     <link rel="stylesheet" href="{{ asset('css/rhythm.css') }}">
-
-    <!-- GSAP (loaded early for init) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-
-    <!-- Lenis Smooth Scroll -->
-    <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
-
-    <style>
-        body { opacity: 0; }
-        html.lenis, html.lenis body { height: auto; }
-        .lenis.lenis-smooth { scroll-behavior: auto !important; }
-    </style>
 </head>
 <body style="background: var(--color-paper); color: var(--color-ink); font-family: var(--font-body);">
 
@@ -39,7 +26,7 @@
                     <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
                 <h1 class="r-display-m" style="margin:0; font-size: clamp(1rem, 2vw, 1.5rem);">
-                    @yield('page_title', 'Dashboard')
+                    @yield('page_title', 'Panel')
                 </h1>
             </div>
 
@@ -80,23 +67,13 @@
             </div>
         </div>
 
-        {{-- Flash Messages --}}
+        {{-- Flash Messages (se muestran como toasts vía app.js) --}}
         @if(session('success'))
-            <div style="padding: 0 var(--space-8);">
-                <div class="r-flash-success r-mt-4" data-reveal="fade-up">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                    <span style="font-weight:500;">{{ session('success') }}</span>
-                </div>
-            </div>
+            <span data-flash="success" data-message="{{ session('success') }}" style="display:none;"></span>
         @endif
 
         @if(session('error'))
-            <div style="padding: 0 var(--space-8);">
-                <div class="r-flash-error r-mt-4" data-reveal="fade-up">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                    <span style="font-weight:500;">{{ session('error') }}</span>
-                </div>
-            </div>
+            <span data-flash="error" data-message="{{ session('error') }}" style="display:none;"></span>
         @endif
 
         {{-- Page Content --}}
@@ -114,67 +91,6 @@
         document.querySelector('.r-sidebar').classList.remove('open');
         document.getElementById('sidebar-backdrop').classList.remove('active');
     }
-
-    document.addEventListener('DOMContentLoaded', function() {
-
-        // Page entrance
-        gsap.to('body', { opacity: 1, duration: 0.4, ease: 'power2.out' });
-
-        // Lenis smooth scroll
-        const lenis = new Lenis({
-            duration: 1.0,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            orientation: 'vertical',
-            smoothWheel: true,
-        });
-
-        function raf(time) {
-            lenis.raf(time);
-            requestAnimationFrame(raf);
-        }
-        requestAnimationFrame(raf);
-
-        lenis.on('scroll', ScrollTrigger.update);
-        gsap.ticker.add((time) => { lenis.raf(time * 1000); });
-        gsap.ticker.lagSmoothing(0);
-
-        // Scroll reveal for [data-reveal] elements
-        document.querySelectorAll('[data-reveal]').forEach((el, i) => {
-            ScrollTrigger.create({
-                trigger: el,
-                start: 'top 90%',
-                once: true,
-                onEnter: () => {
-                    const type = el.getAttribute('data-reveal') || 'fade-up';
-                    const delay = parseFloat(el.dataset.revealDelay || 0);
-
-                    let from = { opacity: 0, y: 24 };
-                    if (type === 'fade-left') from = { opacity: 0, x: -24 };
-                    if (type === 'fade-right') from = { opacity: 0, x: 24 };
-                    if (type === 'scale') from = { opacity: 0, scale: 0.95 };
-
-                    gsap.fromTo(el, from, {
-                        opacity: 1, x: 0, y: 0, scale: 1,
-                        duration: 0.6,
-                        delay: delay,
-                        ease: 'power3.out',
-                        onComplete: () => el.classList.add('revealed')
-                    });
-                }
-            });
-        });
-
-        // Rhythm divider animation
-        document.querySelectorAll('.r-divider').forEach(el => {
-            ScrollTrigger.create({
-                trigger: el,
-                start: 'top 85%',
-                once: true,
-                onEnter: () => el.classList.add('visible')
-            });
-        });
-
-    });
     </script>
 
     @yield('scripts')

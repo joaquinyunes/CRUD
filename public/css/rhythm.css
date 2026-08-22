@@ -3,8 +3,7 @@
    Inspired by Units.gr editorial patterns
    ============================================ */
 
-/* --- FONTS --- */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+/* --- FONTS --- (servidas localmente desde resources/css/app.css vía @fontsource) */
 
 /* --- DESIGN TOKENS --- */
 :root {
@@ -722,6 +721,8 @@ body { margin: 0; }
 }
 
 /* --- UTILITIES --- */
+[x-cloak] { display: none !important; }
+
 .r-flex { display: flex; }
 .r-flex-col { flex-direction: column; }
 .r-items-center { align-items: center; }
@@ -743,6 +744,46 @@ body { margin: 0; }
 .r-text-right { text-align: right; }
 .r-w-full { width: 100%; }
 .r-shrink-0 { flex-shrink: 0; }
+
+/* --- MODALES (Alpine) --- */
+.r-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 36, 34, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 100;
+}
+
+.r-modal {
+  background: var(--color-paper-raised);
+  border: 1px solid var(--color-line);
+  border-radius: var(--border-radius);
+  padding: var(--space-8);
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--shadow-lg);
+}
+
+.r-modal-enter,
+.r-modal-leave {
+  transition: opacity var(--duration-base) var(--ease-rhythm),
+              transform var(--duration-base) var(--ease-rhythm);
+}
+.r-modal-enter-start,
+.r-modal-leave-end {
+  opacity: 0;
+  transform: translateY(14px) scale(0.98);
+}
+.r-modal-enter-end,
+.r-modal-leave-start {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
 
 /* --- RESPONSIVE --- */
 @media (max-width: 768px) {
