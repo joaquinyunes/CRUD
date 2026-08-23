@@ -8,6 +8,8 @@ use App\Models\MetodoPago;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\Setting;
+use App\Services\StockDocumentoService;
+use App\Support\CalculadorTotales;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +17,8 @@ use Illuminate\View\View;
 
 class CompraController extends Controller
 {
+    public function __construct(private StockDocumentoService $stockDoc) {}
+
     public function index(Request $request): View
     {
         $query = Compra::with('proveedor', 'user');
@@ -44,179 +48,136 @@ class CompraController extends Controller
         $proveedores = Proveedor::orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
         $metodosPago = MetodoPago::activos()->get();
+        $depositos = \App\Models\Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
 
-        return view('compras.form', compact('proveedores', 'productos', 'metodosPago'));
+        return view('compras.form', compact('proveedores', 'productos', 'metodosPago', 'depositos'));
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'proveedor_id'  => ['required', 'exists:proveedores,id'],
-            'fecha'         => ['required', 'date'],
-            'estado'        => ['required', 'in:pendiente,completada,cancelada'],
-            'detalles'      => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
-            'detalles.*.cantidad'    => ['required', 'integer', 'min:1'],
-            'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
-        ]);
+        $this->validar($request);
 
-        DB::transaction(function () use ($request) {
-            $numero = $this->generarNumero();
+        $compra = DB::transaction(function () use ($request) {
+            $detalles = $this->construirDetalles($request->detalles);
 
-            $detalles = collect($request->detalles)->map(function ($item) {
-                $subtotal = $item['cantidad'] * $item['precio'];
-                return [
-                    'producto_id' => $item['producto_id'],
-                    'cantidad'    => $item['cantidad'],
-                    'precio'      => $item['precio'],
-                    'subtotal'    => $subtotal,
-                ];
-            });
-
-            $total = $detalles->sum('subtotal');
+            $totales = CalculadorTotales::calcular(
+                $detalles->all(),
+                $request->input('descuento_tipo'),
+                (float) $request->input('descuento', 0)
+            );
 
             $compra = Compra::create([
-                'numero'      => $numero,
-                'proveedor_id' => $request->proveedor_id,
-                'fecha'       => $request->fecha,
-                'total'       => $total,
-                'estado'      => $request->estado,
-                'user_id'     => auth()->id(),
+                'numero'         => $this->generarNumero(),
+                'proveedor_id'   => $request->proveedor_id,
+                'deposito_id'    => $request->deposito_id ?: \App\Models\Deposito::principalId(),
+                'fecha'          => $request->fecha,
+                'subtotal'       => $totales['subtotal'],
+                'descuento'      => $totales['descuento'],
+                'descuento_tipo' => $request->input('descuento_tipo'),
+                'impuesto'       => $totales['impuesto'],
+                'total_final'    => $totales['total'],
+                'total'          => $totales['total'],
+                'estado'         => $request->estado,
+                'user_id'        => auth()->id(),
             ]);
 
-            foreach ($detalles as $detalle) {
-                $compra->detalles()->create($detalle);
+            $compra->detalles()->createMany($detalles->all());
+            $this->sincronizarPagos($compra, $request->input('metodos_pago', []), $totales['total']);
+
+            if ($compra->estado === 'completada') {
+                $this->stockDoc->aplicarCompra($compra);
+                $this->actualizarCostos($detalles->all());
             }
 
-            $subtotal = $detalles->sum('subtotal');
-            $descuentoTipo = $request->input('descuento_tipo');
-            $descuentoValor = (float) $request->input('descuento', 0);
-            $descuento = $descuentoTipo === 'porcentaje' ? ($subtotal * $descuentoValor / 100) : $descuentoValor;
-
-            $ivaHabilitado = Setting::obtener('sistema_impuesto_habilitado', '1') === '1';
-            $ivaPorcentaje = (float) Setting::obtener('sistema_iva', '21');
-            $baseImponible = $subtotal - $descuento;
-            $impuesto = $ivaHabilitado ? ($baseImponible * $ivaPorcentaje / 100) : 0;
-            $totalFinal = $baseImponible + $impuesto;
-
-            $compra->update([
-                'subtotal' => $subtotal,
-                'descuento' => $descuento,
-                'descuento_tipo' => $descuentoTipo,
-                'impuesto' => $impuesto,
-                'total_final' => $totalFinal,
-                'total' => $totalFinal,
-            ]);
-
-            if ($request->filled('metodos_pago')) {
-                foreach ($request->metodos_pago as $pago) {
-                    if (!empty($pago['metodo_pago_id']) && !empty($pago['monto']) && $pago['monto'] > 0) {
-                        $compra->pagos()->create([
-                            'metodo_pago_id' => $pago['metodo_pago_id'],
-                            'monto' => $pago['monto'],
-                            'referencia' => $pago['referencia'] ?? null,
-                        ]);
-                    }
-                }
-            }
+            return $compra;
         });
 
         CompraCreada::dispatch($compra);
 
-        return redirect()->route('compras.index')
-                         ->with('success', 'Compra registrada correctamente.');
+        return redirect()->route('compras.index')->with('success', 'Compra registrada correctamente.');
     }
 
     public function edit(Compra $compra): View
     {
+        $this->authorize('update', $compra);
+        abort_if($compra->estado === 'anulada', 404);
         $compra->load(['detalles.producto', 'pagos.metodoPago']);
 
         $proveedores = Proveedor::orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
         $metodosPago = MetodoPago::activos()->get();
+        $depositos = \App\Models\Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
 
-        return view('compras.form', compact('compra', 'proveedores', 'productos', 'metodosPago'));
+        return view('compras.form', compact('compra', 'proveedores', 'productos', 'metodosPago', 'depositos'));
     }
 
     public function update(Request $request, Compra $compra): RedirectResponse
     {
-        $request->validate([
-            'proveedor_id'  => ['required', 'exists:proveedores,id'],
-            'fecha'         => ['required', 'date'],
-            'estado'        => ['required', 'in:pendiente,completada,cancelada'],
-            'detalles'      => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
-            'detalles.*.cantidad'    => ['required', 'integer', 'min:1'],
-            'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
-        ]);
+        $this->authorize('update', $compra);
+        abort_if($compra->estado === 'anulada', 404);
+        $this->validar($request);
 
-        DB::transaction(function () use ($request, $compra) {
-            $detalles = collect($request->detalles)->map(function ($item) {
-                $subtotal = $item['cantidad'] * $item['precio'];
-                return [
-                    'producto_id' => $item['producto_id'],
-                    'cantidad'    => $item['cantidad'],
-                    'precio'      => $item['precio'],
-                    'subtotal'    => $subtotal,
-                ];
-            });
+        try {
+            DB::transaction(function () use ($request, $compra) {
+                $this->stockDoc->revertirCompra($compra);
 
-            $total = $detalles->sum('subtotal');
+                $detalles = $this->construirDetalles($request->detalles);
+                $totales = CalculadorTotales::calcular(
+                    $detalles->all(),
+                    $request->input('descuento_tipo'),
+                    (float) $request->input('descuento', 0)
+                );
 
-            $subtotal = $detalles->sum('subtotal');
-            $descuentoTipo = $request->input('descuento_tipo');
-            $descuentoValor = (float) $request->input('descuento', 0);
-            $descuento = $descuentoTipo === 'porcentaje' ? ($subtotal * $descuentoValor / 100) : $descuentoValor;
+                $compra->update([
+                    'proveedor_id'   => $request->proveedor_id,
+                    'deposito_id'    => $request->deposito_id ?: $compra->deposito_id,
+                    'fecha'          => $request->fecha,
+                    'subtotal'       => $totales['subtotal'],
+                    'descuento'      => $totales['descuento'],
+                    'descuento_tipo' => $request->input('descuento_tipo'),
+                    'impuesto'       => $totales['impuesto'],
+                    'total_final'    => $totales['total'],
+                    'total'          => $totales['total'],
+                    'estado'         => $request->estado,
+                ]);
 
-            $ivaHabilitado = Setting::obtener('sistema_impuesto_habilitado', '1') === '1';
-            $ivaPorcentaje = (float) Setting::obtener('sistema_iva', '21');
-            $baseImponible = $subtotal - $descuento;
-            $impuesto = $ivaHabilitado ? ($baseImponible * $ivaPorcentaje / 100) : 0;
-            $totalFinal = $baseImponible + $impuesto;
+                $compra->detalles()->delete();
+                $compra->detalles()->createMany($detalles->all());
+                $this->sincronizarPagos($compra, $request->input('metodos_pago', []), $totales['total']);
 
-            $compra->update([
-                'proveedor_id' => $request->proveedor_id,
-                'fecha'        => $request->fecha,
-                'total'        => $totalFinal,
-                'subtotal'     => $subtotal,
-                'descuento'    => $descuento,
-                'descuento_tipo' => $descuentoTipo,
-                'impuesto'     => $impuesto,
-                'total_final'  => $totalFinal,
-                'estado'       => $request->estado,
-            ]);
-
-            $compra->detalles()->delete();
-
-            foreach ($detalles as $detalle) {
-                $compra->detalles()->create($detalle);
-            }
-
-            $compra->pagos()->delete();
-
-            if ($request->filled('metodos_pago')) {
-                foreach ($request->metodos_pago as $pago) {
-                    if (!empty($pago['metodo_pago_id']) && !empty($pago['monto']) && $pago['monto'] > 0) {
-                        $compra->pagos()->create([
-                            'metodo_pago_id' => $pago['metodo_pago_id'],
-                            'monto' => $pago['monto'],
-                            'referencia' => $pago['referencia'] ?? null,
-                        ]);
-                    }
+                if ($compra->estado === 'completada') {
+                    $this->stockDoc->aplicarCompra($compra);
+                    $this->actualizarCostos($detalles->all());
                 }
-            }
-        });
+            });
+        } catch (\App\Exceptions\StockInsuficienteException $e) {
+            return back()->withErrors(['detalles' => $e->getMessage()])->withInput();
+        }
 
-        return redirect()->route('compras.index')
-                         ->with('success', 'Compra actualizada correctamente.');
+        return redirect()->route('compras.index')->with('success', 'Compra actualizada correctamente.');
     }
 
-    public function destroy(Compra $compra): RedirectResponse
+    public function destroy(Request $request, Compra $compra): RedirectResponse
     {
-        $compra->delete();
+        $this->authorize('delete', $compra);
 
-        return redirect()->route('compras.index')
-                         ->with('success', 'Compra eliminada correctamente.');
+        if ($compra->estado === 'anulada') {
+            return redirect()->route('compras.index')->with('success', 'La compra ya estaba anulada.');
+        }
+
+        try {
+            DB::transaction(function () use ($request, $compra) {
+                $this->stockDoc->revertirCompra($compra);
+                $compra->update([
+                    'estado'           => 'anulada',
+                    'motivo_anulacion' => $request->input('motivo', 'Anulada por el usuario'),
+                ]);
+            });
+        } catch (\App\Exceptions\StockInsuficienteException $e) {
+            return back()->withErrors(['general' => 'No se puede anular: ' . $e->getMessage()]);
+        }
+
+        return redirect()->route('compras.index')->with('success', 'Compra anulada correctamente.');
     }
 
     public function show(Compra $compra): View
@@ -226,22 +187,83 @@ class CompraController extends Controller
         return view('compras.show', compact('compra'));
     }
 
+    private function validar(Request $request): void
+    {
+        $request->validate([
+            'proveedor_id'           => ['required', 'exists:proveedores,id'],
+            'deposito_id'            => ['nullable', 'exists:depositos,id'],
+            'fecha'                  => ['required', 'date'],
+            'estado'                 => ['required', 'in:pendiente,completada,cancelada'],
+            'detalles'               => ['required', 'array', 'min:1'],
+            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
+            'detalles.*.cantidad'    => ['required', 'integer', 'min:1'],
+            'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
+            'descuento'              => ['nullable', 'numeric', 'min:0'],
+            'descuento_tipo'         => ['nullable', 'in:fijo,porcentaje'],
+        ]);
+    }
+
+    private function construirDetalles(array $detalles): \Illuminate\Support\Collection
+    {
+        return collect($detalles)->map(function ($item) {
+            $cantidad = (int) $item['cantidad'];
+            $precio = round((float) $item['precio'], 2);
+
+            return [
+                'producto_id' => $item['producto_id'],
+                'cantidad'    => $cantidad,
+                'precio'      => $precio,
+                'subtotal'    => round($cantidad * $precio, 2),
+            ];
+        });
+    }
+
+    /**
+     * Sincroniza el precio_compra del producto con el último costo real pagado.
+     */
+    private function actualizarCostos(array $detalles): void
+    {
+        foreach ($detalles as $d) {
+            Producto::whereKey($d['producto_id'])->update(['precio_compra' => $d['precio']]);
+        }
+    }
+
+    private function sincronizarPagos(Compra $compra, array $pagos, float $total): void
+    {
+        $compra->pagos()->delete();
+        $pagado = 0.0;
+
+        foreach ($pagos as $pago) {
+            $monto = round((float) ($pago['monto'] ?? 0), 2);
+            if (empty($pago['metodo_pago_id']) || $monto <= 0) {
+                continue;
+            }
+            $compra->pagos()->create([
+                'metodo_pago_id' => $pago['metodo_pago_id'],
+                'monto'          => $monto,
+                'referencia'     => $pago['referencia'] ?? null,
+            ]);
+            $pagado += $monto;
+        }
+
+        $compra->update([
+            'pagado'      => $pagado,
+            'estado_pago' => CalculadorTotales::estadoPago($total, $pagado),
+        ]);
+    }
+
     private function generarNumero(): string
     {
         $prefijo = Setting::obtener('compras_prefijo_numero', 'COM');
         $digitos = (int) Setting::obtener('compras_cantidad_digitos', '5');
 
         $ultima = Compra::where('numero', 'like', "{$prefijo}-%")
-                        ->orderByRaw("CAST(SUBSTRING(numero, " . (strlen($prefijo) + 2) . ") AS UNSIGNED) DESC")
+                        ->orderByRaw('CAST(SUBSTRING(numero, ' . (strlen($prefijo) + 2) . ') AS UNSIGNED) DESC')
+                        ->lockForUpdate()
                         ->first();
 
-        if ($ultima) {
-            $ultimoNumero = (int) substr($ultima->numero, strlen($prefijo) + 1);
-            $nuevoNumero = $ultimoNumero + 1;
-        } else {
-            $nuevoNumero = 1;
-        }
+        $nuevoNumero = $ultima ? ((int) substr($ultima->numero, strlen($prefijo) + 1)) + 1 : 1;
 
-        return $prefijo . '-' . str_pad($nuevoNumero, $digitos, '0', STR_PAD_LEFT);
+        return $prefijo . '-' . str_pad((string) $nuevoNumero, $digitos, '0', STR_PAD_LEFT);
     }
 }
