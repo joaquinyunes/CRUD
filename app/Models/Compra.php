@@ -14,6 +14,7 @@ class Compra extends Model
     protected $fillable = [
         'numero',
         'proveedor_id',
+        'deposito_id',
         'fecha',
         'total',
         'subtotal',
@@ -21,22 +22,35 @@ class Compra extends Model
         'descuento_tipo',
         'impuesto',
         'total_final',
+        'pagado',
+        'estado_pago',
         'estado',
+        'motivo_anulacion',
+        'stock_aplicado',
         'user_id',
     ];
 
     protected $casts = [
-        'fecha'       => 'date',
-        'total'       => 'decimal:2',
-        'subtotal'    => 'decimal:2',
-        'descuento'   => 'decimal:2',
-        'impuesto'    => 'decimal:2',
-        'total_final' => 'decimal:2',
+        'fecha'          => 'date',
+        'total'          => 'decimal:2',
+        'subtotal'       => 'decimal:2',
+        'descuento'      => 'decimal:2',
+        'impuesto'       => 'decimal:2',
+        'total_final'    => 'decimal:2',
+        'pagado'         => 'decimal:2',
+        'stock_aplicado' => 'boolean',
     ];
+
+    public const ESTADOS = ['pendiente', 'completada', 'cancelada', 'anulada'];
 
     public function proveedor(): BelongsTo
     {
         return $this->belongsTo(Proveedor::class);
+    }
+
+    public function deposito(): BelongsTo
+    {
+        return $this->belongsTo(Deposito::class);
     }
 
     public function user(): BelongsTo
@@ -52,6 +66,28 @@ class Compra extends Model
     public function pagos(): HasMany
     {
         return $this->hasMany(CompraPago::class);
+    }
+
+    public function devoluciones(): HasMany
+    {
+        return $this->hasMany(Devolucion::class);
+    }
+
+    public function totalDevuelto(): float
+    {
+        return (float) $this->devoluciones()->where('estado', 'registrada')->sum('total');
+    }
+
+    /**
+     * Positivo = se debe al proveedor; negativo = saldo a favor.
+     */
+    public function saldoPendiente(): float
+    {
+        if (in_array($this->estado, ['cancelada', 'anulada'], true)) {
+            return 0.0;
+        }
+
+        return round((float) $this->total_final - (float) $this->pagado - $this->totalDevuelto(), 2);
     }
 
     public function scopeBuscar($query, ?string $buscar)

@@ -10,6 +10,8 @@ class CompraDetalle extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $table = 'compras_detalle';
 
     protected $fillable = [

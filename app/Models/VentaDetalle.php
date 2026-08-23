@@ -10,6 +10,8 @@ class VentaDetalle extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $table = 'ventas_detalle';
 
     protected $fillable = [
@@ -17,11 +19,13 @@ class VentaDetalle extends Model
         'producto_id',
         'cantidad',
         'precio',
+        'costo_unitario',
         'subtotal',
     ];
 
     protected $casts = [
         'precio' => 'decimal:2',
+        'costo_unitario' => 'decimal:2',
         'subtotal' => 'decimal:2',
     ];
 

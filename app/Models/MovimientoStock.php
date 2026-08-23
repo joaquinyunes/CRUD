@@ -14,6 +14,7 @@ class MovimientoStock extends Model
 
     protected $fillable = [
         'producto_id',
+        'deposito_id',
         'tipo',
         'cantidad',
         'user_id',
@@ -24,6 +25,11 @@ class MovimientoStock extends Model
     public function producto(): BelongsTo
     {
         return $this->belongsTo(Producto::class);
+    }
+
+    public function deposito(): BelongsTo
+    {
+        return $this->belongsTo(Deposito::class);
     }
 
     public function user(): BelongsTo
