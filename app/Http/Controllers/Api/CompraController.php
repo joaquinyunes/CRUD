@@ -2,14 +2,20 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\StockInsuficienteException;
 use App\Http\Controllers\Controller;
 use App\Models\Compra;
+use App\Models\Producto;
+use App\Services\StockDocumentoService;
+use App\Support\CalculadorTotales;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CompraController extends Controller
 {
+    public function __construct(private StockDocumentoService $stockDoc) {}
+
     public function index(Request $request)
     {
         $query = Compra::with(['proveedor', 'user', 'detalles.producto']);
@@ -42,27 +48,38 @@ class CompraController extends Controller
         ]);
 
         $compra = DB::transaction(function () use ($validated) {
-            $numero = Compra::max('id') + 1;
-            $numero = 'COM-' . str_pad($numero, 5, '0', STR_PAD_LEFT);
+            $numero = 'COM-' . str_pad((string) (Compra::max('id') + 1), 5, '0', STR_PAD_LEFT);
 
             $detalles = collect($validated['detalles'])->map(function ($item) {
-                $subtotal = $item['cantidad'] * $item['precio'];
-                return array_merge($item, ['subtotal' => $subtotal]);
+                return [
+                    'producto_id' => $item['producto_id'],
+                    'cantidad'    => (int) $item['cantidad'],
+                    'precio'      => round((float) $item['precio'], 2),
+                    'subtotal'    => round($item['cantidad'] * $item['precio'], 2),
+                ];
             });
 
-            $total = $detalles->sum('subtotal');
+            $totales = CalculadorTotales::calcular($detalles->all(), null, 0);
 
             $compra = Compra::create([
                 'numero'       => $numero,
                 'proveedor_id' => $validated['proveedor_id'],
                 'fecha'        => $validated['fecha'],
-                'total'        => $total,
+                'subtotal'     => $totales['subtotal'],
+                'impuesto'     => $totales['impuesto'],
+                'total_final'  => $totales['total'],
+                'total'        => $totales['total'],
                 'estado'       => $validated['estado'],
                 'user_id'      => auth()->id(),
             ]);
 
-            foreach ($detalles as $detalle) {
-                $compra->detalles()->create($detalle);
+            $compra->detalles()->createMany($detalles->all());
+
+            if ($compra->estado === 'completada') {
+                $this->stockDoc->aplicarCompra($compra);
+                foreach ($detalles as $d) {
+                    Producto::whereKey($d['producto_id'])->update(['precio_compra' => $d['precio']]);
+                }
             }
 
             return $compra;
@@ -83,8 +100,15 @@ class CompraController extends Controller
 
     public function destroy(Compra $compra): JsonResponse
     {
-        $compra->delete();
+        try {
+            DB::transaction(function () use ($compra) {
+                $this->stockDoc->revertirCompra($compra);
+                $compra->update(['estado' => 'anulada', 'motivo_anulacion' => 'Anulada vía API']);
+            });
+        } catch (StockInsuficienteException $e) {
+            abort(422, 'No se puede anular: ' . $e->getMessage());
+        }
 
-        return response()->json(['message' => 'Compra eliminada correctamente.']);
+        return response()->json(['message' => 'Compra anulada correctamente.']);
     }
 }

@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\StockInsuficienteException;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\VentaResource;
+use App\Models\Producto;
 use App\Models\Venta;
+use App\Services\StockDocumentoService;
+use App\Support\CalculadorTotales;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -12,6 +16,8 @@ use Illuminate\Support\Facades\DB;
 
 class VentaController extends Controller
 {
+    public function __construct(private StockDocumentoService $stockDoc) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $query = Venta::with(['cliente', 'user', 'detalles.producto']);
@@ -51,32 +57,48 @@ class VentaController extends Controller
             'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
         ]);
 
-        $venta = DB::transaction(function () use ($validated) {
-            $numero = Venta::max('id') + 1;
-            $numero = 'VTA-' . str_pad($numero, 5, '0', STR_PAD_LEFT);
+        try {
+            $venta = DB::transaction(function () use ($validated) {
+                $numero = 'VTA-' . str_pad((string) (Venta::max('id') + 1), 5, '0', STR_PAD_LEFT);
 
-            $detalles = collect($validated['detalles'])->map(function ($item) {
-                $subtotal = $item['cantidad'] * $item['precio'];
-                return array_merge($item, ['subtotal' => $subtotal]);
+                $costos = Producto::whereIn('id', collect($validated['detalles'])->pluck('producto_id'))
+                    ->pluck('precio_compra', 'id');
+
+                $detalles = collect($validated['detalles'])->map(function ($item) use ($costos) {
+                    return [
+                        'producto_id'    => $item['producto_id'],
+                        'cantidad'       => (int) $item['cantidad'],
+                        'precio'         => round((float) $item['precio'], 2),
+                        'costo_unitario' => round((float) ($costos[$item['producto_id']] ?? 0), 2),
+                        'subtotal'       => round($item['cantidad'] * $item['precio'], 2),
+                    ];
+                });
+
+                $totales = CalculadorTotales::calcular($detalles->all(), null, 0);
+
+                $venta = Venta::create([
+                    'numero'      => $numero,
+                    'cliente_id'  => $validated['cliente_id'],
+                    'fecha'       => $validated['fecha'],
+                    'subtotal'    => $totales['subtotal'],
+                    'impuesto'    => $totales['impuesto'],
+                    'total_final' => $totales['total'],
+                    'total'       => $totales['total'],
+                    'estado'      => $validated['estado'],
+                    'user_id'     => auth()->id(),
+                ]);
+
+                $venta->detalles()->createMany($detalles->all());
+
+                if ($venta->estado === 'completada') {
+                    $this->stockDoc->aplicarVenta($venta);
+                }
+
+                return $venta;
             });
-
-            $total = $detalles->sum('subtotal');
-
-            $venta = Venta::create([
-                'numero'     => $numero,
-                'cliente_id' => $validated['cliente_id'],
-                'fecha'      => $validated['fecha'],
-                'total'      => $total,
-                'estado'     => $validated['estado'],
-                'user_id'    => auth()->id(),
-            ]);
-
-            foreach ($detalles as $detalle) {
-                $venta->detalles()->create($detalle);
-            }
-
-            return $venta;
-        });
+        } catch (StockInsuficienteException $e) {
+            abort(422, $e->getMessage());
+        }
 
         return new VentaResource($venta->load(['detalles.producto', 'cliente', 'user']));
     }
@@ -90,8 +112,11 @@ class VentaController extends Controller
 
     public function destroy(Venta $venta): JsonResponse
     {
-        $venta->delete();
+        DB::transaction(function () use ($venta) {
+            $this->stockDoc->revertirVenta($venta);
+            $venta->update(['estado' => 'anulada', 'motivo_anulacion' => 'Anulada vía API']);
+        });
 
-        return response()->json(['message' => 'Venta eliminada correctamente.']);
+        return response()->json(['message' => 'Venta anulada correctamente.']);
     }
 }
