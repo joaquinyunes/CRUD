@@ -78,10 +78,10 @@
                                 @if (auth()->user()->role?->tienePermiso('compras.editar'))
                                     <a href="{{ route('compras.edit', $compra) }}" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px;">Editar</a>
                                 @endif
-                                @if (auth()->user()->role?->tienePermiso('compras.eliminar'))
+                                @if (auth()->user()->role?->tienePermiso('compras.eliminar') && $compra->estado !== 'anulada')
                                     <form method="POST" action="{{ route('compras.destroy', $compra) }}" style="display:inline;">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px; color:#dc2626;" onclick="return confirm('¿Eliminar esta compra?')">Eliminar</button>
+                                        <button type="submit" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px; color:#dc2626;" onclick="return confirm('¿Anular esta compra? Se revertirá el stock ingresado.')">Anular</button>
                                     </form>
                                 @endif
                             </div>

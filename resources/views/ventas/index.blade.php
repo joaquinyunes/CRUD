@@ -98,10 +98,10 @@
                                 @if (auth()->user()->role?->tienePermiso('ventas.editar'))
                                     <a href="{{ route('ventas.edit', $venta) }}" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px;">Editar</a>
                                 @endif
-                                @if (auth()->user()->role?->tienePermiso('ventas.eliminar'))
+                                @if (auth()->user()->role?->tienePermiso('ventas.eliminar') && $venta->estado !== 'anulada')
                                     <form method="POST" action="{{ route('ventas.destroy', $venta) }}" style="display:inline;">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px; color:#dc2626;" onclick="return confirm('¿Eliminar esta venta?')">Eliminar</button>
+                                        <button type="submit" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px; color:#dc2626;" onclick="return confirm('¿Anular esta venta? Se devolverá el stock y quedará registrada como anulada.')">Anular</button>
                                     </form>
                                 @endif
                             </div>
