@@ -49,6 +49,15 @@
                             @error('codigo') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
                         </div>
 
+                        <div style="flex: 1; min-width: 180px;">
+                            <label for="codigo_barra" class="r-label">Código de barras</label>
+                            <input type="text" name="codigo_barra" id="codigo_barra"
+                                   value="{{ old('codigo_barra', $producto->codigo_barra ?? '') }}"
+                                   class="r-input @error('codigo_barra') is-invalid @enderror"
+                                   placeholder="EAN / UPC del lector">
+                            @error('codigo_barra') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
+                        </div>
+
                         <div style="flex: 2; min-width: 220px;">
                             <label for="nombre" class="r-label">Nombre <span class="r-tag" style="background: var(--r-color-danger); color: #fff;">*</span></label>
                             <input type="text" name="nombre" id="nombre"

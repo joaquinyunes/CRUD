@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Categoria;
 use App\Models\Producto;
 use App\Models\UnidadMedida;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -41,6 +42,33 @@ class ProductoController extends Controller
         return view('productos.index', compact('productos', 'categorias'));
     }
 
+    /**
+     * Búsqueda rápida para lectores de código de barras y autocompletado.
+     * Coincidencia exacta por código/código de barra primero, luego por nombre/marca.
+     */
+    public function buscar(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->input('q', ''));
+
+        if (mb_strlen($q) < 1) {
+            return response()->json([]);
+        }
+
+        $productos = Producto::where('estado', 'activo')
+            ->where(function ($sql) use ($q) {
+                $sql->where('codigo', $q)
+                    ->orWhere('codigo_barra', $q)
+                    ->orWhere('nombre', 'like', "%{$q}%")
+                    ->orWhere('marca', 'like', "%{$q}%");
+            })
+            ->orderByRaw('CASE WHEN codigo = ? OR codigo_barra = ? THEN 0 ELSE 1 END', [$q, $q])
+            ->orderBy('nombre')
+            ->limit(10)
+            ->get(['id', 'codigo', 'codigo_barra', 'nombre', 'precio_venta', 'precio_compra', 'stock']);
+
+        return response()->json($productos);
+    }
+
     public function create(): View
     {
         $categorias = Categoria::where('estado', true)->orderBy('nombre')->get();
@@ -52,6 +80,15 @@ class ProductoController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validar($request);
+
+        $validated['codigo'] = $validated['codigo'] ?? $this->generarCodigo();
+        $validated['categoria_id'] = $validated['categoria_id'] ?? Categoria::where('estado', true)->orderBy('id')->value('id');
+        $validated['precio_compra'] = $validated['precio_compra'] ?? 0;
+        $validated['precio_venta'] = $validated['precio_venta'] ?? 0;
+        $validated['stock_minimo'] = $validated['stock_minimo'] ?? 0;
+        $validated['stock'] = $validated['stock'] ?? 0;
+        $validated['estado'] = $validated['estado'] ?? 'activo';
+        $validated['descripcion'] = $validated['descripcion'] ?? '';
 
         $validated['imagen'] = $this->manejarImagen($request);
 
@@ -123,19 +160,23 @@ class ProductoController extends Controller
     private function validar(Request $request, ?int $ignorarId = null): array
     {
         return $request->validate([
-            'codigo'        => ['required', 'string', 'max:100',
+            'codigo'        => ['nullable', 'string', 'max:100',
                                 Rule::unique('productos', 'codigo')
+                                    ->ignore($ignorarId)
+                                    ->where(fn ($q) => $q->where('estado', '!=', 'eliminado'))],
+            'codigo_barra'  => ['nullable', 'string', 'max:100',
+                                Rule::unique('productos', 'codigo_barra')
                                     ->ignore($ignorarId)
                                     ->where(fn ($q) => $q->where('estado', '!=', 'eliminado'))],
             'nombre'        => ['required', 'string', 'max:255'],
             'descripcion'   => ['nullable', 'string'],
-            'categoria_id'  => ['required', 'exists:categorias,id'],
+            'categoria_id'  => ['nullable', 'exists:categorias,id'],
             'marca'         => ['nullable', 'string', 'max:100'],
-            'precio_compra' => ['required', 'numeric', 'min:0'],
-            'precio_venta'  => ['required', 'numeric', 'min:0'],
-            'stock_minimo'  => ['required', 'integer', 'min:0'],
+            'precio_compra' => ['nullable', 'numeric', 'min:0'],
+            'precio_venta'  => ['nullable', 'numeric', 'min:0'],
+            'stock_minimo'  => ['nullable', 'integer', 'min:0'],
             'unidad_medida_id' => ['nullable', 'exists:unidades_medida,id'],
-            'estado'        => ['required', 'in:activo,inactivo'],
+            'estado'        => ['nullable', 'in:activo,inactivo'],
             'imagen'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
     }
@@ -167,5 +208,11 @@ class ProductoController extends Controller
         }
 
         return $codigo;
+    }
+
+    private function generarCodigo(): string
+    {
+        $ultimo = Producto::orderBy('id', 'desc')->value('id') ?? 0;
+        return 'PROD-' . str_pad($ultimo + 1, 4, '0', STR_PAD_LEFT);
     }
 }

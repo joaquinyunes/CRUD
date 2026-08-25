@@ -8,6 +8,10 @@ Route::middleware(['auth', 'verified'])->prefix('productos')->name('productos.')
         ->middleware('permiso:productos.ver')
         ->name('index');
 
+    Route::get('/buscar', [ProductoController::class, 'buscar'])
+        ->middleware('permiso:productos.ver,ventas.crear,compras.crear')
+        ->name('buscar');
+
     Route::get('/crear', [ProductoController::class, 'create'])
         ->middleware('permiso:productos.crear')
         ->name('create');
