@@ -26,7 +26,14 @@
             </div>
         @endif
 
+        <p class="r-caption mb-3" style="opacity:.75;">
+            Atajos: <kbd>F2</kbd> lector de código · <kbd>Alt</kbd>+<kbd>P</kbd> agregar fila ·
+            <kbd>Alt</kbd>+<kbd>M</kbd> medio de pago · <kbd>F9</kbd> guardar
+        </p>
+
         <form method="POST"
+              id="venta-form"
+              data-buscar-url="{{ route('productos.buscar') }}"
               action="{{ isset($venta) ? route('ventas.update', $venta) : route('ventas.store') }}"
               class="space-y-6">
 
@@ -38,7 +45,17 @@
             <div class="r-card-flat">
                 <h2 class="r-label" style="margin-bottom:1rem;">Datos de la venta</h2>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    @if(($depositos ?? collect())->count() > 1)
+                    <div>
+                        <label for="deposito_id" class="r-label">Depósito</label>
+                        <select name="deposito_id" id="deposito_id" class="r-select">
+                            @foreach($depositos as $dep)
+                                <option value="{{ $dep->id }}" {{ old('deposito_id', $venta->deposito_id ?? '') == $dep->id ? 'selected' : '' }}>{{ $dep->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endif
                     <div>
                         <label for="cliente_id" class="r-label">Cliente <span class="text-red-500">*</span></label>
                         <select name="cliente_id" id="cliente_id"
@@ -85,6 +102,14 @@
                             class="r-btn r-btn-primary r-btn-sm">
                         + Agregar producto
                     </button>
+                </div>
+
+                <div class="mb-4">
+                    <label for="scan-codigo" class="r-caption">Escaneá o escribí un código / nombre y presioná Enter</label>
+                    <input type="text" id="scan-codigo" autocomplete="off"
+                           placeholder="Código de barras, código interno o nombre…"
+                           class="r-input">
+                    <p id="scan-msg" class="r-caption" style="min-height:1.1em;"></p>
                 </div>
 
                 <div id="detalles-container" class="space-y-3">
@@ -270,12 +295,81 @@ document.addEventListener('DOMContentLoaded', function () {
         indice++;
     });
 
+    // ---- Lector de código de barras / búsqueda rápida ----
+    const scanInput = document.getElementById('scan-codigo');
+    const scanMsg = document.getElementById('scan-msg');
+    const buscarUrl = document.getElementById('venta-form').dataset.buscarUrl;
+
+    function setMsg(txt, err = false) {
+        scanMsg.textContent = txt || '';
+        scanMsg.style.color = err ? '#dc2626' : 'var(--color-text-muted, #6b7280)';
+    }
+
+    function filaDeProducto(id) {
+        return [...container.querySelectorAll('.detalle-row')].find(row => {
+            const sel = row.querySelector('select[name*="[producto_id]"]');
+            return sel && sel.value == id;
+        });
+    }
+
+    function agregarOIncrementar(prod) {
+        const existente = filaDeProducto(prod.id);
+        if (existente) {
+            const cant = existente.querySelector('.cantidad-input');
+            cant.value = (parseInt(cant.value) || 0) + 1;
+            cant.dispatchEvent(new Event('input'));
+            existente.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            setMsg(`+1 ${prod.nombre} (cantidad ${cant.value})`);
+            return;
+        }
+        agregarFila(indice, { producto_id: prod.id, precio: prod.precio_venta });
+        indice++;
+        setMsg(`Agregado: ${prod.nombre}`);
+    }
+
+    async function buscarCodigo(q) {
+        if (!q) return;
+        setMsg('Buscando…');
+        try {
+            const resp = await fetch(`${buscarUrl}?q=${encodeURIComponent(q)}`, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!resp.ok) { setMsg('No se pudo buscar el producto.', true); return; }
+            const data = await resp.json();
+            if (!data.length) { setMsg(`Sin resultados para «${q}».`, true); return; }
+            const exacto = data.find(p => p.codigo === q || p.codigo_barra === q);
+            if (exacto || data.length === 1) {
+                agregarOIncrementar(exacto || data[0]);
+                scanInput.value = '';
+            } else {
+                setMsg(`${data.length} coincidencias: ${data.slice(0, 5).map(p => p.nombre).join(', ')}… Precisá el código.`);
+            }
+        } catch (e) {
+            setMsg('Error de red al buscar.', true);
+        }
+    }
+
+    scanInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            buscarCodigo(this.value.trim());
+        }
+    });
+
+    // ---- Atajos de teclado ----
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'F2') { e.preventDefault(); scanInput.focus(); scanInput.select(); }
+        else if (e.key === 'F9') { e.preventDefault(); document.getElementById('venta-form').requestSubmit(); }
+        else if (e.altKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); btnAgregar.click(); }
+        else if (e.altKey && (e.key === 'm' || e.key === 'M')) { e.preventDefault(); btnAgregarPago.click(); }
+    });
+
     btnAgregarPago.addEventListener('click', function () {
         agregarFilaPago(indicePago);
         indicePago++;
     });
 
-    function agregarFila(idx) {
+    function agregarFila(idx, preset) {
         const options = productos.map(p =>
             `<option value="${p.id}">${p.nombre} ($${parseFloat(p.precio_venta).toFixed(2)})</option>`
         ).join('');
@@ -317,7 +411,16 @@ document.addEventListener('DOMContentLoaded', function () {
         `;
 
         container.insertAdjacentHTML('beforeend', html);
+        const row = container.lastElementChild;
         bindDetalleEvents();
+
+        if (preset) {
+            const sel = row.querySelector('select[name*="[producto_id]"]');
+            if (preset.producto_id) sel.value = preset.producto_id;
+            if (preset.precio != null) row.querySelector('.precio-input').value = parseFloat(preset.precio).toFixed(2);
+            row.querySelector('.cantidad-input').dispatchEvent(new Event('input'));
+        }
+        return row;
     }
 
     function agregarFilaPago(idx) {
@@ -364,6 +467,19 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.onclick = function () {
                 this.closest('.detalle-row').remove();
                 recalcularTotales();
+            };
+        });
+
+        container.querySelectorAll('select[name*="[producto_id]"]').forEach(sel => {
+            sel.onchange = function () {
+                const prod = productos.find(p => p.id == this.value);
+                if (prod) {
+                    const precioInput = this.closest('.detalle-row').querySelector('.precio-input');
+                    if (!parseFloat(precioInput.value)) {
+                        precioInput.value = parseFloat(prod.precio_venta).toFixed(2);
+                    }
+                    this.closest('.detalle-row').querySelector('.cantidad-input').dispatchEvent(new Event('input'));
+                }
             };
         });
 
