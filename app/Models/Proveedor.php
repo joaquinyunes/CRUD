@@ -25,6 +25,17 @@ class Proveedor extends Model
         return $this->hasMany(Compra::class);
     }
 
+    /**
+     * Deuda a proveedores: compras no anuladas menos lo pagado y lo devuelto.
+     */
+    public function saldo(): float
+    {
+        return (float) $this->compras()
+            ->whereIn('estado', ['completada', 'pendiente'])
+            ->get()
+            ->sum(fn (Compra $c) => $c->saldoPendiente());
+    }
+
     public function scopeBuscar($query, ?string $buscar)
     {
         if (!$buscar) {

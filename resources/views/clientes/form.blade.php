@@ -55,7 +55,7 @@
             </div>
 
             <div>
-                <label for="email" class="r-label">Email</label>
+                <label for="email" class="r-label">Correo electrónico</label>
                 <input type="email" name="email" id="email" value="{{ old('email', $cliente->email) }}"
                        class="r-input">
                 @error('email') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
@@ -73,6 +73,13 @@
                 <input type="text" name="direccion" id="direccion" value="{{ old('direccion', $cliente->direccion) }}"
                        class="r-input">
                 @error('direccion') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label for="limite_credito" class="r-label">Límite de crédito (0 = sin cuenta corriente)</label>
+                <input type="number" step="0.01" min="0" name="limite_credito" id="limite_credito"
+                       value="{{ old('limite_credito', $cliente->limite_credito ?? 0) }}" class="r-input">
+                @error('limite_credito') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
             </div>
 
             <div>

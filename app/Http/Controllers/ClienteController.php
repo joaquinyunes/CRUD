@@ -88,6 +88,7 @@ class ClienteController extends Controller
             'direccion'    => ['nullable', 'string', 'max:255'],
             'observaciones' => ['nullable', 'string'],
             'estado'       => ['required', 'in:activo,archivado,eliminado'],
+            'limite_credito' => ['nullable', 'numeric', 'min:0'],
         ]);
     }
 }
