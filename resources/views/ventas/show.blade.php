@@ -123,8 +123,11 @@
 </div>
 @endif
 
-<div data-reveal="fade-up" data-reveal-delay="0.35">
+<div data-reveal="fade-up" data-reveal-delay="0.35" class="r-flex r-gap-3">
     <a href="{{ route('ventas.index') }}" class="r-btn r-btn-ghost">← Volver a ventas</a>
+    @if($venta->estado !== 'anulada' && auth()->user()->role?->tienePermiso('devoluciones.crear'))
+        <a href="{{ route('devoluciones.venta.create', $venta) }}" class="r-btn r-btn-accent">Registrar devolución</a>
+    @endif
 </div>
 
 @endsection

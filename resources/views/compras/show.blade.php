@@ -75,8 +75,11 @@
     </div>
 </div>
 
-<div data-reveal="fade-up" data-reveal-delay="0.3">
+<div data-reveal="fade-up" data-reveal-delay="0.3" class="r-flex r-gap-3">
     <a href="{{ route('compras.index') }}" class="r-btn r-btn-ghost">← Volver a compras</a>
+    @if($compra->estado !== 'anulada' && auth()->user()->role?->tienePermiso('devoluciones.crear'))
+        <a href="{{ route('devoluciones.compra.create', $compra) }}" class="r-btn r-btn-accent">Devolver a proveedor</a>
+    @endif
 </div>
 
 @endsection
