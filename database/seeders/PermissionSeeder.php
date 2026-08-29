@@ -65,6 +65,30 @@ class PermissionSeeder extends Seeder
         'stock.ver',
         'stock.ajustar',
 
+        'depositos.ver',
+        'depositos.gestionar',
+
+        'cuentas.ver',
+        'cuentas.cobrar',
+
+        'presupuestos.ver',
+        'presupuestos.crear',
+        'presupuestos.editar',
+        'presupuestos.eliminar',
+        'presupuestos.convertir',
+
+        'ordenes_compra.ver',
+        'ordenes_compra.crear',
+        'ordenes_compra.editar',
+        'ordenes_compra.eliminar',
+        'ordenes_compra.recibir',
+
+        'devoluciones.ver',
+        'devoluciones.crear',
+
+        'caja.ver',
+        'caja.operar',
+
         'reportes.ver',
         'reportes.exportar',
     ];
@@ -80,6 +104,12 @@ class PermissionSeeder extends Seeder
             'ventas.ver', 'ventas.crear', 'ventas.editar', 'ventas.exportar',
             'compras.ver', 'compras.crear', 'compras.editar', 'compras.exportar',
             'stock.ver', 'stock.ajustar',
+            'depositos.ver', 'depositos.gestionar',
+            'cuentas.ver', 'cuentas.cobrar',
+            'devoluciones.ver', 'devoluciones.crear',
+            'caja.ver', 'caja.operar',
+            'presupuestos.ver', 'presupuestos.crear', 'presupuestos.editar', 'presupuestos.convertir',
+            'ordenes_compra.ver', 'ordenes_compra.crear', 'ordenes_compra.editar', 'ordenes_compra.recibir',
             'reportes.ver', 'reportes.exportar',
             'auditoria.ver',
         ],
@@ -89,9 +119,15 @@ class PermissionSeeder extends Seeder
             'productos.ver',
             'categorias.ver',
             'clientes.ver', 'clientes.crear', 'clientes.editar',
-            'ventas.ver', 'ventas.crear',
-            'compras.ver',
+            'ventas.ver', 'ventas.crear', 'ventas.editar', 'ventas.eliminar',
+            'compras.ver', 'compras.crear', 'compras.editar',
             'stock.ver',
+            'depositos.ver',
+            'cuentas.ver', 'cuentas.cobrar',
+            'devoluciones.ver', 'devoluciones.crear',
+            'caja.ver', 'caja.operar',
+            'presupuestos.ver', 'presupuestos.crear', 'presupuestos.editar', 'presupuestos.convertir',
+            'ordenes_compra.ver', 'ordenes_compra.crear',
         ],
 
         Role::CLIENTE => [],
