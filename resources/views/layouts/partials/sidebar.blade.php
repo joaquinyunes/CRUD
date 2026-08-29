@@ -13,7 +13,7 @@
 
         <a href="{{ route('dashboard') }}" class="r-sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-            <span>Dashboard</span>
+            <span>Panel</span>
         </a>
 
         <div class="r-sidebar-section">Catálogo</div>
@@ -50,10 +50,24 @@
         </a>
         @endif
 
+        @if(Auth::user()->role && Auth::user()->role->tienePermiso('presupuestos.ver'))
+        <a href="{{ route('presupuestos.index') }}" class="r-sidebar-link {{ request()->routeIs('presupuestos.*') ? 'active' : '' }}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>Presupuestos</span>
+        </a>
+        @endif
+
         @if(Auth::user()->role && Auth::user()->role->tienePermiso('compras.ver'))
         <a href="{{ route('compras.index') }}" class="r-sidebar-link {{ request()->routeIs('compras.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
             <span>Compras</span>
+        </a>
+        @endif
+
+        @if(Auth::user()->role && Auth::user()->role->tienePermiso('ordenes_compra.ver'))
+        <a href="{{ route('ordenes-compra.index') }}" class="r-sidebar-link {{ request()->routeIs('ordenes-compra.*') ? 'active' : '' }}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+            <span>Órdenes de compra</span>
         </a>
         @endif
 
@@ -68,6 +82,34 @@
         <a href="{{ route('stock.index') }}" class="r-sidebar-link {{ request()->routeIs('stock.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/></svg>
             <span>Stock</span>
+        </a>
+        @endif
+
+        @if(Auth::user()->role && (Auth::user()->role->tienePermiso('depositos.ver') || Auth::user()->role->tienePermiso('stock.ver')))
+        <a href="{{ route('depositos.index') }}" class="r-sidebar-link {{ request()->routeIs('depositos.*') ? 'active' : '' }}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
+            <span>Depósitos</span>
+        </a>
+        @endif
+
+        @if(Auth::user()->role && Auth::user()->role->tienePermiso('devoluciones.ver'))
+        <a href="{{ route('devoluciones.index') }}" class="r-sidebar-link {{ request()->routeIs('devoluciones.*') ? 'active' : '' }}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a5 5 0 015 5v2m-18-9l4-4M3 6l4 4"/></svg>
+            <span>Devoluciones</span>
+        </a>
+        @endif
+
+        @if(Auth::user()->role && Auth::user()->role->tienePermiso('cuentas.ver'))
+        <a href="{{ route('cuentas.clientes') }}" class="r-sidebar-link {{ request()->routeIs('cuentas.*') ? 'active' : '' }}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m-6 4h6m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+            <span>Cuenta corriente</span>
+        </a>
+        @endif
+
+        @if(Auth::user()->role && Auth::user()->role->tienePermiso('caja.ver'))
+        <a href="{{ route('caja.index') }}" class="r-sidebar-link {{ request()->routeIs('caja.*') ? 'active' : '' }}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            <span>Caja</span>
         </a>
         @endif
 
