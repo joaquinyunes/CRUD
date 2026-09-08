@@ -6,6 +6,9 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 
 class Producto extends Model
 {
@@ -20,25 +23,31 @@ class Producto extends Model
         'marca',
         'precio_compra',
         'precio_venta',
+        'iva_alicuota',
         'stock',
         'stock_minimo',
+        'punto_pedido',
         'unidad_medida_id',
+        'es_pesable',
         'imagen',
         'estado',
     ];
 
     protected $casts = [
         'precio_compra' => 'decimal:2',
-        'precio_venta'  => 'decimal:2',
-        'stock'         => 'integer',
-        'stock_minimo'  => 'integer',
+        'precio_venta' => 'decimal:2',
+        'iva_alicuota' => 'decimal:2',
+        'stock' => 'integer',
+        'stock_minimo' => 'integer',
+        'punto_pedido' => 'integer',
+        'es_pesable' => 'boolean',
     ];
 
     protected static function booted(): void
     {
         // Al alta, el stock inicial vive en el depósito principal.
         static::created(function (Producto $producto) {
-            if (! \Illuminate\Support\Facades\Schema::hasTable('depositos')) {
+            if (! Schema::hasTable('depositos')) {
                 return;
             }
             $depositoId = Deposito::principalId();
@@ -59,13 +68,22 @@ class Producto extends Model
 
     public function scopePorCodigo($query, string $codigo)
     {
-        return $query->where('codigo', $codigo)->orWhere('codigo_barra', $codigo);
+        return $query->where(function ($q) use ($codigo) {
+            $q->where('codigo', $codigo)
+                ->orWhere('codigo_barra', $codigo)
+                ->orWhereHas('codigos', fn ($c) => $c->where('codigo', $codigo));
+        });
+    }
+
+    public function codigos(): HasMany
+    {
+        return $this->hasMany(ProductoCodigo::class);
     }
 
     public function scopeStockCritico($query)
     {
         return $query->where('stock', '<=', \DB::raw('stock_minimo'))
-                     ->where('estado', 'activo');
+            ->where('estado', 'activo');
     }
 
     public function categoria(): BelongsTo
@@ -78,7 +96,7 @@ class Producto extends Model
         return $this->belongsTo(UnidadMedida::class);
     }
 
-    public function depositos(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function depositos(): BelongsToMany
     {
         return $this->belongsToMany(Deposito::class, 'stock_deposito')
             ->withPivot('cantidad');
@@ -95,8 +113,9 @@ class Producto extends Model
     public function getImagenUrlAttribute(): string
     {
         if ($this->imagen) {
-            return asset('storage/' . $this->imagen);
+            return asset('storage/'.$this->imagen);
         }
+
         return asset('images/producto-placeholder.png');
     }
 

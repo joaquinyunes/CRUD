@@ -15,6 +15,7 @@ class Venta extends Model
         'numero',
         'cliente_id',
         'deposito_id',
+        'caja_sesion_id',
         'fecha',
         'total',
         'subtotal',
@@ -23,21 +24,26 @@ class Venta extends Model
         'impuesto',
         'total_final',
         'pagado',
+        'recibido',
+        'vuelto',
         'estado_pago',
         'estado',
+        'canal',
         'motivo_anulacion',
         'stock_aplicado',
         'user_id',
     ];
 
     protected $casts = [
-        'fecha'          => 'date',
-        'total'          => 'decimal:2',
-        'subtotal'       => 'decimal:2',
-        'descuento'      => 'decimal:2',
-        'impuesto'       => 'decimal:2',
-        'total_final'    => 'decimal:2',
-        'pagado'         => 'decimal:2',
+        'fecha' => 'date',
+        'total' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'descuento' => 'decimal:2',
+        'impuesto' => 'decimal:2',
+        'total_final' => 'decimal:2',
+        'pagado' => 'decimal:2',
+        'recibido' => 'decimal:2',
+        'vuelto' => 'decimal:2',
         'stock_aplicado' => 'boolean',
     ];
 
@@ -51,6 +57,11 @@ class Venta extends Model
     public function deposito(): BelongsTo
     {
         return $this->belongsTo(Deposito::class);
+    }
+
+    public function cajaSesion(): BelongsTo
+    {
+        return $this->belongsTo(CajaSesion::class, 'caja_sesion_id');
     }
 
     public function user(): BelongsTo
@@ -93,13 +104,13 @@ class Venta extends Model
 
     public function scopeBuscar($query, ?string $buscar)
     {
-        if (!$buscar) {
+        if (! $buscar) {
             return $query;
         }
 
         return $query->whereHas('cliente', function ($q) use ($buscar) {
             $q->where('nombre', 'like', "%{$buscar}%")
-              ->orWhere('apellido', 'like', "%{$buscar}%");
+                ->orWhere('apellido', 'like', "%{$buscar}%");
         })->orWhere('numero', 'like', "%{$buscar}%");
     }
 

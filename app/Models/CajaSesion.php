@@ -12,6 +12,8 @@ class CajaSesion extends Model
 
     protected $fillable = [
         'user_id',
+        'terminal',
+        'dia_comercial',
         'monto_inicial',
         'monto_final_declarado',
         'monto_final_sistema',
@@ -23,12 +25,13 @@ class CajaSesion extends Model
     ];
 
     protected $casts = [
-        'monto_inicial'         => 'decimal:2',
+        'monto_inicial' => 'decimal:2',
         'monto_final_declarado' => 'decimal:2',
-        'monto_final_sistema'   => 'decimal:2',
-        'diferencia'            => 'decimal:2',
-        'abierta_en'            => 'datetime',
-        'cerrada_en'            => 'datetime',
+        'monto_final_sistema' => 'decimal:2',
+        'diferencia' => 'decimal:2',
+        'abierta_en' => 'datetime',
+        'cerrada_en' => 'datetime',
+        'dia_comercial' => 'date',
     ];
 
     public function user(): BelongsTo
@@ -39,6 +42,11 @@ class CajaSesion extends Model
     public function movimientos(): HasMany
     {
         return $this->hasMany(CajaMovimiento::class);
+    }
+
+    public function ventas(): HasMany
+    {
+        return $this->hasMany(Venta::class, 'caja_sesion_id');
     }
 
     public function scopeAbierta($query)
