@@ -20,6 +20,7 @@ class Producto extends Model
         'nombre',
         'descripcion',
         'categoria_id',
+        'proveedor_id',
         'marca',
         'precio_compra',
         'precio_venta',
@@ -99,6 +100,11 @@ class Producto extends Model
     public function categoria(): BelongsTo
     {
         return $this->belongsTo(Categoria::class);
+    }
+
+    public function proveedor(): BelongsTo
+    {
+        return $this->belongsTo(Proveedor::class);
     }
 
     public function unidadMedida(): BelongsTo

@@ -35,6 +35,7 @@ require __DIR__.'/devoluciones.php';
 require __DIR__.'/caja.php';
 require __DIR__.'/presupuestos.php';
 require __DIR__.'/ordenes_compra.php';
+require __DIR__.'/reposicion.php';
 require __DIR__.'/depositos.php';
 require __DIR__.'/reportes.php';
 require __DIR__.'/exportar.php';
