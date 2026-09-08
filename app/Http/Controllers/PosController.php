@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Venta;
 use App\Services\CajaService;
 use App\Services\FacturaService;
+use App\Services\PasarelaService;
 use App\Services\PosService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ class PosController extends Controller
         private PosService $pos,
         private CajaService $caja,
         private FacturaService $facturas,
+        private PasarelaService $pasarela,
     ) {}
 
     public function index(): View
@@ -80,6 +82,7 @@ class PosController extends Controller
             'pagos.*.referencia' => ['nullable', 'string', 'max:120'],
             'recibido' => ['nullable', 'numeric', 'min:0'],
             'pin_supervisor' => ['nullable', 'string'],
+            'qr_ref' => ['nullable', 'string', 'max:60'],
         ]);
 
         if ($this->requiereSupervisor($data) && ! $this->pinValido($request->input('pin_supervisor'))) {
@@ -91,6 +94,8 @@ class PosController extends Controller
         } catch (StockInsuficienteException|\RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
+
+        $this->pasarela->vincularAVenta($request->input('qr_ref'), $venta);
 
         // Facturación electrónica: no bloquea la venta si AFIP falla.
         $comprobante = null;

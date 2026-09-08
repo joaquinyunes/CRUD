@@ -29,6 +29,7 @@ require __DIR__.'/ventas.php';
 require __DIR__.'/pos.php';
 require __DIR__.'/promociones.php';
 require __DIR__.'/facturacion.php';
+require __DIR__.'/pasarela.php';
 require __DIR__.'/proveedores.php';
 require __DIR__.'/compras.php';
 require __DIR__.'/stock.php';

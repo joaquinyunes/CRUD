@@ -116,7 +116,13 @@
                 <div class="r-flex r-gap-2">
                     <button class="r-btn r-btn-ghost r-btn-sm" @click="agregarPago()">+ medio</button>
                     <button class="r-btn r-btn-ghost r-btn-sm" @click="pagoExacto()">Exacto</button>
+                    <button class="r-btn r-btn-ghost r-btn-sm" @click="cobrarQr()" :disabled="qrEstado==='esperando'">
+                        <span x-text="qrEstado==='esperando' ? 'Esperando QR…' : (qrEstado==='aprobado' ? 'QR ✓' : 'Cobrar QR')"></span>
+                    </button>
                 </div>
+                <template x-if="qrEstado==='aprobado'">
+                    <p class="r-caption" style="text-transform:none;letter-spacing:0;color:var(--color-forest,#3f5135);">Pago QR aprobado y vinculado a la venta.</p>
+                </template>
             </div>
 
             <div class="r-mt-3">
@@ -174,8 +180,34 @@ window.posApp = function () {
         pagos: [{ metodo_pago_id: efectivoId, monto: 0 }],
         recibido: 0, subtotal: 0, impuesto: 0, total: 0,
         error: '', procesando: false,
+        qrRef: null, qrEstado: null,
 
         init() { this.$refs.buscar && this.$refs.buscar.focus(); },
+
+        async cobrarQr() {
+            const monto = this.total - (this.pagos.filter(p => p.metodo_pago_id !== efectivoId).reduce((s, p) => s + (Number(p.monto) || 0), 0));
+            if (monto <= 0) { this.error = 'No hay saldo para cobrar por QR.'; return; }
+            this.qrRef = 'POS-' + Date.now();
+            this.qrEstado = 'esperando';
+            const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }, body: JSON.stringify(body || {}) });
+            try {
+                let r = await post('{{ route('pos.cobro-qr.crear') }}', { monto: Math.round(monto * 100) / 100, referencia: this.qrRef });
+                let d = await r.json();
+                if (!r.ok) { this.error = d.message || 'No se pudo crear el cobro QR.'; this.qrEstado = null; return; }
+                // Poll hasta 60s
+                for (let i = 0; i < 30 && d.estado === 'pendiente'; i++) {
+                    await new Promise(res => setTimeout(res, 2000));
+                    d = await (await fetch('/pos/cobro-qr/' + d.id, { headers: { 'Accept': 'application/json' } })).json();
+                }
+                if (d.estado === 'aprobado') {
+                    this.qrEstado = 'aprobado';
+                    window.RhythmToast?.success('Pago QR aprobado');
+                } else {
+                    this.qrEstado = null; this.qrRef = null;
+                    this.error = 'El pago QR quedó ' + d.estado + '.';
+                }
+            } catch (e) { this.qrEstado = null; this.qrRef = null; this.error = 'Error con el cobro QR.'; }
+        },
 
         money(n) { return simbolo + ' ' + (Number(n) || 0).toFixed(2); },
 
@@ -266,6 +298,7 @@ window.posApp = function () {
                         pagos: this.pagos.filter(p => p.monto > 0),
                         recibido: this.recibido || 0,
                         pin_supervisor: pin,
+                        qr_ref: this.qrRef,
                     }),
                 });
                 const data = await r.json();
@@ -282,6 +315,7 @@ window.posApp = function () {
             this.items = []; this.term = ''; this.resultados = [];
             this.cliente_id = null; this.descuento = 0; this.descuento_tipo = 'fijo';
             this.pagos = [{ metodo_pago_id: efectivoId, monto: 0 }]; this.recibido = 0;
+            this.qrRef = null; this.qrEstado = null;
             this.recalcular();
             this.$refs.buscar.focus();
         },

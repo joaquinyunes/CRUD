@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use App\Contracts\FacturadorElectronico;
+use App\Contracts\PasarelaPago;
 use App\Services\Afip\NullFacturador;
 use App\Services\Afip\WsfeFacturador;
+use App\Services\Pasarela\MercadoPago;
+use App\Services\Pasarela\NullPasarela;
 use App\Services\StockService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
@@ -19,6 +22,12 @@ class AppServiceProvider extends ServiceProvider
             return config('afip.driver') === 'wsfe'
                 ? new WsfeFacturador
                 : new NullFacturador;
+        });
+
+        $this->app->bind(PasarelaPago::class, function () {
+            return config('mercadopago.driver') === 'mp'
+                ? new MercadoPago
+                : new NullPasarela;
         });
     }
 
