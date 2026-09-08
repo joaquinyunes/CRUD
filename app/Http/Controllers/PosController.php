@@ -6,6 +6,7 @@ use App\Exceptions\StockInsuficienteException;
 use App\Models\Cliente;
 use App\Models\ComprobanteAfip;
 use App\Models\MetodoPago;
+use App\Models\Producto;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Venta;
@@ -42,6 +43,31 @@ class PosController extends Controller
         $request->validate(['q' => ['required', 'string', 'max:100']]);
 
         return response()->json($this->pos->buscar($request->string('q')->toString()));
+    }
+
+    /** Catálogo liviano para búsqueda offline en el POS. */
+    public function catalogo(): JsonResponse
+    {
+        $productos = Producto::where('estado', 'activo')
+            ->with('codigos:id,producto_id,codigo,factor')
+            ->orderBy('nombre')
+            ->get(['id', 'nombre', 'codigo', 'codigo_barra', 'precio_venta', 'stock', 'es_pesable']);
+
+        return response()->json([
+            'generado' => now()->toIso8601String(),
+            'productos' => $productos->map(fn ($p) => [
+                'id' => $p->id,
+                'nombre' => $p->nombre,
+                'codigo' => $p->codigo,
+                'precio' => (float) $p->precio_venta,
+                'stock' => (int) $p->stock,
+                'es_pesable' => (bool) $p->es_pesable,
+                'codigos' => array_values(array_filter(array_merge(
+                    [$p->codigo, $p->codigo_barra],
+                    $p->codigos->pluck('codigo')->all()
+                ))),
+            ]),
+        ]);
     }
 
     public function cotizar(Request $request): JsonResponse
@@ -83,6 +109,7 @@ class PosController extends Controller
             'recibido' => ['nullable', 'numeric', 'min:0'],
             'pin_supervisor' => ['nullable', 'string'],
             'qr_ref' => ['nullable', 'string', 'max:60'],
+            'idempotencia' => ['nullable', 'string', 'max:64'],
         ]);
 
         if ($this->requiereSupervisor($data) && ! $this->pinValido($request->input('pin_supervisor'))) {

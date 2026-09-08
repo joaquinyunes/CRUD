@@ -99,6 +99,14 @@ class PosService
             throw new RuntimeException('El carrito está vacío.');
         }
 
+        // Idempotencia: una venta encolada offline puede reenviarse varias veces.
+        if (! empty($data['idempotencia'])) {
+            $existente = Venta::where('idempotencia', $data['idempotencia'])->first();
+            if ($existente) {
+                return $existente->load('detalles.producto', 'pagos.metodoPago', 'cliente');
+            }
+        }
+
         $sesion = $this->caja->sesionAbierta(auth()->id());
         if (! $sesion) {
             throw new RuntimeException('Abrí la caja antes de vender.');
@@ -175,6 +183,7 @@ class PosService
                 'estado_pago' => CalculadorTotales::estadoPago($totales['total'], $pagadoReal),
                 'estado' => 'completada',
                 'canal' => 'mostrador',
+                'idempotencia' => $data['idempotencia'] ?? null,
                 'user_id' => auth()->id(),
             ]);
 

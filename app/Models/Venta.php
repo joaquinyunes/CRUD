@@ -29,6 +29,7 @@ class Venta extends Model
         'estado_pago',
         'estado',
         'canal',
+        'idempotencia',
         'motivo_anulacion',
         'stock_aplicado',
         'user_id',

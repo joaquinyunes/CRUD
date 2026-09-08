@@ -20,6 +20,17 @@
     @else
     <div x-data="posApp()" x-init="init()" class="pos-grid" @keydown.window="hotkeys($event)">
 
+        <template x-if="!online || pendientes > 0">
+            <div class="pos-offline" :class="{ 'is-off': !online }">
+                <span x-text="online ? 'Conexión OK' : 'SIN CONEXIÓN — modo contingencia'"></span>
+                <template x-if="pendientes > 0">
+                    <button class="r-btn r-btn-ghost r-btn-sm" @click="flush()" :disabled="!online">
+                        <span x-text="pendientes + ' venta(s) en cola — sincronizar'"></span>
+                    </button>
+                </template>
+            </div>
+        </template>
+
         {{-- Columna izquierda: búsqueda + carrito --}}
         <section class="pos-col">
             <div class="r-flex r-gap-2 r-mb-3">
@@ -161,6 +172,8 @@
     .pos-total{display:flex;justify-content:space-between;align-items:baseline;font-size:1.6rem;font-weight:700}
     .pos-vuelto{margin-top:0.5rem;font-weight:700;color:var(--color-forest,#3f5135)}
     .pos-promo{display:inline-block;margin-left:8px;font-size:0.7rem;font-weight:600;color:#b45309;background:#fef3c7;padding:1px 6px;border-radius:6px}
+    .pos-offline{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.5rem 0.9rem;border-radius:10px;font-weight:600;font-size:0.85rem;background:#e0f2fe;color:#075985}
+    .pos-offline.is-off{background:#fef3c7;color:#92400e}
 </style>
 @endsection
 
@@ -181,8 +194,58 @@ window.posApp = function () {
         recibido: 0, subtotal: 0, impuesto: 0, total: 0,
         error: '', procesando: false,
         qrRef: null, qrEstado: null,
+        online: navigator.onLine, pendientes: 0, catalogo: [],
 
-        init() { this.$refs.buscar && this.$refs.buscar.focus(); },
+        init() {
+            this.$refs.buscar && this.$refs.buscar.focus();
+            this.registrarSW();
+            this.cargarCatalogo();
+            this.pendientes = this.cola().length;
+            addEventListener('online', () => { this.online = true; this.flush(); });
+            addEventListener('offline', () => { this.online = false; });
+            setInterval(() => { this.online = navigator.onLine; if (this.online && this.cola().length) this.flush(); }, 20000);
+        },
+
+        registrarSW() {
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+        },
+        async cargarCatalogo() {
+            try {
+                const raw = localStorage.getItem('pos_catalogo');
+                if (raw) this.catalogo = JSON.parse(raw).productos || [];
+            } catch (e) {}
+            try {
+                const r = await fetch('/pos/catalogo', { headers: { 'Accept': 'application/json' } });
+                if (r.ok) { const d = await r.json(); this.catalogo = d.productos; localStorage.setItem('pos_catalogo', JSON.stringify(d)); }
+            } catch (e) {}
+        },
+        cola() {
+            try { return JSON.parse(localStorage.getItem('pos_cola') || '[]'); } catch (e) { return []; }
+        },
+        guardarCola(c) { localStorage.setItem('pos_cola', JSON.stringify(c)); this.pendientes = c.length; },
+        encolar(payload) {
+            const c = this.cola(); c.push(payload); this.guardarCola(c);
+        },
+        async flush() {
+            if (!navigator.onLine) return;
+            let c = this.cola();
+            const quedan = [];
+            for (const payload of c) {
+                try {
+                    const r = await fetch(el.dataset.venderUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                        body: JSON.stringify(payload),
+                    });
+                    if (!r.ok && r.status !== 422) quedan.push(payload);
+                } catch (e) { quedan.push(payload); }
+            }
+            this.guardarCola(quedan);
+            if (c.length && !quedan.length) window.RhythmToast?.success('Cola sincronizada (' + c.length + ' ventas)');
+        },
+        uuid() {
+            return 'pos-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+        },
 
         async cobrarQr() {
             const monto = this.total - (this.pagos.filter(p => p.metodo_pago_id !== efectivoId).reduce((s, p) => s + (Number(p.monto) || 0), 0));
@@ -211,10 +274,22 @@ window.posApp = function () {
 
         money(n) { return simbolo + ' ' + (Number(n) || 0).toFixed(2); },
 
+        buscarLocal() {
+            const q = this.term.trim().toLowerCase();
+            return this.catalogo.filter(p =>
+                (p.codigos || []).some(c => (c || '').toLowerCase() === q) ||
+                (p.nombre || '').toLowerCase().includes(q) ||
+                (p.codigo || '').toLowerCase().includes(q)
+            ).slice(0, 20).map(p => ({ id: p.id, nombre: p.nombre, codigo: p.codigo, precio: p.precio, stock: p.stock, es_pesable: p.es_pesable, factor: 1 }));
+        },
+
         async buscar() {
             if (this.term.trim().length < 2) { this.resultados = []; return; }
-            const r = await fetch(el.dataset.buscarUrl + '?q=' + encodeURIComponent(this.term), { headers: { 'Accept': 'application/json' } });
-            this.resultados = r.ok ? await r.json() : [];
+            if (!navigator.onLine) { this.resultados = this.buscarLocal(); return; }
+            let r;
+            try { r = await fetch(el.dataset.buscarUrl + '?q=' + encodeURIComponent(this.term), { headers: { 'Accept': 'application/json' } }); }
+            catch (e) { this.resultados = this.buscarLocal(); return; }
+            this.resultados = r.ok ? await r.json() : this.buscarLocal();
         },
         agregarPrimero() {
             if (this.resultados.length) this.agregar(this.resultados[0]);
@@ -287,19 +362,28 @@ window.posApp = function () {
             if (this.descuento_tipo === 'porcentaje' && Number(this.descuento) > {{ (float) \App\Models\Setting::obtener('ventas_limite_descuento', '10') }}) {
                 pin = prompt('Descuento alto. PIN de supervisor:');
             }
+            const payload = {
+                cliente_id: this.cliente_id || null,
+                items: this.items.map(i => ({ producto_id: i.producto_id, cantidad: i.cantidad, precio: i.precio, precio_manual: !!i.precio_manual })),
+                descuento: this.descuento || 0, descuento_tipo: this.descuento_tipo,
+                pagos: this.pagos.filter(p => p.monto > 0),
+                recibido: this.recibido || 0,
+                pin_supervisor: pin,
+                qr_ref: this.qrRef,
+                idempotencia: this.uuid(),
+            };
+
+            if (!navigator.onLine) {
+                this.encolar(payload);
+                window.RhythmToast?.info('Sin conexión: venta guardada en cola.');
+                this.reset(); this.procesando = false; return;
+            }
+
             try {
                 const r = await fetch(el.dataset.venderUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                    body: JSON.stringify({
-                        cliente_id: this.cliente_id || null,
-                        items: this.items.map(i => ({ producto_id: i.producto_id, cantidad: i.cantidad, precio: i.precio, precio_manual: !!i.precio_manual })),
-                        descuento: this.descuento || 0, descuento_tipo: this.descuento_tipo,
-                        pagos: this.pagos.filter(p => p.monto > 0),
-                        recibido: this.recibido || 0,
-                        pin_supervisor: pin,
-                        qr_ref: this.qrRef,
-                    }),
+                    body: JSON.stringify(payload),
                 });
                 const data = await r.json();
                 if (!r.ok) { this.error = data.message || 'No se pudo registrar la venta.'; this.procesando = false; return; }
@@ -307,7 +391,9 @@ window.posApp = function () {
                 window.open(data.ticket_url, '_blank', 'width=380,height=640');
                 this.reset();
             } catch (err) {
-                this.error = 'Error de conexión.';
+                this.encolar(payload);
+                window.RhythmToast?.info('Conexión caída: venta guardada en cola.');
+                this.reset();
             }
             this.procesando = false;
         },
