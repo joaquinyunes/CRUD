@@ -58,6 +58,15 @@
         <tr><td>Vuelto</td><td class="r">{{ $negocio['simbolo'] }}{{ number_format($venta->vuelto, 2) }}</td></tr>
         @endif
     </table>
+    @isset($comprobante)
+    @if($comprobante)
+    <hr>
+    <div class="c">{{ $comprobante->numeroFormateado() }}</div>
+    <div class="c">CAE {{ $comprobante->cae }}</div>
+    <div class="c">Vto CAE {{ $comprobante->cae_vencimiento?->format('d/m/Y') }}</div>
+    @if($comprobante->resultado === 'simulado')<div class="c" style="font-size:10px;">— comprobante simulado —</div>@endif
+    @endif
+    @endisset
     <hr>
     <div class="c">¡Gracias por su compra!</div>
 </body>

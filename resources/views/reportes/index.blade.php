@@ -12,6 +12,11 @@
         <div class="r-kpi-value r-mt-2" style="font-size:1.35rem;">Ventas por hora · ticket · margen</div>
         <span class="r-kpi-label">Operativo de retail</span>
     </a>
+    <a href="{{ route('reportes.libro-iva') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0" style="border-left:3px solid #059669;">
+        <span class="r-caption">Libro IVA Ventas</span>
+        <div class="r-kpi-value r-mt-2" style="font-size:1.35rem;">Comprobantes fiscales del período</div>
+        <span class="r-kpi-label">Neto · IVA · total</span>
+    </a>
     <a href="{{ route('reportes.ventas-periodo') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0">
         <span class="r-caption">Ventas por período</span>
         <div class="r-kpi-value r-mt-2" style="font-size:1.75rem;">${{ number_format($ventasHoy, 2, ',', '.') }}</div>

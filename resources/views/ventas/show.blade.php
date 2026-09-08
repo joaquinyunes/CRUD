@@ -123,11 +123,28 @@
 </div>
 @endif
 
+@php $comprobante = \App\Models\ComprobanteAfip::where('venta_id', $venta->id)->whereIn('resultado', ['A','simulado'])->latest('id')->first(); @endphp
+@if($comprobante)
+    <div class="r-card-flat r-mb-4" data-reveal="fade-up">
+        <span class="r-caption">Comprobante fiscal</span>
+        <div class="r-body"><strong>{{ $comprobante->numeroFormateado() }}</strong> · CAE {{ $comprobante->cae }} (vence {{ $comprobante->cae_vencimiento?->format('d/m/Y') }})
+        @if($comprobante->resultado === 'simulado')<span class="r-tag">simulado</span>@endif</div>
+    </div>
+@endif
+
 <div data-reveal="fade-up" data-reveal-delay="0.35" class="r-flex r-gap-3">
     <a href="{{ route('ventas.index') }}" class="r-btn r-btn-ghost">← Volver a ventas</a>
     @if($venta->estado !== 'anulada' && auth()->user()->role?->tienePermiso('devoluciones.crear'))
         <a href="{{ route('devoluciones.venta.create', $venta) }}" class="r-btn r-btn-accent">Registrar devolución</a>
     @endif
+    @if(! $comprobante && $venta->estado !== 'anulada' && auth()->user()->role?->tienePermiso('ventas.crear'))
+        <form method="POST" action="{{ route('ventas.facturar', $venta) }}">
+            @csrf
+            <button class="r-btn r-btn-primary">Facturar (AFIP)</button>
+        </form>
+    @endif
 </div>
+
+@if($errors->has('factura'))<p class="r-flash-error r-mt-3">{{ $errors->first('factura') }}</p>@endif
 
 @endsection

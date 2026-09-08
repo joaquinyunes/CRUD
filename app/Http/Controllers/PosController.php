@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\StockInsuficienteException;
 use App\Models\Cliente;
+use App\Models\ComprobanteAfip;
 use App\Models\MetodoPago;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Venta;
 use App\Services\CajaService;
+use App\Services\FacturaService;
 use App\Services\PosService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +22,7 @@ class PosController extends Controller
     public function __construct(
         private PosService $pos,
         private CajaService $caja,
+        private FacturaService $facturas,
     ) {}
 
     public function index(): View
@@ -89,11 +92,23 @@ class PosController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
 
+        // Facturación electrónica: no bloquea la venta si AFIP falla.
+        $comprobante = null;
+        if ($this->facturas->automatica()) {
+            try {
+                $comprobante = $this->facturas->facturar($venta);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
         return response()->json([
             'id' => $venta->id,
             'numero' => $venta->numero,
             'total' => (float) $venta->total_final,
             'vuelto' => (float) $venta->vuelto,
+            'comprobante' => $comprobante?->numeroFormateado(),
+            'cae' => $comprobante?->cae,
             'ticket_url' => route('pos.ticket', $venta),
         ]);
     }
@@ -102,6 +117,8 @@ class PosController extends Controller
     {
         abort_if($venta->estado === 'anulada', 404);
         $venta->load('detalles.producto', 'pagos.metodoPago', 'cliente', 'user');
+        $comprobante = ComprobanteAfip::where('venta_id', $venta->id)
+            ->whereIn('resultado', ['A', 'simulado'])->latest('id')->first();
         $negocio = [
             'nombre' => Setting::obtener('negocio_nombre', config('app.name')),
             'direccion' => Setting::obtener('negocio_direccion', ''),
@@ -109,7 +126,7 @@ class PosController extends Controller
             'simbolo' => Setting::obtener('sistema_simbolo_moneda', '$'),
         ];
 
-        return view('pos.ticket', compact('venta', 'negocio'));
+        return view('pos.ticket', compact('venta', 'negocio', 'comprobante'));
     }
 
     /** @param array<string,mixed> $data */
