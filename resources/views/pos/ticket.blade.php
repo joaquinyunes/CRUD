@@ -36,6 +36,9 @@
             <td>{{ rtrim(rtrim(number_format($d->cantidad, 3, ',', ''), '0'), ',') }} x {{ $negocio['simbolo'] }}{{ number_format($d->precio, 2) }}</td>
             <td class="r">{{ $negocio['simbolo'] }}{{ number_format($d->subtotal, 2) }}</td>
         </tr>
+        @if($d->descuento_promo > 0)
+        <tr><td colspan="2" style="font-size:11px;">  promo -{{ $negocio['simbolo'] }}{{ number_format($d->descuento_promo, 2) }}</td></tr>
+        @endif
         @endforeach
     </table>
     <hr>

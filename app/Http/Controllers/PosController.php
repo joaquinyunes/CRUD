@@ -39,6 +39,27 @@ class PosController extends Controller
         return response()->json($this->pos->buscar($request->string('q')->toString()));
     }
 
+    public function cotizar(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'cliente_id' => ['nullable', 'exists:clientes,id'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.producto_id' => ['required', 'exists:productos,id'],
+            'items.*.cantidad' => ['required', 'numeric', 'gt:0'],
+            'items.*.precio' => ['nullable', 'numeric', 'min:0'],
+            'items.*.precio_manual' => ['nullable', 'boolean'],
+            'descuento' => ['nullable', 'numeric', 'min:0'],
+            'descuento_tipo' => ['nullable', 'in:fijo,porcentaje'],
+        ]);
+
+        return response()->json($this->pos->cotizar(
+            $data['items'],
+            $data['cliente_id'] ?? null,
+            $data['descuento_tipo'] ?? null,
+            (float) ($data['descuento'] ?? 0),
+        ));
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -47,6 +68,7 @@ class PosController extends Controller
             'items.*.producto_id' => ['required', 'exists:productos,id'],
             'items.*.cantidad' => ['required', 'numeric', 'gt:0'],
             'items.*.precio' => ['required', 'numeric', 'min:0'],
+            'items.*.precio_manual' => ['nullable', 'boolean'],
             'descuento' => ['nullable', 'numeric', 'min:0'],
             'descuento_tipo' => ['nullable', 'in:fijo,porcentaje'],
             'pagos' => ['required', 'array', 'min:1'],

@@ -6,6 +6,7 @@
 @section('content')
 <div id="pos"
      data-buscar-url="{{ route('pos.buscar') }}"
+     data-cotizar-url="{{ route('pos.cotizar') }}"
      data-vender-url="{{ route('pos.store') }}"
      data-simbolo="{{ $simbolo }}"
      data-caja-abierta="{{ $sesion ? '1' : '0' }}">
@@ -43,10 +44,15 @@
                 <tbody>
                     <template x-for="(item, i) in items" :key="item.producto_id">
                         <tr>
-                            <td x-text="item.nombre"></td>
+                            <td>
+                                <span x-text="item.nombre"></span>
+                                <template x-if="item.descuento_promo > 0">
+                                    <span class="pos-promo" x-text="'promo −' + money(item.descuento_promo)"></span>
+                                </template>
+                            </td>
                             <td><input type="number" min="0.001" step="0.001" class="r-input r-input-sm" x-model.number="item.cantidad" @change="recalcular()"></td>
-                            <td><input type="number" min="0" step="0.01" class="r-input r-input-sm" x-model.number="item.precio" @change="recalcular()"></td>
-                            <td class="r-mono" x-text="money(item.cantidad * item.precio)"></td>
+                            <td><input type="number" min="0" step="0.01" class="r-input r-input-sm" x-model.number="item.precio" @change="item.precio_manual=true; recalcular()"></td>
+                            <td class="r-mono" x-text="money(item.cantidad * item.precio - (item.descuento_promo||0))"></td>
                             <td><button class="r-btn r-btn-ghost r-btn-sm" @click="quitar(i)">&times;</button></td>
                         </tr>
                     </template>
@@ -70,7 +76,7 @@
 
             <div class="r-mt-3">
                 <label class="r-label">Cliente</label>
-                <select class="r-input" x-model.number="cliente_id">
+                <select class="r-input" x-model.number="cliente_id" @change="recalcular()">
                     <option :value="null">Consumidor final</option>
                     @foreach($clientes as $c)
                         <option value="{{ $c->id }}">{{ trim($c->nombre.' '.$c->apellido) }}</option>
@@ -148,6 +154,7 @@
     .r-input-sm{padding:0.25rem 0.4rem;font-size:0.85rem}
     .pos-total{display:flex;justify-content:space-between;align-items:baseline;font-size:1.6rem;font-weight:700}
     .pos-vuelto{margin-top:0.5rem;font-weight:700;color:var(--color-forest,#3f5135)}
+    .pos-promo{display:inline-block;margin-left:8px;font-size:0.7rem;font-weight:600;color:#b45309;background:#fef3c7;padding:1px 6px;border-radius:6px}
 </style>
 @endsection
 
@@ -184,7 +191,7 @@ window.posApp = function () {
             const existente = this.items.find(i => i.producto_id === p.id);
             const cant = p.factor && p.factor !== 1 ? p.factor : 1;
             if (existente) existente.cantidad += cant;
-            else this.items.push({ producto_id: p.id, nombre: p.nombre, cantidad: cant, precio: p.precio });
+            else this.items.push({ producto_id: p.id, nombre: p.nombre, cantidad: cant, precio: p.precio, precio_manual: false, descuento_promo: 0 });
             this.term = ''; this.resultados = [];
             this.recalcular();
             this.$refs.buscar.focus();
@@ -192,6 +199,7 @@ window.posApp = function () {
         quitar(i) { this.items.splice(i, 1); this.recalcular(); },
 
         recalcular() {
+            // Cálculo local instantáneo (sin promos); el server manda la cifra final.
             this.subtotal = this.items.reduce((s, i) => s + (Number(i.cantidad) || 0) * (Number(i.precio) || 0), 0);
             let desc = this.descuento_tipo === 'porcentaje' ? this.subtotal * this.descuento / 100 : Number(this.descuento) || 0;
             desc = Math.min(Math.max(desc, 0), this.subtotal);
@@ -199,6 +207,33 @@ window.posApp = function () {
             this.impuesto = IVA_ON ? base * IVA / 100 : 0;
             this.total = Math.round((base + this.impuesto) * 100) / 100;
             if (this.pagos.length === 1) { this.pagos[0].monto = this.total; this.recibido = this.total; }
+            this.cotizar();
+        },
+
+        async cotizar() {
+            if (!this.items.length) return;
+            clearTimeout(this._cotizarT);
+            this._cotizarT = setTimeout(async () => {
+                try {
+                    const r = await fetch(el.dataset.cotizarUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                        body: JSON.stringify({
+                            cliente_id: this.cliente_id || null,
+                            items: this.items.map(i => ({ producto_id: i.producto_id, cantidad: i.cantidad, precio: i.precio, precio_manual: !!i.precio_manual })),
+                            descuento: this.descuento || 0, descuento_tipo: this.descuento_tipo,
+                        }),
+                    });
+                    if (!r.ok) return;
+                    const q = await r.json();
+                    q.lineas.forEach(l => {
+                        const it = this.items.find(i => i.producto_id === l.producto_id);
+                        if (it) { it.descuento_promo = l.descuento_promo; if (!it.precio_manual) it.precio = l.precio; }
+                    });
+                    this.subtotal = q.subtotal; this.impuesto = q.impuesto; this.total = q.total;
+                    if (this.pagos.length === 1) { this.pagos[0].monto = this.total; this.recibido = this.total; }
+                } catch (e) { /* mantiene el cálculo local */ }
+            }, 250);
         },
         agregarPago() { this.pagos.push({ metodo_pago_id: efectivoId, monto: 0 }); },
         pagoExacto() { this.pagos = [{ metodo_pago_id: efectivoId, monto: this.total }]; this.recibido = this.total; },
@@ -226,7 +261,7 @@ window.posApp = function () {
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
                     body: JSON.stringify({
                         cliente_id: this.cliente_id || null,
-                        items: this.items.map(i => ({ producto_id: i.producto_id, cantidad: i.cantidad, precio: i.precio })),
+                        items: this.items.map(i => ({ producto_id: i.producto_id, cantidad: i.cantidad, precio: i.precio, precio_manual: !!i.precio_manual })),
                         descuento: this.descuento || 0, descuento_tipo: this.descuento_tipo,
                         pagos: this.pagos.filter(p => p.monto > 0),
                         recibido: this.recibido || 0,

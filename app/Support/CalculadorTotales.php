@@ -14,7 +14,7 @@ class CalculadorTotales
      * @param  array<int,array{cantidad:int|float,precio:int|float}>  $lineas
      * @return array{subtotal:float,descuento:float,base_imponible:float,impuesto:float,total:float}
      */
-    public static function calcular(array $lineas, ?string $descuentoTipo, float $descuentoValor): array
+    public static function calcular(array $lineas, ?string $descuentoTipo, float $descuentoValor, float $descuentoExtra = 0): array
     {
         $subtotal = 0.0;
         foreach ($lineas as $l) {
@@ -25,7 +25,8 @@ class CalculadorTotales
         $descuento = $descuentoTipo === 'porcentaje'
             ? $subtotal * $descuentoValor / 100
             : $descuentoValor;
-        $descuento = min(round(max($descuento, 0), 2), $subtotal);
+        // `descuentoExtra` (p. ej. promociones) es fijo y previo al impuesto.
+        $descuento = min(round(max($descuento, 0) + max($descuentoExtra, 0), 2), $subtotal);
 
         $base = round($subtotal - $descuento, 2);
 
@@ -34,11 +35,11 @@ class CalculadorTotales
         $impuesto = $ivaHabilitado ? round($base * $ivaPorcentaje / 100, 2) : 0.0;
 
         return [
-            'subtotal'       => $subtotal,
-            'descuento'      => $descuento,
+            'subtotal' => $subtotal,
+            'descuento' => $descuento,
             'base_imponible' => $base,
-            'impuesto'       => $impuesto,
-            'total'          => round($base + $impuesto, 2),
+            'impuesto' => $impuesto,
+            'total' => round($base + $impuesto, 2),
         ];
     }
 

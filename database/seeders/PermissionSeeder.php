@@ -59,6 +59,8 @@ class PermissionSeeder extends Seeder
         'pos.usar',
         'pos.supervisar',
 
+        'promociones.gestionar',
+
         'compras.ver',
         'compras.crear',
         'compras.editar',
@@ -105,7 +107,7 @@ class PermissionSeeder extends Seeder
             'clientes.ver', 'clientes.crear', 'clientes.editar', 'clientes.exportar',
             'proveedores.ver', 'proveedores.crear', 'proveedores.editar',
             'ventas.ver', 'ventas.crear', 'ventas.editar', 'ventas.exportar',
-            'pos.usar', 'pos.supervisar',
+            'pos.usar', 'pos.supervisar', 'promociones.gestionar',
             'compras.ver', 'compras.crear', 'compras.editar', 'compras.exportar',
             'stock.ver', 'stock.ajustar',
             'depositos.ver', 'depositos.gestionar',

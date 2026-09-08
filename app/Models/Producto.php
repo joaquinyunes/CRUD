@@ -80,6 +80,16 @@ class Producto extends Model
         return $this->hasMany(ProductoCodigo::class);
     }
 
+    public function preciosLista(): HasMany
+    {
+        return $this->hasMany(PrecioProducto::class);
+    }
+
+    public function promociones(): HasMany
+    {
+        return $this->hasMany(Promocion::class);
+    }
+
     public function scopeStockCritico($query)
     {
         return $query->where('stock', '<=', \DB::raw('stock_minimo'))

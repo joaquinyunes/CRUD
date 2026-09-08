@@ -26,6 +26,7 @@ require __DIR__.'/clientes.php';
 require __DIR__.'/auditoria.php';
 require __DIR__.'/ventas.php';
 require __DIR__.'/pos.php';
+require __DIR__.'/promociones.php';
 require __DIR__.'/proveedores.php';
 require __DIR__.'/compras.php';
 require __DIR__.'/stock.php';

@@ -10,6 +10,9 @@ Route::middleware(['auth', 'verified'])->prefix('pos')->name('pos.')->group(func
     Route::get('/buscar', [PosController::class, 'buscar'])
         ->middleware('permiso:pos.usar')->name('buscar');
 
+    Route::post('/cotizar', [PosController::class, 'cotizar'])
+        ->middleware('permiso:pos.usar')->name('cotizar');
+
     Route::post('/vender', [PosController::class, 'store'])
         ->middleware('permiso:pos.usar')->name('store');
 

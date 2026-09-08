@@ -7,6 +7,7 @@ use App\Models\Cliente;
 use App\Models\Deposito;
 use App\Models\MetodoPago;
 use App\Models\Producto;
+use App\Models\Promocion;
 use App\Models\Setting;
 use App\Models\Venta;
 use App\Support\CalculadorTotales;
@@ -24,6 +25,7 @@ class PosService
     public function __construct(
         private StockDocumentoService $stockDoc,
         private CajaService $caja,
+        private PrecioService $precios,
     ) {}
 
     /**
@@ -56,17 +58,40 @@ class PosService
     }
 
     /**
-     * Registra una venta de mostrador.
+     * Cotiza el carrito sin registrar nada: precios de lista, promociones y totales.
+     * Lo usa el POS para mostrar el total real en vivo.
      *
-     * @param  array{
-     *     cliente_id?: int|null,
-     *     items: array<int,array{producto_id:int,cantidad:int|float,precio:int|float}>,
-     *     descuento_tipo?: string|null,
-     *     descuento?: int|float,
-     *     pagos: array<int,array{metodo_pago_id:int,monto:int|float,referencia?:string|null}>,
-     *     recibido?: int|float|null
-     * }  $data
+     * @param  array<int,array<string,mixed>>  $items
+     * @return array<string,mixed>
      */
+    public function cotizar(array $items, ?int $clienteId, ?string $descuentoTipo, float $descuento): array
+    {
+        $cliente = $clienteId ? Cliente::find($clienteId) : null;
+        $detalles = $this->construirDetalles($items, $cliente);
+        $descuentoPromo = round((float) $detalles->sum('descuento_promo'), 2);
+
+        $totales = CalculadorTotales::calcular(
+            $detalles->map(fn ($d) => ['cantidad' => $d['cantidad'], 'precio' => $d['precio']])->all(),
+            $descuentoTipo,
+            $descuento,
+            $descuentoPromo,
+        );
+
+        return [
+            'lineas' => $detalles->map(fn ($d) => [
+                'producto_id' => $d['producto_id'],
+                'precio' => (float) $d['precio'],
+                'descuento_promo' => (float) $d['descuento_promo'],
+                'promocion_id' => $d['promocion_id'],
+            ])->all(),
+            'descuento_promo' => $descuentoPromo,
+            'subtotal' => $totales['subtotal'],
+            'descuento' => $totales['descuento'],
+            'impuesto' => $totales['impuesto'],
+            'total' => $totales['total'],
+        ];
+    }
+
     public function registrarVenta(array $data): Venta
     {
         $items = $data['items'] ?? [];
@@ -84,11 +109,13 @@ class PosService
             throw new RuntimeException('El cliente seleccionado no está activo.');
         }
 
-        $detalles = $this->construirDetalles($items);
+        $detalles = $this->construirDetalles($items, $cliente);
+        $descuentoPromo = round((float) $detalles->sum('descuento_promo'), 2);
         $totales = CalculadorTotales::calcular(
-            $detalles->all(),
+            $detalles->map(fn ($d) => ['cantidad' => $d['cantidad'], 'precio' => $d['precio']])->all(),
             $data['descuento_tipo'] ?? null,
             (float) ($data['descuento'] ?? 0),
+            $descuentoPromo,
         );
 
         $todos = $this->normalizarPagos($data['pagos'] ?? []);
@@ -178,20 +205,37 @@ class PosService
     }
 
     /** @param array<int,array<string,mixed>> $items */
-    private function construirDetalles(array $items): Collection
+    private function construirDetalles(array $items, ?Cliente $cliente = null): Collection
     {
         $ids = collect($items)->pluck('producto_id');
-        $productos = Producto::whereIn('id', $ids)->get()->keyBy('id');
+        $productos = Producto::with('preciosLista')->whereIn('id', $ids)->get()->keyBy('id');
+        $listaId = $this->precios->listaDe($cliente);
+        $catalogoPromos = Promocion::vigentes()->get();
+        $ahora = now();
 
-        return collect($items)->map(function ($item) use ($productos) {
+        return collect($items)->map(function ($item) use ($productos, $listaId, $catalogoPromos, $ahora) {
             $producto = $productos->get($item['producto_id']);
             if (! $producto) {
                 throw new RuntimeException('Producto inexistente en el carrito.');
             }
             $cantidad = round((float) $item['cantidad'], 3);
-            $precio = round((float) ($item['precio'] ?? $producto->precio_venta), 2);
             if ($cantidad <= 0) {
                 throw new RuntimeException("Cantidad inválida para «{$producto->nombre}».");
+            }
+
+            $manual = ! empty($item['precio_manual']);
+            $precio = $manual
+                ? round((float) $item['precio'], 2)
+                : $this->precios->precioBase($producto, $listaId);
+
+            $descPromo = 0.0;
+            $promoId = null;
+            if (! $manual) {
+                $promo = $this->precios->mejorPromocion($producto, $cantidad, $precio, $ahora, $catalogoPromos);
+                if ($promo) {
+                    $descPromo = $promo['descuento'];
+                    $promoId = $promo['promocion']->id;
+                }
             }
 
             return [
@@ -199,7 +243,9 @@ class PosService
                 'cantidad' => $cantidad,
                 'precio' => $precio,
                 'costo_unitario' => round((float) $producto->precio_compra, 2),
-                'subtotal' => round($cantidad * $precio, 2),
+                'subtotal' => round($cantidad * $precio - $descPromo, 2),
+                'descuento_promo' => round($descPromo, 2),
+                'promocion_id' => $promoId,
             ];
         });
     }

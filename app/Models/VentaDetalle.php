@@ -21,12 +21,15 @@ class VentaDetalle extends Model
         'precio',
         'costo_unitario',
         'subtotal',
+        'descuento_promo',
+        'promocion_id',
     ];
 
     protected $casts = [
         'precio' => 'decimal:2',
         'costo_unitario' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'descuento_promo' => 'decimal:2',
     ];
 
     public function venta(): BelongsTo

@@ -6,6 +6,7 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cliente extends Model
@@ -22,12 +23,18 @@ class Cliente extends Model
         'observaciones',
         'estado',
         'limite_credito',
+        'lista_precio_id',
     ];
 
     protected $casts = [
-        'estado'         => 'string',
+        'estado' => 'string',
         'limite_credito' => 'decimal:2',
     ];
+
+    public function listaPrecio(): BelongsTo
+    {
+        return $this->belongsTo(ListaPrecio::class, 'lista_precio_id');
+    }
 
     public function ventas(): HasMany
     {
