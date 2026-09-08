@@ -30,6 +30,8 @@ class Producto extends Model
         'punto_pedido',
         'unidad_medida_id',
         'es_pesable',
+        'controla_vencimiento',
+        'dias_alerta_vencimiento',
         'imagen',
         'estado',
     ];
@@ -42,6 +44,8 @@ class Producto extends Model
         'stock_minimo' => 'integer',
         'punto_pedido' => 'integer',
         'es_pesable' => 'boolean',
+        'controla_vencimiento' => 'boolean',
+        'dias_alerta_vencimiento' => 'integer',
     ];
 
     protected static function booted(): void
@@ -89,6 +93,11 @@ class Producto extends Model
     public function promociones(): HasMany
     {
         return $this->hasMany(Promocion::class);
+    }
+
+    public function lotes(): HasMany
+    {
+        return $this->hasMany(ProductoLote::class);
     }
 
     public function scopeStockCritico($query)

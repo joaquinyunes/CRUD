@@ -142,6 +142,21 @@
                         </div>
                     </div>
 
+                    <div class="r-flex r-gap-3" style="flex-wrap:wrap;">
+                        <label class="r-cluster" style="gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="es_pesable" value="1" {{ old('es_pesable', $producto->es_pesable ?? false) ? 'checked' : '' }}>
+                            <span class="r-body" style="font-size:0.9rem;">Se vende por peso (balanza)</span>
+                        </label>
+                        <label class="r-cluster" style="gap:8px;cursor:pointer;">
+                            <input type="checkbox" name="controla_vencimiento" value="1" {{ old('controla_vencimiento', $producto->controla_vencimiento ?? false) ? 'checked' : '' }}>
+                            <span class="r-body" style="font-size:0.9rem;">Controla vencimiento (lotes)</span>
+                        </label>
+                        <div style="width:9rem;">
+                            <label class="r-label">Punto de pedido</label>
+                            <input type="number" min="0" name="punto_pedido" value="{{ old('punto_pedido', $producto->punto_pedido ?? 0) }}" class="r-input">
+                        </div>
+                    </div>
+
                     <div>
                         <label for="unidad_medida_id" class="r-label">Unidad de Medida</label>
                         <select name="unidad_medida_id" id="unidad_medida_id" class="r-select">

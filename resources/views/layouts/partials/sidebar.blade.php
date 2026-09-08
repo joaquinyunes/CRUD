@@ -103,6 +103,13 @@
         </a>
         @endif
 
+        @if(Auth::user()->role && Auth::user()->role->tienePermiso('stock.ver'))
+        <a href="{{ route('lotes.index') }}" class="r-sidebar-link {{ request()->routeIs('lotes.*') ? 'active' : '' }}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Lotes y vencimientos</span>
+        </a>
+        @endif
+
         @if(Auth::user()->role && (Auth::user()->role->tienePermiso('depositos.ver') || Auth::user()->role->tienePermiso('stock.ver')))
         <a href="{{ route('depositos.index') }}" class="r-sidebar-link {{ request()->routeIs('depositos.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>

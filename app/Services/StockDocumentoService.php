@@ -12,7 +12,10 @@ use App\Models\Venta;
  */
 class StockDocumentoService
 {
-    public function __construct(private StockService $stock) {}
+    public function __construct(
+        private StockService $stock,
+        private LoteService $lotes,
+    ) {}
 
     public function aplicarVenta(Venta $venta): void
     {
@@ -24,6 +27,10 @@ class StockDocumentoService
 
         foreach ($venta->detalles as $detalle) {
             $this->stock->registrarSalida($detalle->producto, $detalle->cantidad, 'venta', $venta->id, $venta->deposito_id);
+
+            if ($this->lotes->controla($detalle->producto)) {
+                $this->lotes->consumirFEFO($detalle->producto_id, $venta->deposito_id, (float) $detalle->cantidad);
+            }
         }
 
         $venta->forceFill(['stock_aplicado' => true])->saveQuietly();
@@ -39,6 +46,10 @@ class StockDocumentoService
 
         foreach ($venta->detalles as $detalle) {
             $this->stock->registrarDevolucion($detalle->producto, $detalle->cantidad, 'venta', $venta->id, $venta->deposito_id);
+
+            if ($this->lotes->controla($detalle->producto)) {
+                $this->lotes->devolver($detalle->producto_id, $venta->deposito_id, (float) $detalle->cantidad);
+            }
         }
 
         $venta->forceFill(['stock_aplicado' => false])->saveQuietly();

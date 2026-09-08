@@ -9,7 +9,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -23,8 +22,8 @@ class ProductoController extends Controller
             $buscar = $request->buscar;
             $query->where(function ($q) use ($buscar) {
                 $q->where('nombre', 'like', "%{$buscar}%")
-                  ->orWhere('codigo', 'like', "%{$buscar}%")
-                  ->orWhere('marca', 'like', "%{$buscar}%");
+                    ->orWhere('codigo', 'like', "%{$buscar}%")
+                    ->orWhere('marca', 'like', "%{$buscar}%");
             });
         }
 
@@ -36,8 +35,8 @@ class ProductoController extends Controller
             $query->where('estado', $request->estado);
         }
 
-        $productos   = $query->orderBy('nombre')->paginate(20)->withQueryString();
-        $categorias  = Categoria::where('estado', true)->orderBy('nombre')->get();
+        $productos = $query->orderBy('nombre')->paginate(20)->withQueryString();
+        $categorias = Categoria::where('estado', true)->orderBy('nombre')->get();
 
         return view('productos.index', compact('productos', 'categorias'));
     }
@@ -95,7 +94,7 @@ class ProductoController extends Controller
         Producto::create($validated);
 
         return redirect()->route('productos.index')
-                         ->with('success', 'Producto creado correctamente.');
+            ->with('success', 'Producto creado correctamente.');
     }
 
     public function edit(Producto $producto): View
@@ -128,7 +127,7 @@ class ProductoController extends Controller
         $producto->update($validated);
 
         return redirect()->route('productos.index')
-                         ->with('success', 'Producto actualizado correctamente.');
+            ->with('success', 'Producto actualizado correctamente.');
     }
 
     public function destroy(Producto $producto): RedirectResponse
@@ -136,7 +135,7 @@ class ProductoController extends Controller
         $producto->update(['estado' => 'eliminado']);
 
         return redirect()->route('productos.index')
-                         ->with('success', 'Producto eliminado correctamente.');
+            ->with('success', 'Producto eliminado correctamente.');
     }
 
     public function duplicar(Producto $producto): RedirectResponse
@@ -146,39 +145,46 @@ class ProductoController extends Controller
         }
 
         $nuevo = $producto->replicate();
-        $nuevo->codigo  = $this->generarCodigoUnico($producto->codigo);
-        $nuevo->nombre  = $producto->nombre . ' (copia)';
-        $nuevo->stock   = 0;
-        $nuevo->imagen  = null;
-        $nuevo->estado  = 'inactivo';
+        $nuevo->codigo = $this->generarCodigoUnico($producto->codigo);
+        $nuevo->nombre = $producto->nombre.' (copia)';
+        $nuevo->stock = 0;
+        $nuevo->imagen = null;
+        $nuevo->estado = 'inactivo';
         $nuevo->save();
 
         return redirect()->route('productos.edit', $nuevo)
-                         ->with('success', 'Producto duplicado. Revisá los datos antes de activarlo.');
+            ->with('success', 'Producto duplicado. Revisá los datos antes de activarlo.');
     }
 
     private function validar(Request $request, ?int $ignorarId = null): array
     {
         return $request->validate([
-            'codigo'        => ['nullable', 'string', 'max:100',
-                                Rule::unique('productos', 'codigo')
-                                    ->ignore($ignorarId)
-                                    ->where(fn ($q) => $q->where('estado', '!=', 'eliminado'))],
-            'codigo_barra'  => ['nullable', 'string', 'max:100',
-                                Rule::unique('productos', 'codigo_barra')
-                                    ->ignore($ignorarId)
-                                    ->where(fn ($q) => $q->where('estado', '!=', 'eliminado'))],
-            'nombre'        => ['required', 'string', 'max:255'],
-            'descripcion'   => ['nullable', 'string'],
-            'categoria_id'  => ['nullable', 'exists:categorias,id'],
-            'marca'         => ['nullable', 'string', 'max:100'],
+            'codigo' => ['nullable', 'string', 'max:100',
+                Rule::unique('productos', 'codigo')
+                    ->ignore($ignorarId)
+                    ->where(fn ($q) => $q->where('estado', '!=', 'eliminado'))],
+            'codigo_barra' => ['nullable', 'string', 'max:100',
+                Rule::unique('productos', 'codigo_barra')
+                    ->ignore($ignorarId)
+                    ->where(fn ($q) => $q->where('estado', '!=', 'eliminado'))],
+            'nombre' => ['required', 'string', 'max:255'],
+            'descripcion' => ['nullable', 'string'],
+            'categoria_id' => ['nullable', 'exists:categorias,id'],
+            'marca' => ['nullable', 'string', 'max:100'],
             'precio_compra' => ['nullable', 'numeric', 'min:0'],
-            'precio_venta'  => ['nullable', 'numeric', 'min:0'],
-            'stock_minimo'  => ['nullable', 'integer', 'min:0'],
+            'precio_venta' => ['nullable', 'numeric', 'min:0'],
+            'stock_minimo' => ['nullable', 'integer', 'min:0'],
+            'punto_pedido' => ['nullable', 'integer', 'min:0'],
             'unidad_medida_id' => ['nullable', 'exists:unidades_medida,id'],
-            'estado'        => ['nullable', 'in:activo,inactivo'],
-            'imagen'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-        ]);
+            'proveedor_id' => ['nullable', 'exists:proveedores,id'],
+            'es_pesable' => ['nullable', 'boolean'],
+            'controla_vencimiento' => ['nullable', 'boolean'],
+            'estado' => ['nullable', 'in:activo,inactivo'],
+            'imagen' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]) + [
+            'es_pesable' => $request->boolean('es_pesable'),
+            'controla_vencimiento' => $request->boolean('controla_vencimiento'),
+        ];
     }
 
     private function manejarImagen(Request $request): ?string
@@ -186,6 +192,7 @@ class ProductoController extends Controller
         if ($request->hasFile('imagen')) {
             return $request->file('imagen')->store('productos', 'public');
         }
+
         return null;
     }
 
@@ -198,12 +205,12 @@ class ProductoController extends Controller
 
     private function generarCodigoUnico(string $codigoBase): string
     {
-        $base   = $codigoBase . '-COPIA';
+        $base = $codigoBase.'-COPIA';
         $codigo = $base;
-        $i      = 2;
+        $i = 2;
 
         while (Producto::where('codigo', $codigo)->exists()) {
-            $codigo = $base . '-' . $i;
+            $codigo = $base.'-'.$i;
             $i++;
         }
 
@@ -213,6 +220,7 @@ class ProductoController extends Controller
     private function generarCodigo(): string
     {
         $ultimo = Producto::orderBy('id', 'desc')->value('id') ?? 0;
-        return 'PROD-' . str_pad($ultimo + 1, 4, '0', STR_PAD_LEFT);
+
+        return 'PROD-'.str_pad($ultimo + 1, 4, '0', STR_PAD_LEFT);
     }
 }
