@@ -8,6 +8,10 @@ Route::middleware(['auth', 'verified'])->prefix('reportes')->name('reportes.')->
         ->middleware('permiso:reportes.ver')
         ->name('index');
 
+    Route::get('/negocio', [ReporteController::class, 'negocio'])
+        ->middleware('permiso:reportes.ver')
+        ->name('negocio');
+
     Route::get('/ventas-por-periodo', [ReporteController::class, 'ventasPorPeriodo'])
         ->middleware('permiso:reportes.ver')
         ->name('ventas-periodo');

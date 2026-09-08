@@ -7,6 +7,11 @@
 <h2 class="r-display-l r-mb-8" data-reveal="fade-up">Reportes</h2>
 
 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:var(--space-4);" class="r-mb-8">
+    <a href="{{ route('reportes.negocio') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0" style="border-left:3px solid var(--color-marigold,#e0a53d);">
+        <span class="r-caption">Reporte de negocio</span>
+        <div class="r-kpi-value r-mt-2" style="font-size:1.35rem;">Ventas por hora · ticket · margen</div>
+        <span class="r-kpi-label">Operativo de retail</span>
+    </a>
     <a href="{{ route('reportes.ventas-periodo') }}" class="r-card" data-reveal="fade-up" data-reveal-delay="0">
         <span class="r-caption">Ventas por período</span>
         <div class="r-kpi-value r-mt-2" style="font-size:1.75rem;">${{ number_format($ventasHoy, 2, ',', '.') }}</div>
