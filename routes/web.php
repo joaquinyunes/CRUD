@@ -31,6 +31,7 @@ require __DIR__.'/proveedores.php';
 require __DIR__.'/compras.php';
 require __DIR__.'/stock.php';
 require __DIR__.'/lotes.php';
+require __DIR__.'/inventario.php';
 require __DIR__.'/cuentas.php';
 require __DIR__.'/devoluciones.php';
 require __DIR__.'/caja.php';
