@@ -69,7 +69,7 @@ class PromocionController extends Controller
             'm' => ['nullable', 'integer', 'min:1', 'required_if:tipo,nxm', 'lt:n'],
             'alcance' => ['required', 'in:producto,categoria,todos'],
             'producto_id' => ['nullable', 'exists:productos,id', 'required_if:alcance,producto'],
-            'categoria_id' => ['nullable', 'exists:categorias,id', 'required_if:alcance,categoria'],
+            'categoria_id' => ['nullable', 'exists:mongodb.categorias,_id', 'required_if:alcance,categoria'],
             'desde' => ['nullable', 'date'],
             'hasta' => ['nullable', 'date', 'after_or_equal:desde'],
             'hora_desde' => ['nullable', 'date_format:H:i'],

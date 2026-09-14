@@ -35,7 +35,7 @@ class RecuentoController extends Controller
     {
         $data = $request->validate([
             'deposito_id' => ['required', 'exists:depositos,id'],
-            'categoria_id' => ['nullable', 'exists:categorias,id'],
+            'categoria_id' => ['nullable', 'exists:mongodb.categorias,_id'],
             'observaciones' => ['nullable', 'string', 'max:255'],
         ]);
 

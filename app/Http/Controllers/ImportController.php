@@ -125,7 +125,7 @@ class ImportController extends Controller
         ]);
     }
 
-    private function resolveCategoria(?string $nombre): ?int
+    private function resolveCategoria(?string $nombre): ?string
     {
         if (!$nombre) return null;
         $cat = \App\Models\Categoria::where('nombre', $nombre)->first();

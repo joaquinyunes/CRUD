@@ -26,6 +26,9 @@
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
+        <!-- Categorias/unidades_medida viven en Mongo (fase 2): base separada de la
+             de desarrollo, se trunca antes de cada test en Tests\TestCase::setUp(). -->
+        <env name="MONGODB_DATABASE" value="pos_test"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

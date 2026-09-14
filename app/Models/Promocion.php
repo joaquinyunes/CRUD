@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use MongoDB\Laravel\Eloquent\HybridRelations;
 
 class Promocion extends Model
 {
+    // categoria() apunta a un modelo Mongo; HybridRelations arma el puente.
+    use HybridRelations;
+
     protected $table = 'promociones';
 
     protected $fillable = [

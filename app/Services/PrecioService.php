@@ -81,7 +81,8 @@ class PrecioService
     {
         return match ($promo->alcance) {
             'todos' => true,
-            'categoria' => (int) $promo->categoria_id === (int) $producto->categoria_id,
+            // categoria_id es un ObjectId de Mongo (string) desde la fase 2 de la migracion.
+            'categoria' => (string) $promo->categoria_id === (string) $producto->categoria_id,
             default => (int) $promo->producto_id === (int) $producto->id,
         };
     }

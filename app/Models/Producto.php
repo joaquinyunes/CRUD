@@ -9,10 +9,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
+use MongoDB\Laravel\Eloquent\HybridRelations;
 
 class Producto extends Model
 {
-    use Auditable, HasFactory;
+    // categoria() y unidadMedida() apuntan a modelos Mongo; HybridRelations
+    // detecta el destino y arma la relacion cruzada SQL -> Mongo.
+    use Auditable, HasFactory, HybridRelations;
 
     protected $fillable = [
         'codigo',

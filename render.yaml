@@ -1,0 +1,55 @@
+# Blueprint de Render (plan free). Deploy: New > Blueprint > apuntar a este repo.
+# La DB NO se crea acá: usar Neon (https://neon.tech, Postgres free perpetuo) o
+# Supabase, y pegar su connection string en DB_URL. La Postgres free de Render
+# expira a los 30 dias, por eso se usa una externa.
+services:
+  - type: web
+    name: crud-pos
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /login
+    autoDeploy: true
+    envVars:
+      - key: APP_NAME
+        value: "POS"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false            # generar con: php artisan key:generate --show
+      - key: APP_URL
+        sync: false            # https://crud-pos.onrender.com
+      - key: APP_LOCALE
+        value: es
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        sync: false            # postgres://user:pass@ep-xxx.neon.tech/db?sslmode=require
+      - key: MONGODB_URI
+        sync: false            # mongodb+srv://user:pass@cluster0.xxx.mongodb.net (Atlas M0 free)
+      - key: MONGODB_DATABASE
+        value: pos
+      - key: SESSION_DRIVER
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: FILESYSTEM_DISK
+        value: s3              # ver docs/HOSTING.md: Cloudflare R2 free (disco de Render es efimero)
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_DEFAULT_REGION
+        value: auto
+      - key: AWS_BUCKET
+        sync: false
+      - key: AWS_ENDPOINT
+        sync: false            # https://<accountid>.r2.cloudflarestorage.com
+      - key: AWS_USE_PATH_STYLE_ENDPOINT
+        value: "true"
