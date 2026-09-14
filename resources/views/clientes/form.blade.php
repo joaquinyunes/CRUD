@@ -27,75 +27,75 @@
 
         <form method="POST"
               action="{{ $cliente->exists ? route('clientes.update', $cliente) : route('clientes.store') }}"
-              class="r-card-flat r-mb-6 r-gap-4">
+              class="r-card-flat r-mb-6 r-stack">
             @csrf
             @if ($cliente->exists)
                 @method('PUT')
             @endif
 
             <div data-reveal="fade-up">
-                <label for="nombre" class="r-label">Nombre <span class="r-tag" style="background: var(--r-color-danger); color: #fff;">*</span></label>
+                <label for="nombre" class="r-label">Nombre <span class="r-req">*</span></label>
                 <input type="text" name="nombre" id="nombre" value="{{ old('nombre', $cliente->nombre) }}" required
                        class="r-input @error('nombre') is-invalid @enderror">
-                @error('nombre') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
+                @error('nombre') <p class="r-error">{{ $message }}</p>@enderror
             </div>
 
             <div>
-                <label for="apellido" class="r-label">Apellido <span class="r-tag" style="background: var(--r-color-danger); color: #fff;">*</span></label>
+                <label for="apellido" class="r-label">Apellido <span class="r-req">*</span></label>
                 <input type="text" name="apellido" id="apellido" value="{{ old('apellido', $cliente->apellido) }}" required
                        class="r-input @error('apellido') is-invalid @enderror">
-                @error('apellido') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
+                @error('apellido') <p class="r-error">{{ $message }}</p>@enderror
             </div>
 
             <div>
                 <label for="documento" class="r-label">Documento</label>
                 <input type="text" name="documento" id="documento" value="{{ old('documento', $cliente->documento) }}"
                        class="r-input">
-                @error('documento') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
+                @error('documento') <p class="r-error">{{ $message }}</p>@enderror
             </div>
 
             <div>
                 <label for="email" class="r-label">Correo electrónico</label>
                 <input type="email" name="email" id="email" value="{{ old('email', $cliente->email) }}"
                        class="r-input">
-                @error('email') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
+                @error('email') <p class="r-error">{{ $message }}</p>@enderror
             </div>
 
             <div>
                 <label for="telefono" class="r-label">Teléfono</label>
                 <input type="text" name="telefono" id="telefono" value="{{ old('telefono', $cliente->telefono) }}"
                        class="r-input">
-                @error('telefono') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
+                @error('telefono') <p class="r-error">{{ $message }}</p>@enderror
             </div>
 
             <div>
                 <label for="direccion" class="r-label">Dirección</label>
                 <input type="text" name="direccion" id="direccion" value="{{ old('direccion', $cliente->direccion) }}"
                        class="r-input">
-                @error('direccion') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
+                @error('direccion') <p class="r-error">{{ $message }}</p>@enderror
             </div>
 
             <div>
                 <label for="limite_credito" class="r-label">Límite de crédito (0 = sin cuenta corriente)</label>
                 <input type="number" step="0.01" min="0" name="limite_credito" id="limite_credito"
                        value="{{ old('limite_credito', $cliente->limite_credito ?? 0) }}" class="r-input">
-                @error('limite_credito') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
+                @error('limite_credito') <p class="r-error">{{ $message }}</p>@enderror
             </div>
 
             <div>
                 <label for="observaciones" class="r-label">Observaciones</label>
                 <textarea name="observaciones" id="observaciones" rows="3"
                           class="r-input">{{ old('observaciones', $cliente->observaciones) }}</textarea>
-                @error('observaciones') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
+                @error('observaciones') <p class="r-error">{{ $message }}</p>@enderror
             </div>
 
             <div>
-                <label for="estado" class="r-label">Estado <span class="r-tag" style="background: var(--r-color-danger); color: #fff;">*</span></label>
+                <label for="estado" class="r-label">Estado <span class="r-req">*</span></label>
                 <select name="estado" id="estado" required class="r-select">
                     <option value="activo" @selected(old('estado', $cliente->estado ?? 'activo') === 'activo')>Activo</option>
                     <option value="archivado" @selected(old('estado', $cliente->estado) === 'archivado')>Archivado</option>
                 </select>
-                @error('estado') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
+                @error('estado') <p class="r-error">{{ $message }}</p>@enderror
             </div>
 
             <div class="r-flex r-items-center r-justify-between r-mt-4" style="border-top: 1px solid var(--r-color-border); padding-top: 1rem;">

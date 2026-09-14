@@ -1,53 +1,43 @@
-<section class="space-y-6">
+<section class="r-stack">
     <header>
-        <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-            {{ __('Delete Account') }}
-        </h2>
-
-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.') }}
+        <h2 class="r-display-m" style="font-size:1.125rem;">{{ __('Eliminar cuenta') }}</h2>
+        <p class="r-body" style="font-size:0.9rem;margin:4px 0 0;">
+            {{ __('Al eliminar tu cuenta se borran de forma permanente todos sus datos. Descargá antes lo que quieras conservar.') }}
         </p>
     </header>
 
     <x-danger-button
         x-data=""
         x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')"
-    >{{ __('Delete Account') }}</x-danger-button>
+        style="align-self:flex-start;"
+    >{{ __('Eliminar cuenta') }}</x-danger-button>
 
     <x-modal name="confirm-user-deletion" :show="$errors->userDeletion->isNotEmpty()" focusable>
-        <form method="post" action="{{ route('profile.destroy') }}" class="p-6">
+        <form method="post" action="{{ route('profile.destroy') }}" style="padding:var(--space-8);">
             @csrf
             @method('delete')
 
-            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                {{ __('Are you sure you want to delete your account?') }}
+            <h2 class="r-display-m" style="font-size:1.125rem;">
+                {{ __('¿Seguro que querés eliminar tu cuenta?') }}
             </h2>
 
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
+            <p class="r-body" style="font-size:0.9rem;margin:var(--space-2) 0 var(--space-6);">
+                {{ __('Esta acción es permanente. Ingresá tu contraseña para confirmar.') }}
             </p>
 
-            <div class="mt-6">
-                <x-input-label for="password" value="{{ __('Password') }}" class="sr-only" />
-
-                <x-text-input
-                    id="password"
-                    name="password"
-                    type="password"
-                    class="mt-1 block w-3/4"
-                    placeholder="{{ __('Password') }}"
-                />
-
-                <x-input-error :messages="$errors->userDeletion->get('password')" class="mt-2" />
+            <div class="r-field">
+                <x-input-label for="password" value="{{ __('Contraseña') }}" class="sr-only" />
+                <x-text-input id="password" name="password" type="password" placeholder="{{ __('Contraseña') }}" />
+                <x-input-error :messages="$errors->userDeletion->get('password')" />
             </div>
 
-            <div class="mt-6 flex justify-end">
+            <div class="r-cluster" style="justify-content:flex-end;">
                 <x-secondary-button x-on:click="$dispatch('close')">
-                    {{ __('Cancel') }}
+                    {{ __('Cancelar') }}
                 </x-secondary-button>
 
-                <x-danger-button class="ms-3">
-                    {{ __('Delete Account') }}
+                <x-danger-button>
+                    {{ __('Eliminar cuenta') }}
                 </x-danger-button>
             </div>
         </form>

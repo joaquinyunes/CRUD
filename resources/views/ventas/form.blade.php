@@ -6,19 +6,18 @@
 <div class="py-6">
     <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
 
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">
+        <div class="r-flex r-items-center r-justify-between r-mb-6">
+            <h1 class="r-display-m">
                 {{ isset($venta) ? 'Editar venta' : 'Nueva venta' }}
             </h1>
-            <a href="{{ route('ventas.index') }}"
-               class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <a href="{{ route('ventas.index') }}" class="r-btn r-btn-ghost r-btn-sm">
                 &larr; Volver
             </a>
         </div>
 
         @if($errors->any())
-            <div class="mb-4 rounded-md bg-red-50 dark:bg-red-900/40 px-4 py-3 text-sm text-red-700 dark:text-red-300">
-                <ul class="list-disc list-inside">
+            <div class="r-flash-error r-mb-4">
+                <ul style="list-style:disc;margin:0;padding-left:1.2em;">
                     @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -26,7 +25,7 @@
             </div>
         @endif
 
-        <p class="r-caption mb-3" style="opacity:.75;">
+        <p class="r-caption r-mb-4" style="text-transform:none;letter-spacing:0;">
             Atajos: <kbd>F2</kbd> lector de código · <kbd>Alt</kbd>+<kbd>P</kbd> agregar fila ·
             <kbd>Alt</kbd>+<kbd>M</kbd> medio de pago · <kbd>F9</kbd> guardar
         </p>
@@ -57,7 +56,7 @@
                     </div>
                     @endif
                     <div>
-                        <label for="cliente_id" class="r-label">Cliente <span class="text-red-500">*</span></label>
+                        <label for="cliente_id" class="r-label">Cliente <span class="r-req">*</span></label>
                         <select name="cliente_id" id="cliente_id"
                                 class="r-select"
                                 required>
@@ -69,20 +68,20 @@
                                 </option>
                             @endforeach
                         </select>
-                        @error('cliente_id') <p class="r-caption" style="color:#dc2626;">{{ $message }}</p> @enderror
+                        @error('cliente_id') <p class="r-error">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
-                        <label for="fecha" class="r-label">Fecha <span class="text-red-500">*</span></label>
+                        <label for="fecha" class="r-label">Fecha <span class="r-req">*</span></label>
                         <input type="date" name="fecha" id="fecha"
                                value="{{ old('fecha', isset($venta) ? $venta->fecha->format('Y-m-d') : date('Y-m-d')) }}"
                                class="r-input"
                                required>
-                        @error('fecha') <p class="r-caption" style="color:#dc2626;">{{ $message }}</p> @enderror
+                        @error('fecha') <p class="r-error">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
-                        <label for="estado" class="r-label">Estado <span class="text-red-500">*</span></label>
+                        <label for="estado" class="r-label">Estado <span class="r-req">*</span></label>
                         <select name="estado" id="estado"
                                 class="r-select"
                                 required>
@@ -90,7 +89,7 @@
                             <option value="completada" {{ old('estado', $venta->estado ?? '') === 'completada' ? 'selected' : '' }}>Completada</option>
                             <option value="cancelada"  {{ old('estado', $venta->estado ?? '') === 'cancelada'  ? 'selected' : '' }}>Cancelada</option>
                         </select>
-                        @error('estado') <p class="r-caption" style="color:#dc2626;">{{ $message }}</p> @enderror
+                        @error('estado') <p class="r-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </div>
@@ -109,13 +108,13 @@
                     <input type="text" id="scan-codigo" autocomplete="off"
                            placeholder="Código de barras, código interno o nombre…"
                            class="r-input">
-                    <p id="scan-msg" class="r-caption" style="min-height:1.1em;"></p>
+                    <p id="scan-msg" class="r-caption" style="min-height:1.1em;text-transform:none;letter-spacing:0;" aria-live="polite"></p>
                 </div>
 
                 <div id="detalles-container" class="space-y-3">
                     @if(isset($venta) && $venta->detalles->count())
                         @foreach($venta->detalles as $index => $detalle)
-                            <div class="detalle-row flex flex-wrap gap-3 items-end p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                            <div class="detalle-row r-subrow">
                                 <div class="flex-1 min-w-[200px]">
                                     <label class="r-caption">Producto</label>
                                     <select name="detalles[{{ $index }}][producto_id]"
@@ -150,7 +149,7 @@
                                            value="${{ number_format($detalle->subtotal, 2, ',', '.') }}"
                                            class="r-input subtotal-display" style="background:var(--color-bg-muted); opacity:0.7;">
                                 </div>
-                                <button type="button" class="quitar-detalle mb-1 px-2 py-1 text-red-500 hover:text-red-700 text-xs">
+                                <button type="button" class="quitar-detalle r-btn r-btn-ghost r-btn-sm" aria-label="Quitar producto" style="margin-bottom:1px;">
                                     ✕
                                 </button>
                             </div>
@@ -158,14 +157,14 @@
                     @endif
                 </div>
 
-                <div class="flex justify-end mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div class="text-right">
+                <div class="r-flex r-justify-end r-mt-4" style="padding-top:var(--space-4);border-top:1px solid var(--color-line);">
+                    <div class="r-text-right">
                         <span class="r-caption">Subtotal:</span>
-                        <span id="subtotal-venta" class="ml-2 text-lg font-semibold text-gray-800 dark:text-gray-100">$0.00</span>
+                        <span id="subtotal-venta" class="r-mono" style="margin-left:8px;font-size:1.125rem;font-weight:600;color:var(--color-ink);">$0.00</span>
                     </div>
                 </div>
 
-                @error('detalles') <p class="r-caption" style="color:#dc2626;">{{ $message }}</p> @enderror
+                @error('detalles') <p class="r-error">{{ $message }}</p> @enderror
             </div>
 
             <div class="r-card-flat">
@@ -195,7 +194,7 @@
                 <div id="pagos-container" class="space-y-3">
                     @if(isset($venta) && $venta->pagos->count())
                         @foreach($venta->pagos as $idx => $pago)
-                            <div class="pago-row flex flex-wrap gap-3 items-end p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                            <div class="pago-row r-subrow">
                                 <div class="flex-1 min-w-[180px]">
                                     <label class="r-caption">Método de pago</label>
                                     <select name="metodos_pago[{{ $idx }}][metodo_pago_id]"
@@ -224,7 +223,7 @@
                                            class="r-input"
                                            placeholder="Opcional">
                                 </div>
-                                <button type="button" class="quitar-pago mb-1 px-2 py-1 text-red-500 hover:text-red-700 text-xs">
+                                <button type="button" class="quitar-pago r-btn r-btn-ghost r-btn-sm" aria-label="Quitar medio de pago" style="margin-bottom:1px;">
                                     ✕
                                 </button>
                             </div>
@@ -241,27 +240,27 @@
             </div>
 
             <div class="r-card-flat">
-                <div class="flex justify-between items-center">
+                <div class="r-cluster r-justify-end" style="gap:var(--space-8);">
                     <div>
-                        <span class="r-label">Subtotal:</span>
-                        <span id="resumen-subtotal" class="font-semibold">$0.00</span>
+                        <span class="r-label" style="display:inline;">Subtotal</span>
+                        <span id="resumen-subtotal" class="r-mono" style="margin-left:6px;font-weight:600;">$0.00</span>
                     </div>
                     <div>
-                        <span class="r-label">Descuento:</span>
-                        <span id="resumen-descuento" class="font-semibold">-$0.00</span>
+                        <span class="r-label" style="display:inline;">Descuento</span>
+                        <span id="resumen-descuento" class="r-mono" style="margin-left:6px;font-weight:600;">-$0.00</span>
                     </div>
                     <div>
-                        <span class="r-label">Impuesto:</span>
-                        <span id="resumen-impuesto" class="font-semibold">$0.00</span>
+                        <span class="r-label" style="display:inline;">Impuesto</span>
+                        <span id="resumen-impuesto" class="r-mono" style="margin-left:6px;font-weight:600;">$0.00</span>
                     </div>
                     <div>
-                        <span class="r-label">Total final:</span>
-                        <span id="resumen-total" class="text-lg font-bold text-gray-800 dark:text-gray-100">$0.00</span>
+                        <span class="r-label" style="display:inline;">Total final</span>
+                        <span id="resumen-total" class="r-mono" style="margin-left:6px;font-size:1.25rem;font-weight:700;color:var(--color-ink);">$0.00</span>
                     </div>
                 </div>
             </div>
 
-            <div class="flex items-center justify-end gap-3">
+            <div class="r-flex r-items-center r-justify-end r-gap-3">
                 <a href="{{ route('ventas.index') }}"
                    class="r-btn r-btn-ghost">
                     Cancelar
@@ -375,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ).join('');
 
         const html = `
-            <div class="detalle-row flex flex-wrap gap-3 items-end p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <div class="detalle-row r-subrow">
                 <div class="flex-1 min-w-[200px]">
                     <label class="r-caption">Producto</label>
                     <select name="detalles[${idx}][producto_id]"
@@ -404,7 +403,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <input type="text" readonly value="$0.00"
                            class="r-input subtotal-display" style="background:var(--color-bg-muted); opacity:0.7;">
                 </div>
-                <button type="button" class="quitar-detalle mb-1 px-2 py-1 text-red-500 hover:text-red-700 text-xs">
+                <button type="button" class="quitar-detalle r-btn r-btn-ghost r-btn-sm" aria-label="Quitar producto" style="margin-bottom:1px;">
                     ✕
                 </button>
             </div>
@@ -429,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ).join('');
 
         const html = `
-            <div class="pago-row flex flex-wrap gap-3 items-end p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <div class="pago-row r-subrow">
                 <div class="flex-1 min-w-[180px]">
                     <label class="r-caption">Método de pago</label>
                     <select name="metodos_pago[${idx}][metodo_pago_id]"
@@ -452,7 +451,7 @@ document.addEventListener('DOMContentLoaded', function () {
                            class="r-input"
                            placeholder="Opcional">
                 </div>
-                <button type="button" class="quitar-pago mb-1 px-2 py-1 text-red-500 hover:text-red-700 text-xs">
+                <button type="button" class="quitar-pago r-btn r-btn-ghost r-btn-sm" aria-label="Quitar medio de pago" style="margin-bottom:1px;">
                     ✕
                 </button>
             </div>

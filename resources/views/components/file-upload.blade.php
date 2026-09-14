@@ -1,12 +1,12 @@
 @props(['relacionadoTipo' => null, 'relacionadoId' => null])
 
-<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-    <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Subir archivo</h2>
+<div class="r-card-flat">
+    <h2 class="r-label" style="margin-bottom:var(--space-4);">Subir archivo</h2>
 
     <form method="POST"
           action="{{ route('archivos.store') }}"
           enctype="multipart/form-data"
-          class="space-y-4">
+          class="r-stack">
         @csrf
 
         @if($relacionadoTipo)
@@ -21,29 +21,27 @@
                    name="archivo"
                    id="archivo-input"
                    accept="image/jpeg,image/png,image/webp,application/pdf"
-                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900 dark:file:text-indigo-300">
-            <p class="mt-1 text-xs text-gray-500">JPG, PNG, WEBP o PDF. Máx. 10 MB.</p>
-            @error('archivo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                   class="r-input"
+                   style="padding:8px;cursor:pointer;">
+            <p class="r-help">JPG, PNG, WEBP o PDF. Máx. 10 MB.</p>
+            @error('archivo') <p class="r-error">{{ $message }}</p> @enderror
         </div>
 
-        <div id="archivo-preview" class="hidden">
-            <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <img id="preview-img" class="hidden h-16 w-16 object-cover rounded" alt="Preview">
-                <div id="preview-pdf" class="hidden flex items-center justify-center h-16 w-16 bg-red-100 dark:bg-red-900/50 rounded">
-                    <span class="text-xs font-bold text-red-600 dark:text-red-400">PDF</span>
+        <div id="archivo-preview" hidden>
+            <div class="r-flex r-items-center r-gap-3" style="padding:var(--space-3);background:var(--color-paper);border:1px solid var(--color-line);border-radius:var(--border-radius-sm);">
+                <img id="preview-img" hidden style="height:64px;width:64px;object-fit:cover;border-radius:8px;" alt="Vista previa del archivo">
+                <div id="preview-pdf" hidden style="display:flex;align-items:center;justify-content:center;height:64px;width:64px;background:var(--color-danger-soft);border-radius:8px;">
+                    <span class="r-mono" style="font-size:0.75rem;font-weight:700;color:var(--color-danger);">PDF</span>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <p id="preview-nombre" class="text-sm text-gray-800 dark:text-gray-100 truncate"></p>
-                    <p id="preview-tamano" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                <div class="r-grow" style="min-width:0;">
+                    <p id="preview-nombre" style="font-size:0.9rem;color:var(--color-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;"></p>
+                    <p id="preview-tamano" class="r-caption" style="text-transform:none;letter-spacing:0;margin:2px 0 0;"></p>
                 </div>
-                <button type="button" id="quitar-archivo"
-                        class="text-red-500 hover:text-red-700 text-xs">✕</button>
+                <button type="button" id="quitar-archivo" class="r-btn r-btn-ghost r-btn-sm" aria-label="Quitar archivo seleccionado">Quitar</button>
             </div>
         </div>
 
-        <button type="submit"
-                id="btn-subir"
-                class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-500">
+        <button type="submit" id="btn-subir" class="r-btn r-btn-primary r-btn-sm" style="align-self:flex-start;">
             Subir archivo
         </button>
     </form>
@@ -61,31 +59,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
     input.addEventListener('change', function () {
         const file = this.files[0];
-        if (!file) {
-            preview.classList.add('hidden');
-            return;
-        }
+        if (!file) { preview.hidden = true; return; }
 
         previewNombre.textContent = file.name;
         previewTamano.textContent = formatBytes(file.size);
 
         if (file.type.startsWith('image/')) {
-            previewImg.classList.remove('hidden');
-            previewPdf.classList.add('hidden');
+            previewImg.hidden = false;
+            previewPdf.hidden = true;
             const reader = new FileReader();
             reader.onload = (e) => { previewImg.src = e.target.result; };
             reader.readAsDataURL(file);
         } else if (file.type === 'application/pdf') {
-            previewImg.classList.add('hidden');
-            previewPdf.classList.remove('hidden');
+            previewImg.hidden = true;
+            previewPdf.hidden = false;
         }
 
-        preview.classList.remove('hidden');
+        preview.hidden = false;
     });
 
     quitarBtn.addEventListener('click', function () {
         input.value = '';
-        preview.classList.add('hidden');
+        preview.hidden = true;
     });
 
     function formatBytes(bytes) {

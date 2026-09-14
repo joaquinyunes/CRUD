@@ -1,91 +1,71 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Usuarios y Roles
-            </h2>
-            <a href="{{ route('roles.index') }}"
-               class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                ← Volver a roles
-            </a>
-        </div>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="py-12">
-        <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
+@section('page_title', 'Usuarios y roles')
 
-            @if (session('success'))
-                <div class="mb-4 rounded-md bg-green-100 p-4 text-sm text-green-800 dark:bg-green-900 dark:text-green-200">
-                    {{ session('success') }}
-                </div>
-            @endif
+@section('content')
+<div style="max-width: 64rem; margin: 0 auto;">
 
-            @if (session('error'))
-                <div class="mb-4 rounded-md bg-red-100 p-4 text-sm text-red-800 dark:bg-red-900 dark:text-red-200">
-                    {{ session('error') }}
-                </div>
-            @endif
+    <div class="r-head">
+        <h2 class="r-display-m">Usuarios y roles</h2>
+        <a href="{{ route('roles.index') }}" class="r-btn r-btn-ghost r-btn-sm">&larr; Volver a roles</a>
+    </div>
 
-            <div class="overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg">
-                <div class="p-6">
-                    <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
-                        <thead>
-                            <tr class="border-b border-gray-200 dark:border-gray-700">
-                                <th class="pb-3 pr-6 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Usuario</th>
-                                <th class="pb-3 pr-6 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Correo</th>
-                                <th class="pb-3 pr-6 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Rol actual</th>
-                                <th class="pb-3 font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Asignar rol</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                            @foreach ($usuarios as $usuario)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
-                                    <td class="py-3 pr-6 font-medium text-gray-900 dark:text-gray-100">
-                                        {{ $usuario->name }}
-                                        @if ($usuario->id === auth()->id())
-                                            <span class="ml-1 text-xs text-gray-400">(vos)</span>
-                                        @endif
-                                    </td>
-                                    <td class="py-3 pr-6 text-gray-500 dark:text-gray-400">
-                                        {{ $usuario->email }}
-                                    </td>
-                                    <td class="py-3 pr-6">
-                                        @if ($usuario->role)
-                                            <span class="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
-                                                {{ $usuario->role->nombre }}
-                                            </span>
-                                        @else
-                                            <span class="text-xs text-red-500">Sin rol</span>
-                                        @endif
-                                    </td>
-                                    <td class="py-3">
-                                        <form action="{{ route('roles.asignar-rol', $usuario) }}" method="POST"
-                                              class="flex items-center gap-2">
-                                            @csrf
-                                            @method('PUT')
-                                            <select name="role_id"
-                                                    class="rounded-md border-gray-300 py-1 pl-2 pr-8 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
-                                                <option value="">— Sin rol —</option>
-                                                @foreach ($roles as $rol)
-                                                    <option value="{{ $rol->id }}"
-                                                            {{ $usuario->role_id == $rol->id ? 'selected' : '' }}>
-                                                        {{ $rol->nombre }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <button type="submit"
-                                                    class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                                Guardar
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    @if (session('success'))
+        <div class="r-flash-success r-mb-6">{{ session('success') }}</div>
+    @endif
+    @if (session('error'))
+        <div class="r-flash-error r-mb-6">{{ session('error') }}</div>
+    @endif
 
+    <div class="r-card-flat" style="padding:0;">
+        <div style="overflow-x:auto;">
+            <table class="r-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Correo</th>
+                        <th>Rol actual</th>
+                        <th>Asignar rol</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($usuarios as $usuario)
+                        <tr>
+                            <td style="font-weight:500;">
+                                {{ $usuario->name }}
+                                @if ($usuario->id === auth()->id())
+                                    <span class="r-caption" style="text-transform:none;letter-spacing:0;margin-left:4px;">(vos)</span>
+                                @endif
+                            </td>
+                            <td class="r-mono" style="font-size:0.8125rem;color:var(--color-ink-soft);">{{ $usuario->email }}</td>
+                            <td>
+                                @if ($usuario->role)
+                                    <span class="r-tag r-tag-marigold">{{ $usuario->role->nombre }}</span>
+                                @else
+                                    <span class="r-tag r-tag-danger">Sin rol</span>
+                                @endif
+                            </td>
+                            <td>
+                                <form action="{{ route('roles.asignar-rol', $usuario) }}" method="POST" class="r-cluster" style="gap:var(--space-2);">
+                                    @csrf
+                                    @method('PUT')
+                                    <select name="role_id" class="r-select" style="min-height:34px;padding:4px 32px 4px 10px;font-size:0.8125rem;width:auto;">
+                                        <option value="">— Sin rol —</option>
+                                        @foreach ($roles as $rol)
+                                            <option value="{{ $rol->id }}" {{ $usuario->role_id == $rol->id ? 'selected' : '' }}>
+                                                {{ $rol->nombre }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button type="submit" class="r-btn r-btn-primary r-btn-sm">Guardar</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
-</x-app-layout>
+
+</div>
+@endsection
