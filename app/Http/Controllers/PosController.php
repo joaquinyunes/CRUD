@@ -73,7 +73,7 @@ class PosController extends Controller
     public function cotizar(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'cliente_id' => ['nullable', 'exists:clientes,id'],
+            'cliente_id' => ['nullable', 'exists:mongodb.clientes,_id'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.producto_id' => ['required', 'exists:productos,id'],
             'items.*.cantidad' => ['required', 'numeric', 'gt:0'],
@@ -94,7 +94,7 @@ class PosController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'cliente_id' => ['nullable', 'exists:clientes,id'],
+            'cliente_id' => ['nullable', 'exists:mongodb.clientes,_id'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.producto_id' => ['required', 'exists:productos,id'],
             'items.*.cantidad' => ['required', 'numeric', 'gt:0'],
@@ -161,12 +161,53 @@ class PosController extends Controller
         return view('pos.ticket', compact('venta', 'negocio', 'comprobante'));
     }
 
-    /** @param array<string,mixed> $data */
+    /**
+     * Detecta cualquier forma de "regalar" la venta por encima del límite
+     * configurado: descuento porcentual (como antes), descuento fijo
+     * (antes no se chequeaba nada) y precio manual por debajo del precio de
+     * lista (antes no se chequeaba nada — un cajero podía poner cualquier
+     * precio sin PIN).
+     *
+     * @param array<string,mixed> $data
+     */
     private function requiereSupervisor(array $data): bool
     {
         $limite = (float) Setting::obtener('ventas_limite_descuento', '10');
-        if (($data['descuento_tipo'] ?? null) === 'porcentaje') {
-            return (float) ($data['descuento'] ?? 0) > $limite;
+        $items = $data['items'] ?? [];
+
+        $subtotalCobrado = 0.0;
+        foreach ($items as $item) {
+            $subtotalCobrado += (float) ($item['cantidad'] ?? 0) * (float) ($item['precio'] ?? 0);
+        }
+
+        $descuentoTipo = $data['descuento_tipo'] ?? null;
+        $descuento = (float) ($data['descuento'] ?? 0);
+
+        if ($descuentoTipo === 'porcentaje' && $descuento > $limite) {
+            return true;
+        }
+
+        if ($descuentoTipo === 'fijo' && $subtotalCobrado > 0 && ($descuento / $subtotalCobrado * 100) > $limite) {
+            return true;
+        }
+
+        $manualIds = collect($items)->filter(fn ($i) => ! empty($i['precio_manual']))->pluck('producto_id');
+        if ($manualIds->isNotEmpty()) {
+            $preciosLista = Producto::whereIn('id', $manualIds)->pluck('precio_venta', 'id');
+
+            foreach ($items as $item) {
+                if (empty($item['precio_manual'])) {
+                    continue;
+                }
+                $precioLista = (float) ($preciosLista[$item['producto_id']] ?? 0);
+                if ($precioLista <= 0) {
+                    continue;
+                }
+                $bajaPct = (1 - (float) $item['precio'] / $precioLista) * 100;
+                if ($bajaPct > $limite) {
+                    return true;
+                }
+            }
         }
 
         return false;

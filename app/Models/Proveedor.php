@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use MongoDB\Laravel\Eloquent\Model;
 
 class Proveedor extends Model
 {
     use HasFactory;
+
+    protected $connection = 'mongodb';
 
     protected $table = 'proveedores';
 
@@ -20,9 +22,15 @@ class Proveedor extends Model
         'direccion',
     ];
 
+    /**
+     * OJO: HybridRelations::hasMany() delega a parent::hasMany() para
+     * relaciones Mongo -> SQL, y ese metodo (core de Eloquent) copia la
+     * conexion del padre ('mongodb') al modelo relacionado via
+     * newRelatedInstance() -> rompe la query contra "compras". Se arma a mano.
+     */
     public function compras(): HasMany
     {
-        return $this->hasMany(Compra::class);
+        return new HasMany(Compra::query(), $this, 'proveedor_id', '_id');
     }
 
     /**

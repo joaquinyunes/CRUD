@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\CajaSesion;
 use App\Models\Cliente;
 use App\Models\MetodoPago;
+use App\Models\Permission;
 use App\Models\Producto;
 use App\Models\ProductoCodigo;
 use App\Models\Role;
@@ -171,5 +172,64 @@ class PosTest extends TestCase
         $this->assertSame('pagado', $venta->estado_pago);
         $this->assertEquals(21, $sesion->fresh()->totalIngresos());
         $this->assertCount(2, $venta->pagos);
+    }
+
+    /** Rol Empleado con permiso para vender y operar caja, pero SIN pos.supervisar. */
+    private function empleado(): User
+    {
+        $rol = Role::create(['nombre' => 'Empleado']);
+        $rol->permissions()->attach([
+            Permission::create(['clave' => 'pos.usar'])->id,
+            Permission::create(['clave' => 'caja.operar'])->id,
+        ]);
+
+        return User::factory()->create(['role_id' => $rol->id]);
+    }
+
+    public function test_precio_manual_muy_por_debajo_de_lista_requiere_pin_de_supervisor(): void
+    {
+        $empleado = $this->empleado();
+        $efectivo = $this->efectivo();
+        $this->abrirCaja($empleado);
+        $producto = Producto::factory()->create(['stock' => 10, 'precio_venta' => 100]);
+
+        // Precio manual a $1 sobre un producto de $100 de lista: 99% de baja, muy por
+        // encima del limite (10% por defecto) -> antes del fix esto pasaba sin pedir nada.
+        $payload = [
+            'items' => [['producto_id' => $producto->id, 'cantidad' => 1, 'precio' => 1, 'precio_manual' => true]],
+            'pagos' => [['metodo_pago_id' => $efectivo->id, 'monto' => 1.21]],
+        ];
+
+        $this->actingAs($empleado)->postJson(route('pos.store'), $payload)
+            ->assertStatus(422)
+            ->assertJsonFragment(['message' => 'Descuento alto: requiere PIN de un supervisor.']);
+        $this->assertSame(0, Venta::count());
+
+        $permiso = Permission::create(['clave' => 'pos.supervisar']);
+        $supervisorRole = Role::create(['nombre' => 'Supervisor']);
+        $supervisorRole->permissions()->attach($permiso->id);
+        User::factory()->create(['role_id' => $supervisorRole->id, 'pin_supervisor' => '2468']);
+
+        $this->actingAs($empleado)
+            ->postJson(route('pos.store'), $payload + ['pin_supervisor' => '2468'])
+            ->assertOk();
+        $this->assertSame(1, Venta::count());
+    }
+
+    public function test_descuento_fijo_igual_al_subtotal_requiere_pin_de_supervisor(): void
+    {
+        $empleado = $this->empleado();
+        $efectivo = $this->efectivo();
+        $this->abrirCaja($empleado);
+        $producto = Producto::factory()->create(['stock' => 10, 'precio_venta' => 100]);
+
+        // descuento_tipo=fijo esquivaba el chequeo por completo antes del fix.
+        $this->actingAs($empleado)->postJson(route('pos.store'), [
+            'items' => [['producto_id' => $producto->id, 'cantidad' => 1, 'precio' => 100]],
+            'descuento_tipo' => 'fijo',
+            'descuento' => 100,
+            'pagos' => [['metodo_pago_id' => $efectivo->id, 'monto' => 0.01]],
+        ])->assertStatus(422)->assertJsonFragment(['message' => 'Descuento alto: requiere PIN de un supervisor.']);
+        $this->assertSame(0, Venta::count());
     }
 }

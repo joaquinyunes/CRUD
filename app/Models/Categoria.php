@@ -5,11 +5,15 @@ namespace App\Models;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class Categoria extends Model
 {
     use Auditable, HasFactory;
+
+    protected $connection = 'mongodb';
+
+    protected $table = 'categorias';
 
     public $timestamps = false;
 

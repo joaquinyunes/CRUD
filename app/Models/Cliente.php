@@ -5,13 +5,17 @@ namespace App\Models;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use MongoDB\Laravel\Eloquent\Model;
 
 class Cliente extends Model
 {
     use Auditable, HasFactory;
+
+    protected $connection = 'mongodb';
+
+    protected $table = 'clientes';
 
     protected $fillable = [
         'nombre',
@@ -31,14 +35,22 @@ class Cliente extends Model
         'limite_credito' => 'decimal:2',
     ];
 
+    /** Mismo problema que ventas(): se arma a mano para no heredar la conexion mongodb. */
     public function listaPrecio(): BelongsTo
     {
-        return $this->belongsTo(ListaPrecio::class, 'lista_precio_id');
+        return new BelongsTo(ListaPrecio::query(), $this, 'lista_precio_id', 'id', 'listaPrecio');
     }
 
+    /**
+     * OJO: HybridRelations::hasMany() delega a parent::hasMany() para
+     * relaciones Mongo -> SQL, y ese metodo (core de Eloquent) copia la
+     * conexion del padre ('mongodb') al modelo relacionado via
+     * newRelatedInstance() -> rompe la query contra "ventas" (usa la
+     * conexion mongodb en vez de la propia de Venta). Se arma a mano.
+     */
     public function ventas(): HasMany
     {
-        return $this->hasMany(Venta::class);
+        return new HasMany(Venta::query(), $this, 'cliente_id', '_id');
     }
 
     /**
