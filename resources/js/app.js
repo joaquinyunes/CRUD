@@ -10,6 +10,17 @@ window.gsap = gsap;
 window.ScrollTrigger = ScrollTrigger;
 
 document.addEventListener('DOMContentLoaded', () => {
+    const prefiereMenosMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefiereMenosMovimiento) {
+        document.querySelectorAll('[data-reveal]').forEach((el) => {
+            el.style.opacity = '1';
+            el.style.transform = 'none';
+            el.classList.add('revealed');
+        });
+        return;
+    }
+
     // Entrada de página (no bloqueante: el body ya es visible por defecto)
     gsap.fromTo('body', { opacity: 0 }, { opacity: 1, duration: 0.4, ease: 'power2.out' });
 
@@ -49,6 +60,67 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Entrada escalonada del menú lateral
+    const sidebarLinks = document.querySelectorAll('.r-sidebar-link');
+    if (sidebarLinks.length) {
+        gsap.fromTo(sidebarLinks,
+            { opacity: 0, x: -8 },
+            { opacity: 1, x: 0, duration: 0.35, ease: 'power2.out', stagger: 0.02 }
+        );
+    }
+
+    // Indicador que sigue al link bajo el cursor en el sidebar
+    const sidebarNav = document.querySelector('.r-sidebar-nav');
+    const sidebarIndicator = document.getElementById('sidebarIndicator');
+    if (sidebarNav && sidebarIndicator) {
+        sidebarLinks.forEach((link) => {
+            link.addEventListener('mouseenter', () => {
+                const navRect = sidebarNav.getBoundingClientRect();
+                const r = link.getBoundingClientRect();
+                gsap.to(sidebarIndicator, {
+                    y: r.top - navRect.top + sidebarNav.scrollTop,
+                    height: r.height,
+                    opacity: 1,
+                    duration: 0.35,
+                    ease: 'power3.out',
+                });
+            });
+        });
+        sidebarNav.addEventListener('mouseleave', () => {
+            gsap.to(sidebarIndicator, { opacity: 0, duration: 0.25 });
+        });
+    }
+
+    // Sombra del topbar al hacer scroll
+    const topbar = document.querySelector('.r-topbar');
+    if (topbar) {
+        const onScroll = () => {
+            const scrollY = document.scrollingElement ? document.scrollingElement.scrollTop : window.scrollY;
+            topbar.classList.toggle('is-scrolled', scrollY > 4);
+        };
+        document.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+    }
+
+    // Spotlight que sigue al cursor sobre cards y KPIs
+    if (window.matchMedia('(pointer: fine)').matches) {
+        let spotlightTarget = null;
+        let spotlightTicking = false;
+        document.addEventListener('mousemove', (e) => {
+            spotlightTarget = e.target.closest('.r-card, .r-kpi');
+            if (!spotlightTarget || spotlightTicking) return;
+            spotlightTicking = true;
+            requestAnimationFrame(() => {
+                if (spotlightTarget) {
+                    const rect = spotlightTarget.getBoundingClientRect();
+                    spotlightTarget.style.setProperty('--spot-x', (e.clientX - rect.left) + 'px');
+                    spotlightTarget.style.setProperty('--spot-y', (e.clientY - rect.top) + 'px');
+                }
+                spotlightTicking = false;
+            });
+        }, { passive: true });
+    }
+
     // Fallback: si algo falla, nunca dejar contenido oculto
     setTimeout(() => {
         document.querySelectorAll('[data-reveal]:not(.revealed)').forEach((el) => {
@@ -72,6 +144,8 @@ window.RhythmToast = (() => {
         if (container) return container;
         container = document.createElement('div');
         container.id = 'rhythm-toast-container';
+        container.setAttribute('role', 'status');
+        container.setAttribute('aria-live', 'polite');
         container.style.cssText =
             'position:fixed;top:20px;right:20px;z-index:9999;display:flex;' +
             'flex-direction:column;gap:12px;pointer-events:none;max-width:360px;';

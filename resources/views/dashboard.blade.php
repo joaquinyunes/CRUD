@@ -6,18 +6,39 @@
 @section('content')
 
 {{-- Hero Section --}}
-<div class="r-mb-12" data-reveal="fade-up">
-    <h2 class="r-display-xl r-mb-4">
-        Hola, {{ explode(' ', Auth::user()->name)[0] }}.
-    </h2>
-    <p class="r-body-l" style="max-width: 520px;">
-        Este es tu resumen de actividad. Filtrá por período para ver los números que importan.
-    </p>
+<div class="r-mb-12 r-hero" data-reveal="fade-up">
+    <div class="r-hero-copy">
+        <h2 class="r-display-xl r-mb-4">
+            Hola, {{ explode(' ', Auth::user()->name)[0] }}.
+        </h2>
+        <p class="r-body-l" style="max-width: 520px;">
+            Este es tu resumen de actividad. Filtrá por período para ver los números que importan.
+        </p>
 
-    {{-- Rhythm divider --}}
-    <div class="r-divider" style="justify-content: flex-start; padding: var(--space-6) 0;">
-        <svg viewBox="0 0 120 24" width="120" height="24">
-            <path class="r-divider-line" d="M0,12 Q10,4 20,12 T40,12 T60,12 T80,12 T100,12 T120,12" />
+        {{-- Rhythm divider --}}
+        <div class="r-divider" style="justify-content: flex-start; padding: var(--space-6) 0;">
+            <svg viewBox="0 0 120 24" width="120" height="24">
+                <path class="r-divider-line" d="M0,12 Q10,4 20,12 T40,12 T60,12 T80,12 T100,12 T120,12" />
+            </svg>
+        </div>
+    </div>
+
+    <div class="r-hero-art" data-reveal="scale" data-reveal-delay="0.15">
+        <svg viewBox="0 0 240 240" role="img" aria-hidden="true">
+            <circle cx="120" cy="120" r="118" fill="var(--color-moss-pale)" opacity="0.45"/>
+            <g stroke="var(--color-marigold)" stroke-width="2" fill="none" stroke-linecap="round">
+                <path d="M30,152 Q50,112 70,152 T110,152 T150,152 T190,152 T210,152" opacity="0.85"/>
+                <path d="M30,172 Q50,142 70,172 T110,172 T150,172 T190,172 T210,172" opacity="0.4"/>
+            </g>
+            <g>
+                <rect x="58" y="132" width="14" height="48" rx="7" fill="var(--color-ink)" opacity="0.82"/>
+                <rect x="82" y="100" width="14" height="80" rx="7" fill="var(--color-marigold)"/>
+                <rect x="106" y="58" width="14" height="122" rx="7" fill="var(--color-marigold-deep)"/>
+                <rect x="130" y="88" width="14" height="92" rx="7" fill="var(--color-moss)"/>
+                <rect x="154" y="114" width="14" height="66" rx="7" fill="var(--color-ink)" opacity="0.55"/>
+            </g>
+            <circle cx="172" cy="52" r="6" fill="var(--color-marigold)"/>
+            <circle cx="193" cy="72" r="3" fill="var(--color-moss)"/>
         </svg>
     </div>
 </div>
