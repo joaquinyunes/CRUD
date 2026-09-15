@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use MongoDB\Laravel\Eloquent\HybridRelations;
 
 class Compra extends Model
 {
-    use HasFactory;
+    // proveedor() apunta a un modelo Mongo; HybridRelations arma el puente.
+    use HasFactory, HybridRelations;
 
     protected $fillable = [
         'numero',
@@ -96,9 +98,13 @@ class Compra extends Model
             return $query;
         }
 
-        return $query->whereHas('proveedor', function ($q) use ($buscar) {
-            $q->where('nombre', 'like', "%{$buscar}%");
-        })->orWhere('numero', 'like', "%{$buscar}%");
+        // proveedor vive en Mongo: no se puede hacer whereHas cruzando motores.
+        $proveedorIds = Proveedor::buscar($buscar)->pluck('_id');
+
+        return $query->where(function ($q) use ($buscar, $proveedorIds) {
+            $q->whereIn('proveedor_id', $proveedorIds)
+                ->orWhere('numero', 'like', "%{$buscar}%");
+        });
     }
 
     public function scopeParaFecha($query, ?string $desde, ?string $hasta)

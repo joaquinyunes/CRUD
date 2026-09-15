@@ -87,7 +87,7 @@
 
             <div class="r-mt-3">
                 <label class="r-label">Cliente</label>
-                <select class="r-input" x-model.number="cliente_id" @change="recalcular()">
+                <select class="r-input" x-model="cliente_id" @change="recalcular()">
                     <option :value="null">Consumidor final</option>
                     @foreach($clientes as $c)
                         <option value="{{ $c->id }}">{{ trim($c->nombre.' '.$c->apellido) }}</option>

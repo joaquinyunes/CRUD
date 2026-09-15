@@ -22,8 +22,10 @@ class CompraController extends Controller
 
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
+            // proveedor vive en Mongo: no se puede hacer whereHas cruzando motores.
+            $proveedorIds = \App\Models\Proveedor::where('nombre', 'like', "%{$buscar}%")->pluck('_id');
             $query->where('numero', 'like', "%{$buscar}%")
-                  ->orWhereHas('proveedor', fn ($q) => $q->where('nombre', 'like', "%{$buscar}%"));
+                  ->orWhereIn('proveedor_id', $proveedorIds);
         }
 
         if ($request->filled('estado')) {
@@ -38,7 +40,7 @@ class CompraController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'proveedor_id'            => ['required', 'exists:proveedores,id'],
+            'proveedor_id'            => ['required', 'exists:mongodb.proveedores,_id'],
             'fecha'                   => ['required', 'date'],
             'estado'                  => ['required', 'in:pendiente,completada,cancelada'],
             'detalles'                => ['required', 'array', 'min:1'],

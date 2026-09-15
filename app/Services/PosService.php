@@ -64,7 +64,7 @@ class PosService
      * @param  array<int,array<string,mixed>>  $items
      * @return array<string,mixed>
      */
-    public function cotizar(array $items, ?int $clienteId, ?string $descuentoTipo, float $descuento): array
+    public function cotizar(array $items, ?string $clienteId, ?string $descuentoTipo, float $descuento): array
     {
         $cliente = $clienteId ? Cliente::find($clienteId) : null;
         $detalles = $this->construirDetalles($items, $cliente);

@@ -24,8 +24,10 @@ class VentaController extends Controller
 
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
+            // cliente vive en Mongo: no se puede hacer whereHas cruzando motores.
+            $clienteIds = \App\Models\Cliente::where('nombre', 'like', "%{$buscar}%")->pluck('_id');
             $query->where('numero', 'like', "%{$buscar}%")
-                  ->orWhereHas('cliente', fn ($q) => $q->where('nombre', 'like', "%{$buscar}%"));
+                  ->orWhereIn('cliente_id', $clienteIds);
         }
 
         if ($request->filled('estado')) {
@@ -48,7 +50,7 @@ class VentaController extends Controller
     public function store(Request $request): VentaResource
     {
         $validated = $request->validate([
-            'cliente_id'             => ['required', 'exists:clientes,id'],
+            'cliente_id'             => ['required', 'exists:mongodb.clientes,_id'],
             'fecha'                  => ['required', 'date'],
             'estado'                 => ['required', 'in:pendiente,completada,cancelada'],
             'detalles'               => ['required', 'array', 'min:1'],

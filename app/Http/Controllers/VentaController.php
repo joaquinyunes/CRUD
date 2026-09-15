@@ -217,7 +217,7 @@ class VentaController extends Controller
     private function validar(Request $request): void
     {
         $request->validate([
-            'cliente_id'             => ['required', 'exists:clientes,id'],
+            'cliente_id'             => ['required', 'exists:mongodb.clientes,_id'],
             'deposito_id'            => ['nullable', 'exists:depositos,id'],
             'fecha'                  => ['required', 'date'],
             'estado'                 => ['required', 'in:pendiente,completada,cancelada'],

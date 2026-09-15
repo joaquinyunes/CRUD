@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Categoria;
 use App\Models\Cliente;
 use App\Models\Compra;
 use App\Models\Producto;
@@ -135,20 +136,31 @@ class ReporteController extends Controller
         $fechaDesde = $request->get('fecha_desde', now()->startOfYear()->toDateString());
         $fechaHasta = $request->get('fecha_hasta', now()->toDateString());
 
+        // clientes vive en Mongo: no se puede hacer join SQL contra ella.
         $datos = Venta::select(
-            'clientes.nombre',
-            'clientes.apellido',
-            'clientes.email',
+            'cliente_id',
             DB::raw('COUNT(*) as total_compras'),
-            DB::raw('SUM(ventas.total) as total_gastado')
+            DB::raw('SUM(total) as total_gastado')
         )
-            ->join('clientes', 'ventas.cliente_id', '=', 'clientes.id')
-            ->where('ventas.estado', 'completada')
-            ->whereBetween('ventas.fecha', [$fechaDesde, $fechaHasta])
-            ->groupBy('clientes.id', 'clientes.nombre', 'clientes.apellido', 'clientes.email')
+            ->where('estado', 'completada')
+            ->whereBetween('fecha', [$fechaDesde, $fechaHasta])
+            ->groupBy('cliente_id')
             ->orderBy('total_gastado', 'desc')
             ->limit($limit)
             ->get();
+
+        $clientes = Cliente::whereIn('_id', $datos->pluck('cliente_id')->filter()->unique()->values())
+            ->get(['nombre', 'apellido', 'email'])
+            ->keyBy(fn ($c) => (string) $c->id);
+
+        $datos = $datos->map(function ($fila) use ($clientes) {
+            $cliente = $clientes->get($fila->cliente_id);
+            $fila->nombre = $cliente->nombre ?? '—';
+            $fila->apellido = $cliente->apellido ?? '';
+            $fila->email = $cliente->email ?? '';
+
+            return $fila;
+        });
 
         return view('reportes.mejores-clientes', compact('datos', 'limit', 'fechaDesde', 'fechaHasta'));
     }
@@ -176,16 +188,17 @@ class ReporteController extends Controller
         $fechaDesde = $request->get('fecha_desde', now()->startOfMonth()->toDateString());
         $fechaHasta = $request->get('fecha_hasta', now()->toDateString());
 
+        // categorias vive en Mongo: no se puede hacer leftJoin SQL contra ella.
+        // Se trae el nombre por producto y se resuelve el nombre de categoria aparte.
         $productos = DB::table('ventas_detalle')
             ->join('ventas', 'ventas_detalle.venta_id', '=', 'ventas.id')
             ->join('productos', 'ventas_detalle.producto_id', '=', 'productos.id')
-            ->leftJoin('categorias', 'productos.categoria_id', '=', 'categorias.id')
             ->where('ventas.estado', 'completada')
             ->whereBetween('ventas.fecha', [$fechaDesde, $fechaHasta])
             ->select(
                 'productos.codigo',
                 'productos.nombre',
-                'categorias.nombre as categoria',
+                'productos.categoria_id',
                 'productos.precio_compra',
                 'productos.precio_venta',
                 DB::raw('SUM(ventas_detalle.cantidad) as unidades_vendidas'),
@@ -194,9 +207,18 @@ class ReporteController extends Controller
                 DB::raw('SUM(ventas_detalle.subtotal) - SUM(ventas_detalle.cantidad * productos.precio_compra) as ganancia_total'),
                 DB::raw('CASE WHEN SUM(ventas_detalle.subtotal) > 0 THEN ((SUM(ventas_detalle.subtotal) - SUM(ventas_detalle.cantidad * productos.precio_compra)) / SUM(ventas_detalle.subtotal)) * 100 ELSE 0 END as margen_porcentaje')
             )
-            ->groupBy('productos.id', 'productos.codigo', 'productos.nombre', 'productos.precio_compra', 'productos.precio_venta', 'categorias.nombre')
+            ->groupBy('productos.id', 'productos.codigo', 'productos.nombre', 'productos.categoria_id', 'productos.precio_compra', 'productos.precio_venta')
             ->orderBy('ganancia_total', 'desc')
             ->get();
+
+        $nombresCategoria = Categoria::whereIn('_id', $productos->pluck('categoria_id')->filter()->unique()->values())
+            ->pluck('nombre', '_id');
+
+        $productos = $productos->map(function ($fila) use ($nombresCategoria) {
+            $fila->categoria = $nombresCategoria->get($fila->categoria_id, '—');
+
+            return $fila;
+        });
 
         $totales = [
             'facturado' => $productos->sum('total_facturado'),
@@ -267,20 +289,31 @@ class ReporteController extends Controller
     {
         $limit = $request->get('limit', 10);
 
+        // proveedores vive en Mongo: no se puede hacer join SQL contra ella.
         $datos = DB::table('compras')
-            ->join('proveedores', 'compras.proveedor_id', '=', 'proveedores.id')
-            ->where('compras.estado', 'completada')
+            ->where('estado', 'completada')
             ->select(
-                'proveedores.nombre',
-                'proveedores.email',
-                'proveedores.telefono',
+                'proveedor_id',
                 DB::raw('COUNT(*) as total_compras'),
-                DB::raw('SUM(compras.total) as total_gastado')
+                DB::raw('SUM(total) as total_gastado')
             )
-            ->groupBy('proveedores.id', 'proveedores.nombre', 'proveedores.email', 'proveedores.telefono')
+            ->groupBy('proveedor_id')
             ->orderBy('total_gastado', 'desc')
             ->limit($limit)
             ->get();
+
+        $proveedores = Proveedor::whereIn('_id', $datos->pluck('proveedor_id')->filter()->unique()->values())
+            ->get(['nombre', 'email', 'telefono'])
+            ->keyBy(fn ($p) => (string) $p->id);
+
+        $datos = $datos->map(function ($fila) use ($proveedores) {
+            $proveedor = $proveedores->get($fila->proveedor_id);
+            $fila->nombre = $proveedor->nombre ?? '—';
+            $fila->email = $proveedor->email ?? '';
+            $fila->telefono = $proveedor->telefono ?? '';
+
+            return $fila;
+        });
 
         return view('reportes.proveedores-ranking', compact('datos', 'limit'));
     }

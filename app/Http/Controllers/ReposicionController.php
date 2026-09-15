@@ -64,7 +64,7 @@ class ReposicionController extends Controller
     public function generar(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'proveedor_id' => ['required', 'exists:proveedores,id'],
+            'proveedor_id' => ['required', 'exists:mongodb.proveedores,_id'],
             'lineas' => ['required', 'array', 'min:1'],
             'lineas.*.producto_id' => ['required', 'exists:productos,id'],
             'lineas.*.cantidad' => ['required', 'integer', 'min:1'],

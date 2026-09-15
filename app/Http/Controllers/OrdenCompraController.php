@@ -229,7 +229,7 @@ class OrdenCompraController extends Controller
     private function validar(Request $request): void
     {
         $request->validate([
-            'proveedor_id'           => ['required', 'exists:proveedores,id'],
+            'proveedor_id'           => ['required', 'exists:mongodb.proveedores,_id'],
             'deposito_id'            => ['nullable', 'exists:depositos,id'],
             'fecha'                  => ['required', 'date'],
             'fecha_entrega_estimada' => ['nullable', 'date'],

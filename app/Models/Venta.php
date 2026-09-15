@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use MongoDB\Laravel\Eloquent\HybridRelations;
 
 class Venta extends Model
 {
-    use HasFactory;
+    // cliente() apunta a un modelo Mongo; HybridRelations arma el puente.
+    use HasFactory, HybridRelations;
 
     protected $fillable = [
         'numero',
@@ -109,10 +111,14 @@ class Venta extends Model
             return $query;
         }
 
-        return $query->whereHas('cliente', function ($q) use ($buscar) {
-            $q->where('nombre', 'like', "%{$buscar}%")
-                ->orWhere('apellido', 'like', "%{$buscar}%");
-        })->orWhere('numero', 'like', "%{$buscar}%");
+        // cliente vive en Mongo: no se puede hacer whereHas (join implicito) cruzando
+        // motores. Se resuelven los ids que matchean en Mongo y se filtra por ellos.
+        $clienteIds = Cliente::buscar($buscar)->pluck('_id');
+
+        return $query->where(function ($q) use ($buscar, $clienteIds) {
+            $q->whereIn('cliente_id', $clienteIds)
+                ->orWhere('numero', 'like', "%{$buscar}%");
+        });
     }
 
     public function scopeParaFecha($query, ?string $desde, ?string $hasta)

@@ -169,7 +169,7 @@ class PresupuestoController extends Controller
     private function validar(Request $request): void
     {
         $request->validate([
-            'cliente_id'             => ['required', 'exists:clientes,id'],
+            'cliente_id'             => ['required', 'exists:mongodb.clientes,_id'],
             'fecha'                  => ['required', 'date'],
             'validez_dias'           => ['nullable', 'integer', 'min:1', 'max:365'],
             'estado'                 => ['nullable', 'in:borrador,enviado,aceptado,rechazado'],

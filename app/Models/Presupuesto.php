@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use MongoDB\Laravel\Eloquent\HybridRelations;
 
 class Presupuesto extends Model
 {
+    // cliente() apunta a un modelo Mongo; HybridRelations arma el puente.
+    use HybridRelations;
+
     protected $fillable = [
         'numero', 'cliente_id', 'fecha', 'validez_dias',
         'subtotal', 'descuento', 'descuento_tipo', 'impuesto', 'total',
