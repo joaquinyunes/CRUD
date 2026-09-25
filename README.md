@@ -29,12 +29,16 @@ ropa— cambiando el dominio de negocio y reutilizando el núcleo de usuarios, r
 
 | | |
 |---|---|
-| **URL** | _pendiente de deploy — ver [Deploy en Render](#deploy-en-render)_ |
+| **URL** | **https://crud-erp.onrender.com** |
 | **Usuario** | `admin@admin.com` |
 | **Contraseña** | `password` |
 
-La demo se carga con `DemoSeeder`: categorías, productos con stock real, clientes, proveedores, ventas
-y compras ya cargadas, para que se vea funcionando desde el primer minuto.
+La demo se carga con `DemoSeeder`: categorías, productos con stock real, clientes, proveedores, ventas,
+compras, caja abierta con movimientos del día y cuenta corriente con saldos, para que se vea
+funcionando desde el primer minuto.
+
+> Corre en el plan gratuito de Render: la primera visita después de un rato de inactividad tarda
+> entre 30 y 60 segundos en levantar el contenedor.
 
 ---
 
