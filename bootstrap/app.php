@@ -17,6 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permiso' => CheckPermission::class,
         ]);
+
+        // Detras de un balanceador (Render, Fly, Heroku, nginx) la peticion
+        // llega por HTTP aunque el visitante haya entrado por HTTPS. Sin esto
+        // Laravel genera los enlaces y las redirecciones en http://, y el
+        // navegador los bloquea como contenido inseguro.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

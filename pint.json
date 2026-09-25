@@ -10,5 +10,8 @@
         "concat_space": {
             "spacing": "none"
         }
-    }
+    },
+    "exclude": [
+        "lang"
+    ]
 }
