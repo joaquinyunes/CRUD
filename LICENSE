@@ -1,0 +1,38 @@
+Licencia de Código Disponible (Source Available)
+Sistema Administrativo — Copyright (c) 2026 Joaquín Yunes
+
+Este software NO es de código abierto. El código se publica para que pueda ser
+leído, auditado y evaluado, no para ser usado libremente.
+
+1. PERMITIDO, sin costo ni permiso previo
+
+   a) Leer, clonar y estudiar el código fuente.
+   b) Ejecutarlo localmente con fines de evaluación, aprendizaje o revisión
+      técnica (por ejemplo, un empleador evaluando el trabajo del autor).
+   c) Citar fragmentos con atribución, en artículos, clases o reseñas.
+
+2. NO PERMITIDO sin una licencia comercial escrita del autor
+
+   a) Usarlo, total o parcialmente, para operar un negocio propio o de terceros.
+   b) Ofrecerlo como servicio, alojarlo para clientes o incorporarlo a un
+      producto comercial.
+   c) Redistribuirlo, revenderlo o sublicenciarlo.
+   d) Crear obras derivadas destinadas a cualquiera de los usos anteriores.
+
+3. LICENCIA COMERCIAL
+
+   El autor otorga licencias de uso comercial, instalación, personalización y
+   soporte. Consultas: joaquinyunes (GitHub) — ver README.md para contacto.
+
+4. SIN GARANTÍA
+
+   EL SOFTWARE SE ENTREGA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O
+   IMPLÍCITA, INCLUIDAS LAS GARANTÍAS DE COMERCIABILIDAD E IDONEIDAD PARA UN FIN
+   DETERMINADO. EN NINGÚN CASO EL AUTOR SERÁ RESPONSABLE POR RECLAMOS, DAÑOS U
+   OTRAS RESPONSABILIDADES DERIVADAS DEL SOFTWARE O DE SU USO.
+
+5. COMPONENTES DE TERCEROS
+
+   Este proyecto se apoya en Laravel y otras dependencias de código abierto, cada
+   una bajo su propia licencia (principalmente MIT). Esta licencia aplica
+   únicamente al código original de este repositorio, no a esas dependencias.

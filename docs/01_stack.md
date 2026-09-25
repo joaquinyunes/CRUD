@@ -5,16 +5,17 @@ Sistema Administrativo Universal para Negocios (adaptable por módulos a distint
 tiendas, ferreterías, gimnasios, imprentas, talleres, distribuidores, locales de ropa, etc.)
 
 ## Backend
-- **Framework:** Laravel 12
+- **Framework:** Laravel 13
 - **Lenguaje:** PHP 8.3+
-- **Base de datos:** MySQL / MariaDB
+- **Base de datos:** PostgreSQL, MySQL/MariaDB o SQLite (el CI prueba los tres). Las
+  diferencias de dialecto SQL se resuelven en `App\Support\PeriodoSql`, nunca en los controllers
 - **API:** API REST (todo el sistema debe poder operarse vía API, no solo vía Blade)
-- **Autenticación API:** JWT o Laravel Sanctum (definir cuál antes de Nivel 3 — API completa)
+- **Autenticación API:** Laravel Sanctum (decidido)
 - **ORM:** Eloquent (obligatorio — prohibido SQL crudo, ver `04_system_prompt.md`)
 
 ## Frontend
 - **Motor de plantillas:** Blade
-- **CSS:** Bootstrap o Tailwind (definir uno y mantenerlo en todo el proyecto, no mezclar)
+- **CSS:** Tailwind (decidido) + design system propio en `public/css/rhythm.css`
 
 ## Principio arquitectónico clave
 Separar en dos grandes dominios de datos:
@@ -32,6 +33,12 @@ dominio de negocio.
 - ❌ Constructor visual de automatizaciones
 - ❌ Microservicios
 - ❌ WebSockets para todo
+
+## Infraestructura
+- **Contenedor:** Docker con FrankenPHP (`Dockerfile`)
+- **Deploy:** Render vía blueprint (`render.yaml`), con PostgreSQL gestionado
+- **Local sin PHP:** `docker-compose.yml`
+- **CI:** GitHub Actions, tests contra los tres motores + Pint
 
 ## Notas
 - Editar este archivo solo si cambia una decisión de stack real (ej: se decide JWT en vez de
