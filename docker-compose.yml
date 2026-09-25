@@ -1,0 +1,51 @@
+# Entorno local completo, sin instalar PHP ni MySQL en la máquina.
+#
+#   docker compose up --build
+#   docker compose exec app php artisan db:seed --class=DemoSeeder
+#
+# La app queda en http://localhost:8080
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      APP_NAME: "Sistema Administrativo"
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8080
+      APP_KEY: ${APP_KEY:?Falta APP_KEY. Generala con: docker compose run --rm app php artisan key:generate --show}
+      APP_LOCALE: es
+      APP_FALLBACK_LOCALE: es
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: crud_erp
+      DB_USERNAME: crud_erp
+      DB_PASSWORD: secret
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      DB_SEED_ON_BOOT: "true"
+      LOG_CHANNEL: stderr
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: crud_erp
+      POSTGRES_USER: crud_erp
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crud_erp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

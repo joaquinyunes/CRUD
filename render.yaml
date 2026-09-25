@@ -1,0 +1,84 @@
+# Blueprint de Render — https://render.com/docs/blueprint-spec
+#
+# Uso:
+#   1. Render > New > Blueprint > conectar este repositorio.
+#   2. Render crea la base Postgres y el web service, y los enlaza solo.
+#   3. Cargar APP_KEY a mano (es el único valor que Render no puede generar):
+#        php artisan key:generate --show
+#      y pegar el resultado completo, incluido el prefijo "base64:".
+#
+# El primer deploy corre las migraciones y, si DB_SEED_ON_BOOT=true, carga los
+# datos de demostración (ver docker/entrypoint.sh).
+
+databases:
+  - name: crud-erp-db
+    databaseName: crud_erp
+    user: crud_erp
+    plan: free
+
+services:
+  - type: web
+    name: crud-erp
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /login
+    autoDeploy: true
+    envVars:
+      # --- Aplicación ---
+      - key: APP_NAME
+        value: Sistema Administrativo
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false          # cargar a mano: php artisan key:generate --show
+      - key: APP_LOCALE
+        value: es
+      - key: APP_FALLBACK_LOCALE
+        value: es
+      - key: APP_FAKER_LOCALE
+        value: es_AR
+
+      # --- Base de datos (enlazada automáticamente a crud-erp-db) ---
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: crud-erp-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: crud-erp-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: crud-erp-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: crud-erp-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: crud-erp-db
+          property: password
+
+      # --- Sesión, caché y colas sobre la misma base ---
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+
+      # --- Demo: poblar el sistema en el primer arranque ---
+      # Poner en "false" si es una instalación real de un cliente.
+      - key: DB_SEED_ON_BOOT
+        value: "true"
+
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: MAIL_MAILER
+        value: log

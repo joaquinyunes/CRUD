@@ -1,2 +1,0 @@
-mysqld: [ERROR] Failed to open required defaults file: C:\ProgramData\MySQL\MySQL
-mysqld: [ERROR] Fatal error in defaults handling. Program aborted!
