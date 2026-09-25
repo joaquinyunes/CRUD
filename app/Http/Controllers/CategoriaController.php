@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Categoria;
+use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -21,7 +22,11 @@ class CategoriaController extends Controller
             $query->where('estado', $request->input('estado') === 'activo');
         }
 
-        $categorias = $query->orderBy('nombre')->paginate(15)->withQueryString();
+        $categorias = Orden::aplicar($query, [
+            'nombre'      => 'nombre',
+            'descripcion' => 'descripcion',
+            'estado'      => 'estado',
+        ], 'nombre')->paginate(15)->withQueryString();
 
         return view('categorias.index', [
             'categorias'   => $categorias,

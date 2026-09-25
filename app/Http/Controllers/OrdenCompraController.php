@@ -11,6 +11,7 @@ use App\Models\Setting;
 use App\Services\StockService;
 use App\Support\CalculadorTotales;
 use App\Support\NumeradorDocumentos;
+use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -23,9 +24,17 @@ class OrdenCompraController extends Controller
 
     public function index(Request $request): View
     {
-        $ordenes = OrdenCompra::with('proveedor', 'user')
-            ->when($request->filled('estado'), fn ($q) => $q->where('estado', $request->estado))
-            ->orderByDesc('fecha')->orderByDesc('id')
+        $query = OrdenCompra::with('proveedor', 'user')
+            ->when($request->filled('estado'), fn ($q) => $q->where('estado', $request->estado));
+
+        $ordenes = Orden::aplicar($query, [
+            'numero'    => 'numero',
+            'proveedor' => Proveedor::select('nombre')->whereColumn('proveedores.id', 'ordenes_compra.proveedor_id'),
+            'fecha'     => fn ($q, $dir) => $q->orderBy('fecha', $dir)->orderBy('id', $dir),
+            'entrega'   => 'fecha_entrega_estimada',
+            'estado'    => 'estado',
+            'total'     => 'total',
+        ], 'fecha', 'desc')
             ->paginate(20)->withQueryString();
 
         return view('ordenes_compra.index', compact('ordenes'));

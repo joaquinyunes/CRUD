@@ -22,6 +22,10 @@ class Role extends Model
 
     const CLIENTE = 'Cliente';
 
+    const SOLO_LECTURA = 'Solo Lectura';
+
+    const VENDEDOR = 'Vendedor';
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class);

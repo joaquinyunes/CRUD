@@ -9,6 +9,7 @@ use App\Models\Setting;
 use App\Models\Venta;
 use App\Support\CalculadorTotales;
 use App\Support\NumeradorDocumentos;
+use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -19,10 +20,18 @@ class PresupuestoController extends Controller
 {
     public function index(Request $request): View
     {
-        $presupuestos = Presupuesto::with('cliente', 'user')
+        $query = Presupuesto::with('cliente', 'user')
             ->when($request->filled('estado'), fn ($q) => $q->where('estado', $request->estado))
-            ->when($request->filled('buscar'), fn ($q) => $q->where('numero', 'like', "%{$request->buscar}%"))
-            ->orderByDesc('fecha')->orderByDesc('id')
+            ->when($request->filled('buscar'), fn ($q) => $q->where('numero', 'like', "%{$request->buscar}%"));
+
+        $presupuestos = Orden::aplicar($query, [
+            'numero'  => 'numero',
+            'cliente' => Cliente::select('nombre')->whereColumn('clientes.id', 'presupuestos.cliente_id'),
+            'fecha'   => fn ($q, $dir) => $q->orderBy('fecha', $dir)->orderBy('id', $dir),
+            'validez' => 'validez_dias',
+            'estado'  => 'estado',
+            'total'   => 'total',
+        ], 'fecha', 'desc')
             ->paginate(20)->withQueryString();
 
         return view('presupuestos.index', compact('presupuestos'));

@@ -27,7 +27,7 @@
 <div class="r-card-flat">
     <div style="overflow-x:auto;">
         <table class="r-table">
-            <thead><tr><th>Número</th><th>Proveedor</th><th>Fecha</th><th>Entrega</th><th>Estado</th><th style="text-align:right;">Total</th><th></th></tr></thead>
+            <thead><tr><x-th campo="numero">Número</x-th><x-th campo="proveedor">Proveedor</x-th><x-th campo="fecha" inicial="desc">Fecha</x-th><x-th campo="entrega" inicial="desc">Entrega</x-th><x-th campo="estado">Estado</x-th><x-th campo="total" align="right" inicial="desc">Total</x-th><th></th></tr></thead>
             <tbody>
             @forelse($ordenes as $o)
                 <tr>

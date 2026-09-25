@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Archivo;
+use App\Models\User;
+use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -23,7 +25,14 @@ class ArchivoController extends Controller
             $query->where('nombre', 'like', "%{$buscar}%");
         }
 
-        $archivos = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        $archivos = Orden::aplicar($query, [
+            'nombre'   => 'nombre',
+            'tipo'     => 'tipo',
+            'tamano'   => 'tamano',
+            'relacion' => 'relacionado_tipo',
+            'usuario'  => User::select('name')->whereColumn('users.id', 'archivos.user_id'),
+            'fecha'    => 'created_at',
+        ], 'fecha', 'desc')->paginate(20)->withQueryString();
 
         return view('archivos.index', compact('archivos'));
     }

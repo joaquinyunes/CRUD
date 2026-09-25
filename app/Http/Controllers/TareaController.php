@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tarea;
 use App\Models\User;
+use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -33,7 +34,14 @@ class TareaController extends Controller
             $query->paraUsuario($request->asignada_a);
         }
 
-        $tareas = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        $tareas = Orden::aplicar($query, [
+            'titulo'    => 'titulo',
+            'prioridad' => 'prioridad',
+            'estado'    => 'estado',
+            'asignada'  => User::select('name')->whereColumn('users.id', 'tareas.asignada_a'),
+            'limite'    => 'fecha_limite',
+            'creada'    => 'created_at',
+        ], 'creada', 'desc')->paginate(20)->withQueryString();
         $usuarios = User::orderBy('name')->get();
 
         if ($vista === 'kanban') {

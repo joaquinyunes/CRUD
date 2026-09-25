@@ -9,6 +9,7 @@ use App\Models\Producto;
 use App\Models\Venta;
 use App\Services\CajaService;
 use App\Services\StockService;
+use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,9 +24,16 @@ class DevolucionController extends Controller
 
     public function index(Request $request): View
     {
-        $devoluciones = Devolucion::with(['venta.cliente', 'compra.proveedor', 'user'])
-            ->when($request->filled('tipo'), fn ($q) => $q->where('tipo', $request->tipo))
-            ->orderByDesc('fecha')->orderByDesc('id')
+        $query = Devolucion::with(['venta.cliente', 'compra.proveedor', 'user'])
+            ->when($request->filled('tipo'), fn ($q) => $q->where('tipo', $request->tipo));
+
+        $devoluciones = Orden::aplicar($query, [
+            'numero' => 'numero',
+            'tipo'   => 'tipo',
+            'fecha'  => fn ($q, $dir) => $q->orderBy('fecha', $dir)->orderBy('id', $dir),
+            'total'  => 'total',
+            'estado' => 'estado',
+        ], 'fecha', 'desc')
             ->paginate(20)->withQueryString();
 
         return view('devoluciones.index', compact('devoluciones'));

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\MovimientoStock;
 use App\Models\Producto;
+use App\Models\User;
+use App\Support\Orden;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -25,8 +27,14 @@ class StockController extends Controller
             $query->paraFecha($request->fecha_desde, $request->fecha_hasta);
         }
 
-        $movimientos = $query->orderBy('created_at', 'desc')
-            ->orderBy('id', 'desc')
+        $movimientos = Orden::aplicar($query, [
+            'fecha'      => fn ($q, $dir) => $q->orderBy('created_at', $dir)->orderBy('id', $dir),
+            'producto'   => Producto::select('nombre')->whereColumn('productos.id', 'movimientos_stock.producto_id'),
+            'tipo'       => 'tipo',
+            'cantidad'   => 'cantidad',
+            'referencia' => 'referencia_tipo',
+            'usuario'    => User::select('name')->whereColumn('users.id', 'movimientos_stock.user_id'),
+        ], 'fecha', 'desc')
             ->paginate(20)
             ->withQueryString();
 

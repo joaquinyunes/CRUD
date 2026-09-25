@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Proveedor;
+use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,7 +18,13 @@ class ProveedorController extends Controller
             $query->buscar($request->buscar);
         }
 
-        $proveedores = $query->orderBy('nombre')->paginate(20)->withQueryString();
+        $proveedores = Orden::aplicar($query, [
+            'nombre'    => 'nombre',
+            'cuit'      => 'cuit',
+            'telefono'  => 'telefono',
+            'email'     => 'email',
+            'direccion' => 'direccion',
+        ], 'nombre')->paginate(20)->withQueryString();
 
         return view('proveedores.index', compact('proveedores'));
     }

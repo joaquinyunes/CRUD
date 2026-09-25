@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Categoria;
 use App\Models\Producto;
 use App\Models\UnidadMedida;
+use App\Support\Orden;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,7 +36,16 @@ class ProductoController extends Controller
             $query->where('estado', $request->estado);
         }
 
-        $productos = $query->orderBy('nombre')->paginate(20)->withQueryString();
+        $productos = Orden::aplicar($query, [
+            'codigo'        => 'codigo',
+            'nombre'        => 'nombre',
+            'categoria'     => Categoria::select('nombre')->whereColumn('categorias.id', 'productos.categoria_id'),
+            'marca'         => 'marca',
+            'precio_compra' => 'precio_compra',
+            'precio_venta'  => 'precio_venta',
+            'stock'         => 'stock',
+            'estado'        => 'estado',
+        ], 'nombre')->paginate(20)->withQueryString();
         $categorias = Categoria::where('estado', true)->orderBy('nombre')->get();
 
         return view('productos.index', compact('productos', 'categorias'));

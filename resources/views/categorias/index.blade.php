@@ -37,9 +37,9 @@
         <table class="r-table">
             <thead>
                 <tr>
-                    <th>Nombre</th>
-                    <th>Descripción</th>
-                    <th>Estado</th>
+                    <x-th campo="nombre">Nombre</x-th>
+                    <x-th campo="descripcion">Descripción</x-th>
+                    <x-th campo="estado">Estado</x-th>
                     <th style="text-align:right;">Acciones</th>
                 </tr>
             </thead>

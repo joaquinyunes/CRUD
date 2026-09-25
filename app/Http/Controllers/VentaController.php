@@ -9,10 +9,12 @@ use App\Models\Deposito;
 use App\Models\MetodoPago;
 use App\Models\Producto;
 use App\Models\Setting;
+use App\Models\User;
 use App\Models\Venta;
 use App\Services\CajaService;
 use App\Services\StockDocumentoService;
 use App\Support\CalculadorTotales;
+use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -42,8 +44,14 @@ class VentaController extends Controller
             $query->paraEstado($request->estado);
         }
 
-        $ventas = $query->orderBy('fecha', 'desc')
-            ->orderBy('id', 'desc')
+        $ventas = Orden::aplicar($query, [
+            'numero'   => 'numero',
+            'cliente'  => Cliente::select('nombre')->whereColumn('clientes.id', 'ventas.cliente_id'),
+            'fecha'    => fn ($q, $dir) => $q->orderBy('fecha', $dir)->orderBy('id', $dir),
+            'total'    => 'total_final',
+            'estado'   => 'estado',
+            'vendedor' => User::select('name')->whereColumn('users.id', 'ventas.user_id'),
+        ], 'fecha', 'desc')
             ->paginate(20)
             ->withQueryString();
 

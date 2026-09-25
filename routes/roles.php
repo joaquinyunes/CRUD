@@ -16,12 +16,4 @@ Route::middleware(['auth', 'verified'])->prefix('roles')->name('roles.')->group(
     Route::put('/{role}', [RoleController::class, 'update'])
         ->middleware('permiso:roles.editar')
         ->name('update');
-
-    Route::get('/usuarios', [RoleController::class, 'usuarios'])
-        ->middleware('permiso:roles.ver')
-        ->name('usuarios');
-
-    Route::put('/usuarios/{user}/rol', [RoleController::class, 'asignarRol'])
-        ->middleware('permiso:roles.editar')
-        ->name('asignar-rol');
 });

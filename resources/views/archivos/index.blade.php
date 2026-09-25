@@ -6,9 +6,13 @@
 
 <h2 class="r-display-l r-mb-8" data-reveal="fade-up">Archivos</h2>
 
+@php $puedeGestionarArchivos = auth()->user()->role?->tienePermiso('archivos.gestionar'); @endphp
+
+@if($puedeGestionarArchivos)
 <div class="r-mb-6" data-reveal="fade-up" data-reveal-delay="0.1">
     <x-file-upload />
 </div>
+@endif
 
 <div class="r-card-flat r-mb-6" data-reveal="fade-up" data-reveal-delay="0.15">
     <form method="GET" action="{{ route('archivos.index') }}" class="r-flex r-gap-3" style="flex-wrap:wrap; align-items:flex-end;">
@@ -29,12 +33,12 @@
             <thead>
                 <tr>
                     <th style="width:48px;"></th>
-                    <th>Nombre</th>
-                    <th>Tipo</th>
-                    <th style="text-align:right;">Tamaño</th>
-                    <th>Relación</th>
-                    <th>Subido por</th>
-                    <th>Fecha</th>
+                    <x-th campo="nombre">Nombre</x-th>
+                    <x-th campo="tipo">Tipo</x-th>
+                    <x-th campo="tamano" align="right" inicial="desc">Tamaño</x-th>
+                    <x-th campo="relacion">Relación</x-th>
+                    <x-th campo="usuario">Subido por</x-th>
+                    <x-th campo="fecha" inicial="desc">Fecha</x-th>
                     <th style="text-align:right;">Acciones</th>
                 </tr>
             </thead>
@@ -65,10 +69,12 @@
                         <td style="text-align:right;">
                             <div class="r-flex r-gap-3" style="justify-content:flex-end;">
                                 <a href="{{ route('archivos.download', $archivo) }}" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px;">Descargar</a>
+                                @if($puedeGestionarArchivos)
                                 <form method="POST" action="{{ route('archivos.destroy', $archivo) }}" style="display:inline;">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px; color:#dc2626;" onclick="return confirm('¿Eliminar este archivo?')">Eliminar</button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

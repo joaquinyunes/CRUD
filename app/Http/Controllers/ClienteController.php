@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -20,8 +21,14 @@ class ClienteController extends Controller
             $query->where('estado', $estado);
         }
 
-        $clientes = $query->orderBy('apellido')
-            ->orderBy('nombre')
+        $clientes = Orden::aplicar($query, [
+            'nombre'    => fn ($q, $dir) => $q->orderBy('apellido', $dir)->orderBy('nombre', $dir),
+            'documento' => 'documento',
+            'email'     => 'email',
+            'telefono'  => 'telefono',
+            'estado'    => 'estado',
+            'creado'    => 'created_at',
+        ], 'nombre')
             ->paginate(20)
             ->withQueryString();
 

@@ -21,12 +21,22 @@ php artisan migrate --force
 usuarios=$(php artisan tinker --execute="echo \DB::table('users')->count();" 2>/dev/null | tr -dc '0-9') || usuarios=""
 [ -n "$usuarios" ] || usuarios=0
 
+# DatabaseSeeder es idempotente (firstOrCreate + sync): crea permisos, roles y
+# cuentas base sin pisar nada. Se corre en cada arranque de la demo para que un
+# permiso o un rol nuevo llegue a una base que ya tiene datos. En una instalación
+# real (DB_SEED_ON_BOOT=false) no se toca nada.
+if [ "$DB_SEED_ON_BOOT" = "true" ] || [ "$DB_SEED_ALWAYS" = "true" ]; then
+    echo "==> Sincronizando permisos, roles y cuentas base"
+    php artisan db:seed --force
+fi
+
+# DemoSeeder sí borra y regenera las tablas de negocio: sólo con la base vacía
+# (o si se pide explícitamente reiniciar la demo en cada arranque).
 if [ "$DB_SEED_ALWAYS" = "true" ] || { [ "$DB_SEED_ON_BOOT" = "true" ] && [ "$usuarios" -eq 0 ]; }; then
     echo "==> Cargando datos de demostración"
-    php artisan db:seed --force
     php artisan db:seed --class=DemoSeeder --force
 else
-    echo "==> La base ya tiene datos; se omite el seed"
+    echo "==> La base ya tiene datos; se omiten los datos de demostración"
 fi
 
 echo "==> Enlazando storage público"

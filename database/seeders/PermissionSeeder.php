@@ -91,6 +91,19 @@ class PermissionSeeder extends Seeder
 
         'reportes.ver',
         'reportes.exportar',
+
+        'archivos.ver',
+        'archivos.gestionar',
+
+        'tareas.ver',
+        'tareas.gestionar',
+
+        'calendario.ver',
+        'calendario.gestionar',
+
+        'importar.ejecutar',
+
+        'backup.gestionar',
     ];
 
     private array $permisosPorRol = [
@@ -112,6 +125,9 @@ class PermissionSeeder extends Seeder
             'ordenes_compra.ver', 'ordenes_compra.crear', 'ordenes_compra.editar', 'ordenes_compra.recibir',
             'reportes.ver', 'reportes.exportar',
             'auditoria.ver',
+            'archivos.ver', 'archivos.gestionar',
+            'tareas.ver', 'tareas.gestionar',
+            'calendario.ver', 'calendario.gestionar',
         ],
 
         Role::EMPLEADO => [
@@ -128,6 +144,9 @@ class PermissionSeeder extends Seeder
             'caja.ver', 'caja.operar',
             'presupuestos.ver', 'presupuestos.crear', 'presupuestos.editar', 'presupuestos.convertir',
             'ordenes_compra.ver', 'ordenes_compra.crear',
+            'archivos.ver', 'archivos.gestionar',
+            'tareas.ver', 'tareas.gestionar',
+            'calendario.ver', 'calendario.gestionar',
         ],
 
         Role::CLIENTE => [],

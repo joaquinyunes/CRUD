@@ -12,6 +12,7 @@ use App\Models\Proveedor;
 use App\Models\Setting;
 use App\Services\StockDocumentoService;
 use App\Support\CalculadorTotales;
+use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -38,8 +39,13 @@ class CompraController extends Controller
             $query->paraEstado($request->estado);
         }
 
-        $compras = $query->orderBy('fecha', 'desc')
-            ->orderBy('id', 'desc')
+        $compras = Orden::aplicar($query, [
+            'numero'    => 'numero',
+            'proveedor' => Proveedor::select('nombre')->whereColumn('proveedores.id', 'compras.proveedor_id'),
+            'fecha'     => fn ($q, $dir) => $q->orderBy('fecha', $dir)->orderBy('id', $dir),
+            'total'     => 'total_final',
+            'estado'    => 'estado',
+        ], 'fecha', 'desc')
             ->paginate(20)
             ->withQueryString();
 

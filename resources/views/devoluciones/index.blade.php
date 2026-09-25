@@ -24,8 +24,8 @@
     <div style="overflow-x:auto;">
         <table class="r-table">
             <thead><tr>
-                <th>Número</th><th>Tipo</th><th>Documento</th><th>Contraparte</th><th>Fecha</th>
-                <th style="text-align:right;">Total</th><th></th>
+                <x-th campo="numero">Número</x-th><x-th campo="tipo">Tipo</x-th><th>Documento</th><th>Contraparte</th><x-th campo="fecha" inicial="desc">Fecha</x-th>
+                <x-th campo="total" align="right" inicial="desc">Total</x-th><th></th>
             </tr></thead>
             <tbody>
             @forelse($devoluciones as $d)

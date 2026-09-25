@@ -6,7 +6,7 @@
 
 <div class="r-flex r-justify-between r-items-center r-mb-8" data-reveal="fade-up">
     <h2 class="r-display-l">Gestión de Roles</h2>
-    <a href="{{ route('roles.usuarios') }}" class="r-btn r-btn-primary r-btn-sm">Ver Usuarios y Roles</a>
+    <a href="{{ route('usuarios.index') }}" class="r-btn r-btn-primary r-btn-sm">Ver usuarios</a>
 </div>
 
 @if (session('success'))

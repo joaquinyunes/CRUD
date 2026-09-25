@@ -27,11 +27,15 @@ ropa— cambiando el dominio de negocio y reutilizando el núcleo de usuarios, r
 
 ## Demo
 
-| | |
-|---|---|
-| **URL** | **https://crud-erp.onrender.com** |
-| **Usuario** | `admin@admin.com` |
-| **Contraseña** | `password` |
+**URL:** **https://crud-erp.onrender.com**
+
+Tres cuentas, para ver el sistema desde los tres lados:
+
+| Cuenta | Contraseña | Rol | Qué puede hacer |
+|---|---|---|---|
+| `admin@admin.com` | `password` | admin | Todo: usuarios, roles, auditoría, backup, configuración. |
+| `vendedor@demo.com` | `vendedor1234` | Vendedor | Opera el día a día: ventas, presupuestos, clientes, compras, stock, caja. No entra a administración. |
+| `lectura@demo.com` | `lectura1234` | Solo Lectura | Ve todos los listados y reportes y puede exportar, pero no crea, edita ni borra nada: los botones ni aparecen y las rutas de escritura devuelven 403. |
 
 La demo se carga con `DemoSeeder`: categorías, productos con stock real, clientes, proveedores, ventas,
 compras, caja abierta con movimientos del día y cuenta corriente con saldos, para que se vea

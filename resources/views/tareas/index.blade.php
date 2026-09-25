@@ -11,7 +11,9 @@
             <a href="{{ route('tareas.index', ['vista' => 'lista']) }}" class="r-btn r-btn-sm" style="border-radius:var(--border-radius-pill); {{ request('vista', 'lista') === 'lista' ? 'background:var(--color-ink); color:var(--color-paper);' : 'background:transparent; color:var(--color-ink-soft);' }}">Lista</a>
             <a href="{{ route('tareas.index', ['vista' => 'kanban']) }}" class="r-btn r-btn-sm" style="border-radius:var(--border-radius-pill); {{ request('vista') === 'kanban' ? 'background:var(--color-ink); color:var(--color-paper);' : 'background:transparent; color:var(--color-ink-soft);' }}">Kanban</a>
         </div>
-        <a href="{{ route('tareas.create') }}" class="r-btn r-btn-primary r-btn-sm">Nueva tarea</a>
+        @if(auth()->user()->role?->tienePermiso('tareas.gestionar'))
+            <a href="{{ route('tareas.create') }}" class="r-btn r-btn-primary r-btn-sm">Nueva tarea</a>
+        @endif
     </div>
 </div>
 
@@ -61,11 +63,11 @@
         <table class="r-table">
             <thead>
                 <tr>
-                    <th>Título</th>
-                    <th style="text-align:center;">Prioridad</th>
-                    <th style="text-align:center;">Estado</th>
-                    <th>Asignada a</th>
-                    <th>Fecha límite</th>
+                    <x-th campo="titulo">Título</x-th>
+                    <x-th campo="prioridad" align="center">Prioridad</x-th>
+                    <x-th campo="estado" align="center">Estado</x-th>
+                    <x-th campo="asignada">Asignada a</x-th>
+                    <x-th campo="limite" inicial="desc">Fecha límite</x-th>
                     <th style="text-align:right;">Acciones</th>
                 </tr>
             </thead>
@@ -105,6 +107,7 @@
                         </td>
                         <td style="text-align:right;">
                             <div class="r-flex r-gap-3" style="justify-content:flex-end;">
+                                @if(auth()->user()->role?->tienePermiso('tareas.gestionar'))
                                 @if($tarea->estado !== 'completada')
                                     @if($tarea->estado === 'pendiente')
                                         <form method="PATCH" action="{{ route('tareas.cambiar-estado', [$tarea, 'en_progreso']) }}">
@@ -123,6 +126,7 @@
                                     @csrf @method('DELETE')
                                     <button type="submit" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px; color:#dc2626;" onclick="return confirm('¿Eliminar esta tarea?')">Eliminar</button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

@@ -50,12 +50,12 @@
         <table class="r-table">
             <thead>
                 <tr>
-                    <th>Fecha/Hora</th>
-                    <th>Usuario</th>
-                    <th>IP</th>
-                    <th>Acción</th>
-                    <th>Modelo</th>
-                    <th style="text-align:right;">ID</th>
+                    <x-th campo="fecha" inicial="desc">Fecha/Hora</x-th>
+                    <x-th campo="usuario">Usuario</x-th>
+                    <x-th campo="ip">IP</x-th>
+                    <x-th campo="accion">Acción</x-th>
+                    <x-th campo="modelo">Modelo</x-th>
+                    <x-th campo="registro" align="right" inicial="desc">ID</x-th>
                     <th style="text-align:right;">Detalle</th>
                 </tr>
             </thead>

@@ -4,10 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Permission;
 use App\Models\Role;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class RoleController extends Controller
@@ -56,37 +54,5 @@ class RoleController extends Controller
         return redirect()
             ->route('roles.index')
             ->with('success', "Permisos del rol \"{$role->nombre}\" actualizados correctamente.");
-    }
-
-    public function usuarios(): View
-    {
-        $usuarios = User::with('role')->orderBy('name')->get();
-        $roles = Role::all();
-
-        return view('roles.usuarios', compact('usuarios', 'roles'));
-    }
-
-    public function asignarRol(Request $request, User $user): RedirectResponse
-    {
-        $request->validate([
-            'role_id' => ['nullable', 'exists:roles,id'],
-        ]);
-
-        if ($user->id === Auth::id() && $request->role_id === null) {
-            return redirect()
-                ->route('roles.usuarios')
-                ->with('error', 'No podés quitarte el rol a vos mismo.');
-        }
-
-        $user->role_id = $request->input('role_id');
-        $user->save();
-
-        $rolNombre = $request->role_id
-            ? Role::find($request->role_id)?->nombre ?? 'desconocido'
-            : 'sin rol';
-
-        return redirect()
-            ->route('roles.usuarios')
-            ->with('success', "Rol de \"{$user->name}\" actualizado a \"{$rolNombre}\".");
     }
 }

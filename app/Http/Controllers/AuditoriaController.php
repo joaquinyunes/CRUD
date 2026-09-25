@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Auditoria;
 use App\Models\User;
+use App\Support\Orden;
 use Illuminate\Http\Request;
 
 class AuditoriaController extends Controller
@@ -16,13 +17,21 @@ class AuditoriaController extends Controller
         $desde = $request->input('desde');
         $hasta = $request->input('hasta');
 
-        $registros = Auditoria::with('user')
+        $query = Auditoria::with('user')
             ->paraBuscar($buscar)
             ->paraModelo($modelo)
             ->paraUsuario($usuarioId)
             ->when($desde, fn ($q) => $q->whereDate('created_at', '>=', $desde))
-            ->when($hasta, fn ($q) => $q->whereDate('created_at', '<=', $hasta))
-            ->orderBy('created_at', 'desc')
+            ->when($hasta, fn ($q) => $q->whereDate('created_at', '<=', $hasta));
+
+        $registros = Orden::aplicar($query, [
+            'fecha'    => fn ($q, $dir) => $q->orderBy('created_at', $dir)->orderBy('id', $dir),
+            'usuario'  => User::select('name')->whereColumn('users.id', 'auditoria.user_id'),
+            'ip'       => 'ip',
+            'accion'   => 'accion',
+            'modelo'   => 'modelo_afectado',
+            'registro' => 'modelo_id',
+        ], 'fecha', 'desc')
             ->paginate(50)
             ->withQueryString();
 

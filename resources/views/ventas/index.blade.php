@@ -51,13 +51,13 @@
         <table class="r-table">
             <thead>
                 <tr>
-                    <th>Número</th>
-                    <th>Cliente</th>
-                    <th>Fecha</th>
-                    <th style="text-align:right;">Total</th>
+                    <x-th campo="numero">Número</x-th>
+                    <x-th campo="cliente">Cliente</x-th>
+                    <x-th campo="fecha" inicial="desc">Fecha</x-th>
+                    <x-th campo="total" align="right" inicial="desc">Total</x-th>
                     <th>Medio de Pago</th>
-                    <th style="text-align:center;">Estado</th>
-                    <th>Vendedor</th>
+                    <x-th campo="estado" align="center">Estado</x-th>
+                    <x-th campo="vendedor">Vendedor</x-th>
                     <th style="text-align:right;">Acciones</th>
                 </tr>
             </thead>

@@ -93,15 +93,15 @@
             <thead>
                 <tr>
                     <th style="width:48px;"></th>
-                    <th>Código</th>
-                    <th>Nombre</th>
-                    <th>Categoría</th>
-                    <th>Marca</th>
-                    <th style="text-align:right;">P. Compra</th>
-                    <th style="text-align:right;">P. Venta</th>
-                    <th style="text-align:center;">Stock</th>
+                    <x-th campo="codigo">Código</x-th>
+                    <x-th campo="nombre">Nombre</x-th>
+                    <x-th campo="categoria">Categoría</x-th>
+                    <x-th campo="marca">Marca</x-th>
+                    <x-th campo="precio_compra" align="right" inicial="desc">P. Compra</x-th>
+                    <x-th campo="precio_venta" align="right" inicial="desc">P. Venta</x-th>
+                    <x-th campo="stock" align="center" inicial="desc">Stock</x-th>
                     <th>Unidad</th>
-                    <th style="text-align:center;">Estado</th>
+                    <x-th campo="estado" align="center">Estado</x-th>
                     <th style="text-align:right;">Acciones</th>
                 </tr>
             </thead>

@@ -35,11 +35,11 @@
         <table class="r-table">
             <thead>
                 <tr>
-                    <th>Nombre y Apellido</th>
-                    <th>Documento</th>
-                    <th>Correo</th>
-                    <th>Teléfono</th>
-                    <th>Estado</th>
+                    <x-th campo="nombre">Nombre y Apellido</x-th>
+                    <x-th campo="documento">Documento</x-th>
+                    <x-th campo="email">Correo</x-th>
+                    <x-th campo="telefono">Teléfono</x-th>
+                    <x-th campo="estado">Estado</x-th>
                     <th style="text-align:right;">Acciones</th>
                 </tr>
             </thead>

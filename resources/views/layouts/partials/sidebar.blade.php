@@ -120,20 +120,26 @@
         </a>
         @endif
 
+        @if(Auth::user()->role && Auth::user()->role->tienePermiso('archivos.ver'))
         <a href="{{ route('archivos.index') }}" class="r-sidebar-link {{ request()->routeIs('archivos.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
             <span>Archivos</span>
         </a>
+        @endif
 
+        @if(Auth::user()->role && Auth::user()->role->tienePermiso('tareas.ver'))
         <a href="{{ route('tareas.index') }}" class="r-sidebar-link {{ request()->routeIs('tareas.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
             <span>Tareas</span>
         </a>
+        @endif
 
+        @if(Auth::user()->role && Auth::user()->role->tienePermiso('calendario.ver'))
         <a href="{{ route('calendario.index') }}" class="r-sidebar-link {{ request()->routeIs('calendario.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <span>Calendario</span>
         </a>
+        @endif
 
         <div class="r-sidebar-section">Administración</div>
 
@@ -145,7 +151,7 @@
         @endif
 
         @if(Auth::user()->role && Auth::user()->role->tienePermiso('usuarios.ver'))
-        <a href="{{ route('roles.usuarios') }}" class="r-sidebar-link {{ request()->routeIs('roles.usuarios') ? 'active' : '' }}">
+        <a href="{{ route('usuarios.index') }}" class="r-sidebar-link {{ request()->routeIs('usuarios.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197"/></svg>
             <span>Usuarios</span>
         </a>
@@ -158,10 +164,12 @@
         </a>
         @endif
 
+        @if(Auth::user()->role && Auth::user()->role->tienePermiso('configuracion.ver'))
         <a href="{{ route('configuracion.index') }}" class="r-sidebar-link {{ request()->routeIs('configuracion.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             <span>Configuración</span>
         </a>
+        @endif
 
         @if(Auth::user()->role && Auth::user()->role->tienePermiso('configuracion.ver'))
         <a href="{{ route('unidades-medida.index') }}" class="r-sidebar-link {{ request()->routeIs('unidades-medida.*') ? 'active' : '' }}">
@@ -177,15 +185,19 @@
         </a>
         @endif
 
+        @if(Auth::user()->role && Auth::user()->role->tienePermiso('importar.ejecutar'))
         <a href="{{ route('importar.index') }}" class="r-sidebar-link {{ request()->routeIs('importar.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
             <span>Importar CSV</span>
         </a>
+        @endif
 
+        @if(Auth::user()->role && Auth::user()->role->tienePermiso('backup.gestionar'))
         <a href="{{ route('backup.index') }}" class="r-sidebar-link {{ request()->routeIs('backup.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
             <span>Backup / Restore</span>
         </a>
+        @endif
 
     </nav>
 

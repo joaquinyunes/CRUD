@@ -8,11 +8,13 @@ Route::middleware(['auth', 'verified'])->prefix('archivos')->name('archivos.')->
         ->name('index');
 
     Route::post('/', [ArchivoController::class, 'store'])
+        ->middleware('permiso:archivos.gestionar')
         ->name('store');
 
     Route::get('/{archivo}/descargar', [ArchivoController::class, 'download'])
         ->name('download');
 
     Route::delete('/{archivo}', [ArchivoController::class, 'destroy'])
+        ->middleware('permiso:archivos.gestionar')
         ->name('destroy');
 });

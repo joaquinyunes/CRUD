@@ -49,12 +49,12 @@
         <table class="r-table">
             <thead>
                 <tr>
-                    <th>Fecha</th>
-                    <th>Producto</th>
-                    <th style="text-align:center;">Tipo</th>
-                    <th style="text-align:center;">Cantidad</th>
-                    <th>Referencia</th>
-                    <th>Usuario</th>
+                    <x-th campo="fecha" inicial="desc">Fecha</x-th>
+                    <x-th campo="producto">Producto</x-th>
+                    <x-th campo="tipo" align="center">Tipo</x-th>
+                    <x-th campo="cantidad" align="center" inicial="desc">Cantidad</x-th>
+                    <x-th campo="referencia">Referencia</x-th>
+                    <x-th campo="usuario">Usuario</x-th>
                 </tr>
             </thead>
             <tbody>

@@ -128,7 +128,11 @@
     </div>
 
     <div class="r-text-right" data-reveal="fade-up" data-reveal-delay="0.3">
-        <button type="submit" class="r-btn r-btn-accent">Guardar Configuración</button>
+        @if(auth()->user()->role?->tienePermiso('configuracion.editar'))
+            <button type="submit" class="r-btn r-btn-accent">Guardar Configuración</button>
+        @else
+            <span class="r-tag">Solo lectura · no podés guardar cambios</span>
+        @endif
     </div>
 </form>
 
