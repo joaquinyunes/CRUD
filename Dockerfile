@@ -9,23 +9,12 @@ COPY vite.config.js tailwind.config.js postcss.config.js ./
 COPY resources ./resources
 RUN npm run build
 
-# ---------- 2. Dependencias de PHP ----------
-FROM composer:2 AS vendor
-WORKDIR /app
-COPY composer.json composer.lock ./
-RUN composer install \
-      --no-dev \
-      --no-scripts \
-      --no-interaction \
-      --prefer-dist \
-      --optimize-autoloader
-
-# ---------- 3. Imagen final ----------
+# ---------- 2. Imagen final ----------
 FROM dunglas/frankenphp:1-php8.3 AS app
 
 # Extensiones que usa el sistema:
 #   pdo_pgsql / pdo_mysql -> base de datos
-#   gd                    -> PDFs con dompdf
+#   gd                    -> PDFs con dompdf y phpspreadsheet
 #   zip                   -> exportación a Excel
 #   bcmath, intl          -> cálculos de totales y formato de moneda
 RUN install-php-extensions \
@@ -37,13 +26,24 @@ RUN install-php-extensions \
       intl \
       opcache
 
-# La imagen de FrankenPHP no trae Composer: lo copiamos para regenerar el
-# autoloader y correr package:discover con el codigo de la app presente.
+# Las dependencias se resuelven acá y no en la imagen oficial de Composer: esa
+# imagen no trae gd ni bcmath, y varios paquetes (phpspreadsheet, laravel-lang)
+# los exigen. Resolviendo en la imagen final, Composer valida contra el PHP que
+# realmente va a ejecutar la aplicación.
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 WORKDIR /app
 
-COPY --from=vendor /app/vendor ./vendor
+# Primero solo los manifiestos, para que la capa de vendor se cachee mientras no
+# cambien las dependencias.
+COPY composer.json composer.lock ./
+RUN composer install \
+      --no-dev \
+      --no-scripts \
+      --no-interaction \
+      --prefer-dist \
+      --optimize-autoloader
+
 COPY . .
 COPY --from=assets /app/public/build ./public/build
 
