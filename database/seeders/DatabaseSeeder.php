@@ -41,5 +41,9 @@ class DatabaseSeeder extends Seeder
                 'role_id'  => $admin->id,
             ]
         );
+
+        // Unidades de medida, metodos de pago y configuracion base: sin esto el
+        // sistema arranca vacio y no se puede cargar ni un producto.
+        $this->call(UniversalSeeder::class);
     }
 }

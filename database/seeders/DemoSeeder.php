@@ -2,10 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Models\CajaMovimiento;
+use App\Models\CajaSesion;
 use App\Models\Categoria;
 use App\Models\Cliente;
 use App\Models\Compra;
 use App\Models\CompraDetalle;
+use App\Models\Deposito;
+use App\Models\MetodoPago;
 use App\Models\MovimientoStock;
 use App\Models\Producto;
 use App\Models\Proveedor;
@@ -15,6 +19,7 @@ use App\Models\Venta;
 use App\Models\VentaDetalle;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DemoSeeder extends Seeder
 {
@@ -25,20 +30,26 @@ class DemoSeeder extends Seeder
         $admin = User::where('email', 'admin@admin.com')->first()
             ?? User::first();
 
+        // El seed de demostracion necesita las unidades de medida, los metodos
+        // de pago y la configuracion base. Si no estan, se cargan primero.
+        if (UnidadMedida::where('estado', true)->doesntExist()) {
+            $this->call(UniversalSeeder::class);
+        }
+
         $unidades = UnidadMedida::where('estado', true)->get();
         $uni = fn (string $abr) => $unidades->firstWhere('abreviacion', $abr)?->id
             ?? $unidades->first()->id;
 
         // ---------- Categorías ----------
         $cats = [
-            'Bebidas'            => 'Gaseosas, aguas, jugos y energizantes',
-            'Lácteos'            => 'Leches, yogures y quesos',
-            'Panadería'          => 'Pan, facturas y masas',
-            'Frutas y Verduras'  => 'Productos frescos de estación',
-            'Limpieza'           => 'Detergentes y artículos del hogar',
-            'Snacks'             => 'Galletitas, golosinas y snacks',
-            'Carnicería'         => 'Carnes frescas y embutidos',
-            'Tecnología'         => 'Accesorios y electrónica',
+            'Bebidas'           => 'Gaseosas, aguas, jugos y energizantes',
+            'Lácteos'           => 'Leches, yogures y quesos',
+            'Panadería'         => 'Pan, facturas y masas',
+            'Frutas y Verduras' => 'Productos frescos de estación',
+            'Limpieza'          => 'Detergentes y artículos del hogar',
+            'Snacks'            => 'Galletitas, golosinas y snacks',
+            'Carnicería'        => 'Carnes frescas y embutidos',
+            'Tecnología'        => 'Accesorios y electrónica',
         ];
 
         $categorias = [];
@@ -63,9 +74,9 @@ class DemoSeeder extends Seeder
             ['Pan Francés 500g',        'Panadería',         'Panadería Propia', 50, 90, 22, 10, 'kg', 'activo'],
             ['Medialunas (6u)',         'Panadería',         'Panadería Propia', 40, 80, 3, 10, 'doc', 'activo'],
             ['Facturas Surtidas',       'Panadería',         'Panadería Propia', 35, 70, 14, 8, 'doc', 'activo'],
-            ['Manzana Roja x kg',       'Frutas y Verduras','Granja', 50, 90, 35, 15, 'kg', 'activo'],
-            ['Banana x kg',             'Frutas y Verduras','Granja', 45, 85, 6, 10, 'kg', 'activo'],
-            ['Tomate x kg',             'Frutas y Verduras','Granja', 40, 80, 20, 10, 'kg', 'activo'],
+            ['Manzana Roja x kg',       'Frutas y Verduras', 'Granja', 50, 90, 35, 15, 'kg', 'activo'],
+            ['Banana x kg',             'Frutas y Verduras', 'Granja', 45, 85, 6, 10, 'kg', 'activo'],
+            ['Tomate x kg',             'Frutas y Verduras', 'Granja', 40, 80, 20, 10, 'kg', 'activo'],
             ['Detergente 1L',           'Limpieza',          'Ala', 110, 170, 28, 10, 'L',  'activo'],
             ['Lavandina 1L',            'Limpieza',          'Ayudín', 50, 90, 4, 12, 'L',  'activo'],
             ['Papel Higiénico (12u)',   'Limpieza',          'Scott', 200, 320, 16, 6, 'caja', 'activo'],
@@ -81,7 +92,7 @@ class DemoSeeder extends Seeder
 
         $productos = [];
         foreach ($productosData as [$nombre, $cat, $marca, $compra, $venta, $stock, $min, $abr, $estado]) {
-            $codigo = 'PROD-' . str_pad((count($productos) + 1), 4, '0', STR_PAD_LEFT);
+            $codigo = 'PROD-'.str_pad((count($productos) + 1), 4, '0', STR_PAD_LEFT);
             $productos[] = Producto::create([
                 'codigo'           => $codigo,
                 'nombre'           => $nombre,
@@ -134,10 +145,10 @@ class DemoSeeder extends Seeder
         $proveedores = [];
         foreach ($proveedoresData as [$nombre, $cuit, $tel, $email, $dir]) {
             $proveedores[] = Proveedor::create([
-                'nombre'   => $nombre,
-                'cuit'     => $cuit,
-                'telefono' => $tel,
-                'email'    => $email,
+                'nombre'    => $nombre,
+                'cuit'      => $cuit,
+                'telefono'  => $tel,
+                'email'     => $email,
                 'direccion' => $dir,
             ]);
         }
@@ -146,7 +157,10 @@ class DemoSeeder extends Seeder
 
         // ---------- Ventas (completadas, últimos 30 días) ----------
         for ($i = 0; $i < 40; $i++) {
-            $fecha = $now->copy()->subDays(rand(0, 29))->setTime(rand(8, 20), rand(0, 59));
+            // Las primeras cinco son de hoy: el panel muestra "ventas de hoy" y
+            // con fechas al azar la demostracion puede aparecer en cero.
+            $diasAtras = $i < 5 ? 0 : rand(1, 29);
+            $fecha = $now->copy()->subDays($diasAtras)->setTime(rand(8, 20), rand(0, 59));
             $cliente = $clientes[array_rand($clientes)];
             $nDet = rand(1, 4);
             $detalles = [];
@@ -173,17 +187,20 @@ class DemoSeeder extends Seeder
             $totalFinal = round($subtotal - $descuento + $impuesto, 2);
 
             $venta = Venta::create([
-                'numero'          => 'VTA-' . str_pad($i + 1, 5, '0', STR_PAD_LEFT),
-                'cliente_id'      => $cliente->id,
-                'fecha'           => $fecha,
-                'subtotal'        => $subtotal,
-                'descuento'       => $descuento,
-                'descuento_tipo'  => 'monto',
-                'impuesto'        => $impuesto,
-                'total'           => $subtotal,
-                'total_final'     => $totalFinal,
-                'estado'          => 'completada',
-                'user_id'         => $admin?->id,
+                'numero'         => 'VTA-'.str_pad($i + 1, 5, '0', STR_PAD_LEFT),
+                'cliente_id'     => $cliente->id,
+                'fecha'          => $fecha,
+                'subtotal'       => $subtotal,
+                'descuento'      => $descuento,
+                'descuento_tipo' => 'monto',
+                'impuesto'       => $impuesto,
+                // La app guarda el total ya con descuento e impuesto en ambas
+                // columnas; el seed tiene que hacer lo mismo o los importes del
+                // panel no coinciden con los del comprobante.
+                'total'       => $totalFinal,
+                'total_final' => $totalFinal,
+                'estado'      => 'completada',
+                'user_id'     => $admin?->id,
             ]);
 
             foreach ($detalles as $d) {
@@ -230,17 +247,20 @@ class DemoSeeder extends Seeder
             $totalFinal = round($subtotal + $impuesto, 2);
 
             $compra = Compra::create([
-                'numero'          => 'COM-' . str_pad($i + 1, 5, '0', STR_PAD_LEFT),
-                'proveedor_id'    => $proveedor->id,
-                'fecha'           => $fecha,
-                'subtotal'        => $subtotal,
-                'descuento'       => 0,
-                'descuento_tipo'  => 'monto',
-                'impuesto'        => $impuesto,
-                'total'           => $subtotal,
-                'total_final'     => $totalFinal,
-                'estado'          => 'completada',
-                'user_id'         => $admin?->id,
+                'numero'         => 'COM-'.str_pad($i + 1, 5, '0', STR_PAD_LEFT),
+                'proveedor_id'   => $proveedor->id,
+                'fecha'          => $fecha,
+                'subtotal'       => $subtotal,
+                'descuento'      => 0,
+                'descuento_tipo' => 'monto',
+                'impuesto'       => $impuesto,
+                // La app guarda el total ya con descuento e impuesto en ambas
+                // columnas; el seed tiene que hacer lo mismo o los importes del
+                // panel no coinciden con los del comprobante.
+                'total'       => $totalFinal,
+                'total_final' => $totalFinal,
+                'estado'      => 'completada',
+                'user_id'     => $admin?->id,
             ]);
 
             foreach ($detalles as $d) {
@@ -263,19 +283,173 @@ class DemoSeeder extends Seeder
             }
         }
 
+        $this->sucursales($productos);
+        $this->cajaDelDia($admin);
+        $this->cuentaCorriente();
+
         $this->command?->info('DemoSeeder: datos de demostración creados.');
     }
 
+    /**
+     * Vacia las tablas de negocio antes de recargar la demostracion.
+     *
+     * Se hace con la API de Schema en vez de PRAGMA/sqlite_sequence para que
+     * funcione igual en SQLite, MySQL y PostgreSQL: el seed de demostracion
+     * tambien corre en el deploy.
+     */
     private function limpiarTablas(): void
     {
-        DB::statement('PRAGMA foreign_keys = OFF;');
-        foreach ([
+        $tablas = [
             'movimientos_stock', 'ventas_detalle', 'ventas', 'compras_detalle', 'compras',
             'clientes', 'proveedores', 'productos', 'categorias',
-        ] as $tabla) {
+        ];
+
+        Schema::disableForeignKeyConstraints();
+
+        foreach ($tablas as $tabla) {
             DB::table($tabla)->delete();
-            DB::statement("DELETE FROM sqlite_sequence WHERE name = '$tabla'");
+            $this->reiniciarNumeracion($tabla);
         }
-        DB::statement('PRAGMA foreign_keys = ON;');
+
+        Schema::enableForeignKeyConstraints();
+    }
+
+    /** Vuelve el autoincremento a 1, con la sintaxis que entiende cada motor. */
+    private function reiniciarNumeracion(string $tabla): void
+    {
+        match (DB::connection()->getDriverName()) {
+            'sqlite'           => DB::statement('DELETE FROM sqlite_sequence WHERE name = ?', [$tabla]),
+            'pgsql'            => DB::statement("SELECT setval(pg_get_serial_sequence('$tabla', 'id'), 1, false)"),
+            'mysql', 'mariadb' => DB::statement("ALTER TABLE $tabla AUTO_INCREMENT = 1"),
+            default            => null,
+        };
+    }
+
+    /**
+     * Segundo deposito con parte del stock, para que el modulo multi-deposito
+     * tenga algo que mostrar en la demostracion.
+     */
+    private function sucursales(array $productos): void
+    {
+        $principal = Deposito::where('es_principal', true)->first()
+            ?? Deposito::orderBy('id')->first();
+
+        $sucursal = Deposito::firstOrCreate(
+            ['nombre' => 'Sucursal Centro'],
+            ['direccion' => 'Av. Belgrano 1450', 'es_principal' => false, 'activo' => true]
+        );
+
+        $deposito = Deposito::firstOrCreate(
+            ['nombre' => 'Depósito Externo'],
+            ['direccion' => 'Parque Industrial, Galpón 7', 'es_principal' => false, 'activo' => true]
+        );
+
+        foreach ($productos as $indice => $producto) {
+            $enSucursal = (int) floor($producto->stock * 0.3);
+            $enExterno = (int) floor($producto->stock * 0.15);
+
+            if ($enSucursal < 1) {
+                continue;
+            }
+
+            $this->asignarStock($principal->id, $producto->id, max($producto->stock - $enSucursal - $enExterno, 0));
+            $this->asignarStock($sucursal->id, $producto->id, $enSucursal);
+
+            if ($enExterno >= 1 && $indice % 2 === 0) {
+                $this->asignarStock($deposito->id, $producto->id, $enExterno);
+            }
+        }
+    }
+
+    private function asignarStock(int $depositoId, int $productoId, int $cantidad): void
+    {
+        DB::table('stock_deposito')->updateOrInsert(
+            ['producto_id' => $productoId, 'deposito_id' => $depositoId],
+            ['cantidad' => $cantidad]
+        );
+    }
+
+    /**
+     * Una caja abierta hoy, con los movimientos tipicos de una jornada.
+     */
+    private function cajaDelDia(?User $admin): void
+    {
+        if (! $admin) {
+            return;
+        }
+
+        CajaMovimiento::query()->delete();
+        CajaSesion::query()->delete();
+
+        $ayer = CajaSesion::create([
+            'user_id'               => $admin->id,
+            'monto_inicial'         => 15000,
+            'monto_final_declarado' => 48200,
+            'monto_final_sistema'   => 48500,
+            'diferencia'            => -300,
+            'estado'                => 'cerrada',
+            'observaciones'         => 'Faltante por vuelto mal dado.',
+            'abierta_en'            => now()->subDay()->setTime(9, 0),
+            'cerrada_en'            => now()->subDay()->setTime(20, 15),
+        ]);
+
+        $hoy = CajaSesion::create([
+            'user_id'       => $admin->id,
+            'monto_inicial' => 20000,
+            'estado'        => 'abierta',
+            'abierta_en'    => now()->setTime(9, 0),
+        ]);
+
+        $movimientos = [
+            [$ayer->id, 'ingreso', 'Cobro de ventas del día', 36500, 'venta'],
+            [$ayer->id, 'egreso',  'Pago a proveedor de bebidas', 3000, 'compra'],
+            [$hoy->id,  'ingreso', 'Cobro venta VTA-00031', 8450, 'venta'],
+            [$hoy->id,  'ingreso', 'Cobro venta VTA-00032', 12300, 'venta'],
+            [$hoy->id,  'egreso',  'Flete de mercadería', 4500, 'manual'],
+            [$hoy->id,  'ingreso', 'Cobro cuenta corriente Pérez', 6000, 'manual'],
+            [$hoy->id,  'egreso',  'Compra de insumos de limpieza', 1800, 'manual'],
+        ];
+
+        foreach ($movimientos as [$sesionId, $tipo, $concepto, $monto, $referencia]) {
+            CajaMovimiento::create([
+                'caja_sesion_id'  => $sesionId,
+                'tipo'            => $tipo,
+                'concepto'        => $concepto,
+                'monto'           => $monto,
+                'referencia_tipo' => $referencia,
+                'user_id'         => $admin->id,
+            ]);
+        }
+    }
+
+    /**
+     * Deja algunas ventas impagas y otras parciales para que la cuenta
+     * corriente de clientes tenga saldos reales.
+     */
+    private function cuentaCorriente(): void
+    {
+        Cliente::query()->update(['limite_credito' => 150000]);
+
+        $ventas = Venta::where('estado', 'completada')->orderByDesc('fecha')->take(12)->get();
+
+        foreach ($ventas as $indice => $venta) {
+            $total = (float) $venta->total_final;
+
+            if ($indice % 3 === 0) {
+                continue;                      // queda impaga
+            }
+
+            $pagado = $indice % 3 === 1
+                ? round($total * 0.4, 2)       // pago parcial
+                : $total;                      // saldada
+
+            DB::table('ventas_pago')->insert([
+                'venta_id'       => $venta->id,
+                'metodo_pago_id' => MetodoPago::orderBy('id')->value('id'),
+                'monto'          => $pagado,
+                'created_at'     => $venta->fecha,
+                'updated_at'     => $venta->fecha,
+            ]);
+        }
     }
 }
