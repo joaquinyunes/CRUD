@@ -71,7 +71,7 @@ class PresupuestoTest extends TestCase
 
         $this->actingAs($admin)->post(route('presupuestos.store'), [
             'cliente_id' => $cliente->id, 'fecha' => now()->toDateString(),
-            'detalles' => [['producto_id' => $producto->id, 'cantidad' => 1, 'precio' => 100]],
+            'detalles'   => [['producto_id' => $producto->id, 'cantidad' => 1, 'precio' => 100]],
         ]);
         $pre = Presupuesto::first();
         $this->actingAs($admin)->post(route('presupuestos.convertir', $pre));

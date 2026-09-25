@@ -31,11 +31,11 @@ class PantallasFase3Test extends TestCase
 
         $this->actingAs($admin)->post(route('presupuestos.store'), [
             'cliente_id' => $cliente->id, 'fecha' => now()->toDateString(),
-            'detalles' => [['producto_id' => $producto->id, 'cantidad' => 2, 'precio' => 100]],
+            'detalles'   => [['producto_id' => $producto->id, 'cantidad' => 2, 'precio' => 100]],
         ]);
         $this->actingAs($admin)->post(route('ordenes-compra.store'), [
             'proveedor_id' => $prov->id, 'fecha' => now()->toDateString(),
-            'detalles' => [['producto_id' => $producto->id, 'cantidad' => 5, 'precio' => 80]],
+            'detalles'     => [['producto_id' => $producto->id, 'cantidad' => 5, 'precio' => 80]],
         ]);
         $sucursal = Deposito::create(['nombre' => 'Sucursal', 'activo' => true]);
 
