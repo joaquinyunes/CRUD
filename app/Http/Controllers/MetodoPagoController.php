@@ -18,8 +18,8 @@ class MetodoPagoController extends Controller
 
         if ($request->filled('buscar')) {
             $query->where(function ($q) use ($request) {
-                $q->where('nombre', 'like', '%' . $request->input('buscar') . '%')
-                    ->orWhere('codigo', 'like', '%' . $request->input('buscar') . '%');
+                $q->where('nombre', 'like', '%'.$request->input('buscar').'%')
+                    ->orWhere('codigo', 'like', '%'.$request->input('buscar').'%');
             });
         }
 
@@ -35,16 +35,16 @@ class MetodoPagoController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'nombre'          => ['required', 'string', 'max:100'],
-            'codigo'          => ['required', 'string', 'max:20', 'unique:metodos_pago,codigo'],
-            'activo'          => ['boolean'],
-            'permite_vuelto'  => ['boolean'],
-            'orden'           => ['integer'],
+            'nombre'         => ['required', 'string', 'max:100'],
+            'codigo'         => ['required', 'string', 'max:20', 'unique:metodos_pago,codigo'],
+            'activo'         => ['boolean'],
+            'permite_vuelto' => ['boolean'],
+            'orden'          => ['integer'],
         ]);
 
-        $validated['activo']         = $request->boolean('activo');
+        $validated['activo'] = $request->boolean('activo');
         $validated['permite_vuelto'] = $request->boolean('permite_vuelto');
-        $validated['orden']          = $request->input('orden', 0);
+        $validated['orden'] = $request->input('orden', 0);
 
         $metodo = MetodoPago::create($validated);
 
@@ -57,16 +57,16 @@ class MetodoPagoController extends Controller
     public function update(Request $request, MetodoPago $metodo_pago): JsonResponse
     {
         $validated = $request->validate([
-            'nombre'          => ['required', 'string', 'max:100'],
-            'codigo'          => ['required', 'string', 'max:20', 'unique:metodos_pago,codigo,' . $metodo_pago->id],
-            'activo'          => ['boolean'],
-            'permite_vuelto'  => ['boolean'],
-            'orden'           => ['integer'],
+            'nombre'         => ['required', 'string', 'max:100'],
+            'codigo'         => ['required', 'string', 'max:20', 'unique:metodos_pago,codigo,'.$metodo_pago->id],
+            'activo'         => ['boolean'],
+            'permite_vuelto' => ['boolean'],
+            'orden'          => ['integer'],
         ]);
 
-        $validated['activo']         = $request->boolean('activo');
+        $validated['activo'] = $request->boolean('activo');
         $validated['permite_vuelto'] = $request->boolean('permite_vuelto');
-        $validated['orden']          = $request->input('orden', 0);
+        $validated['orden'] = $request->input('orden', 0);
 
         $metodo_pago->update($validated);
 

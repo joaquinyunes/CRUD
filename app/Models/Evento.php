@@ -42,7 +42,7 @@ class Evento extends Model
 
     public function getEndAttribute(): ?string
     {
-        if (!$this->fin) {
+        if (! $this->fin) {
             return null;
         }
 

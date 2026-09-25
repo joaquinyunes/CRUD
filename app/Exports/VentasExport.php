@@ -12,7 +12,9 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class VentasExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
     protected ?string $fechaDesde;
+
     protected ?string $fechaHasta;
+
     protected ?string $estado;
 
     public function __construct(?string $fechaDesde = null, ?string $fechaHasta = null, ?string $estado = null)
@@ -55,7 +57,7 @@ class VentasExport implements FromCollection, WithHeadings, WithMapping, WithSty
     {
         return [
             $venta->numero,
-            ($venta->cliente->nombre ?? '') . ' ' . ($venta->cliente->apellido ?? ''),
+            ($venta->cliente->nombre ?? '').' '.($venta->cliente->apellido ?? ''),
             $venta->fecha->format('d/m/Y'),
             $venta->total,
             ucfirst($venta->estado),

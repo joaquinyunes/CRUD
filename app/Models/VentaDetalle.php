@@ -24,9 +24,9 @@ class VentaDetalle extends Model
     ];
 
     protected $casts = [
-        'precio' => 'decimal:2',
+        'precio'         => 'decimal:2',
         'costo_unitario' => 'decimal:2',
-        'subtotal' => 'decimal:2',
+        'subtotal'       => 'decimal:2',
     ];
 
     public function venta(): BelongsTo

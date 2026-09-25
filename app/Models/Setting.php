@@ -8,12 +8,14 @@ use Illuminate\Support\Facades\Cache;
 class Setting extends Model
 {
     protected $table = 'configuracion';
+
     protected $fillable = ['clave', 'valor', 'grupo'];
 
     public static function obtener(string $clave, ?string $default = null): ?string
     {
         return Cache::remember("setting_{$clave}", 3600, function () use ($clave, $default) {
             $setting = static::where('clave', $clave)->first();
+
             return $setting ? $setting->valor : $default;
         });
     }

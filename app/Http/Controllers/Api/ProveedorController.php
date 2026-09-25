@@ -18,7 +18,7 @@ class ProveedorController extends Controller
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
             $query->where('nombre', 'like', "%{$buscar}%")
-                  ->orWhere('cuit', 'like', "%{$buscar}%");
+                ->orWhere('cuit', 'like', "%{$buscar}%");
         }
 
         $proveedores = $query->orderBy('nombre')->paginate(20);

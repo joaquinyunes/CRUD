@@ -92,7 +92,7 @@ class Compra extends Model
 
     public function scopeBuscar($query, ?string $buscar)
     {
-        if (!$buscar) {
+        if (! $buscar) {
             return $query;
         }
 

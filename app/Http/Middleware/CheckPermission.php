@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Role;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +18,7 @@ class CheckPermission
             if ($request->expectsJson()) {
                 return response()->json(['error' => 'No autenticado.'], 401);
             }
+
             return redirect()->route('login');
         }
 
@@ -26,7 +28,7 @@ class CheckPermission
             abort(403, 'Tu cuenta no tiene un rol asignado. Contactá al administrador.');
         }
 
-        if ($rol->nombre === \App\Models\Role::ADMINISTRADOR || $rol->nombre === 'admin') {
+        if ($rol->nombre === Role::ADMINISTRADOR || $rol->nombre === 'admin') {
             return $next($request);
         }
 

@@ -19,8 +19,8 @@ class ClienteController extends Controller
             $buscar = $request->buscar;
             $query->where(function ($q) use ($buscar) {
                 $q->where('nombre', 'like', "%{$buscar}%")
-                  ->orWhere('apellido', 'like', "%{$buscar}%")
-                  ->orWhere('documento', 'like', "%{$buscar}%");
+                    ->orWhere('apellido', 'like', "%{$buscar}%")
+                    ->orWhere('documento', 'like', "%{$buscar}%");
             });
         }
 

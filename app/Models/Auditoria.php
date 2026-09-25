@@ -42,7 +42,7 @@ class Auditoria extends Model
 
         return $query->where(function (Builder $q) use ($texto) {
             $q->where('accion', 'like', "%{$texto}%")
-              ->orWhere('modelo_afectado', 'like', "%{$texto}%");
+                ->orWhere('modelo_afectado', 'like', "%{$texto}%");
         });
     }
 

@@ -56,7 +56,7 @@ class CalendarioController extends Controller
         Evento::create($validated);
 
         return redirect()->route('calendario.index')
-                         ->with('success', 'Evento creado correctamente.');
+            ->with('success', 'Evento creado correctamente.');
     }
 
     public function update(Request $request, Evento $evento): RedirectResponse
@@ -75,7 +75,7 @@ class CalendarioController extends Controller
         $evento->update($validated);
 
         return redirect()->route('calendario.index')
-                         ->with('success', 'Evento actualizado correctamente.');
+            ->with('success', 'Evento actualizado correctamente.');
     }
 
     public function destroy(Evento $evento): RedirectResponse

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\StockInsuficienteException;
 use App\Models\Compra;
 use App\Models\Devolucion;
+use App\Models\Producto;
 use App\Models\Venta;
 use App\Services\CajaService;
 use App\Services\StockService;
@@ -102,7 +103,7 @@ class DevolucionController extends Controller
                 foreach ($lineas as $l) {
                     $devolucion->detalles()->create($l);
                     $this->stock->registrarDevolucion(
-                        \App\Models\Producto::find($l['producto_id']),
+                        Producto::find($l['producto_id']),
                         $l['cantidad'],
                         'devolucion_venta',
                         $devolucion->id
@@ -184,7 +185,7 @@ class DevolucionController extends Controller
                 foreach ($lineas as $l) {
                     $devolucion->detalles()->create($l);
                     $this->stock->registrarSalida(
-                        \App\Models\Producto::find($l['producto_id']),
+                        Producto::find($l['producto_id']),
                         $l['cantidad'],
                         'devolucion_compra',
                         $devolucion->id
@@ -221,6 +222,6 @@ class DevolucionController extends Controller
 
         $n = $ultimo ? ((int) substr($ultimo->numero, 4)) + 1 : 1;
 
-        return 'DEV-' . str_pad((string) $n, 5, '0', STR_PAD_LEFT);
+        return 'DEV-'.str_pad((string) $n, 5, '0', STR_PAD_LEFT);
     }
 }

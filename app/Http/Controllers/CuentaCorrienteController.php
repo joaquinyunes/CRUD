@@ -3,10 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
-use App\Models\Compra;
 use App\Models\MetodoPago;
 use App\Models\Proveedor;
-use App\Models\Venta;
 use App\Services\PagoDocumentoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,6 +21,7 @@ class CuentaCorrienteController extends Controller
             ->orderBy('nombre')->get()
             ->map(function (Cliente $c) {
                 $c->saldo_actual = $c->saldo();
+
                 return $c;
             })
             ->when($request->input('con_saldo'), fn ($col) => $col->filter(fn ($c) => $c->saldo_actual > 0)->values());
@@ -75,6 +74,7 @@ class CuentaCorrienteController extends Controller
             ->orderBy('nombre')->get()
             ->map(function (Proveedor $p) {
                 $p->saldo_actual = $p->saldo();
+
                 return $p;
             });
 
@@ -135,7 +135,7 @@ class CuentaCorrienteController extends Controller
 
         $deudaTotal = round($docs->sum(fn ($d) => $d->saldoPendiente()), 2);
         if ($restante > $deudaTotal + 0.01) {
-            throw new \RuntimeException('El monto ($' . number_format($restante, 2) . ') supera la deuda total ($' . number_format($deudaTotal, 2) . ').');
+            throw new \RuntimeException('El monto ($'.number_format($restante, 2).') supera la deuda total ($'.number_format($deudaTotal, 2).').');
         }
 
         foreach ($docs as $doc) {

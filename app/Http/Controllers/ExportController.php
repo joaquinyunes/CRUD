@@ -13,7 +13,7 @@ class ExportController extends Controller
     {
         $formato = $request->get('formato', 'xlsx');
 
-        return Excel::download(new ProductosExport, 'productos.' . $formato);
+        return Excel::download(new ProductosExport, 'productos.'.$formato);
     }
 
     public function ventas(Request $request)
@@ -26,7 +26,7 @@ class ExportController extends Controller
                 $request->get('fecha_hasta'),
                 $request->get('estado')
             ),
-            'ventas.' . $formato
+            'ventas.'.$formato
         );
     }
 }

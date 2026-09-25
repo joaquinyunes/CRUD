@@ -14,7 +14,7 @@ class CategoriaController extends Controller
         $query = Categoria::query();
 
         if ($request->filled('buscar')) {
-            $query->where('nombre', 'like', '%' . $request->input('buscar') . '%');
+            $query->where('nombre', 'like', '%'.$request->input('buscar').'%');
         }
 
         if ($request->filled('estado')) {
@@ -24,8 +24,8 @@ class CategoriaController extends Controller
         $categorias = $query->orderBy('nombre')->paginate(15)->withQueryString();
 
         return view('categorias.index', [
-            'categorias' => $categorias,
-            'buscar' => $request->input('buscar', ''),
+            'categorias'   => $categorias,
+            'buscar'       => $request->input('buscar', ''),
             'estadoFiltro' => $request->input('estado', ''),
         ]);
     }
@@ -33,7 +33,7 @@ class CategoriaController extends Controller
     public function create(): View
     {
         return view('categorias.form', [
-            'categoria' => new Categoria(),
+            'categoria' => new Categoria,
         ]);
     }
 
@@ -74,7 +74,7 @@ class CategoriaController extends Controller
     private function validarDatos(Request $request): array
     {
         $validado = $request->validate([
-            'nombre' => ['required', 'string', 'max:255'],
+            'nombre'      => ['required', 'string', 'max:255'],
             'descripcion' => ['nullable', 'string', 'max:255'],
         ]);
 

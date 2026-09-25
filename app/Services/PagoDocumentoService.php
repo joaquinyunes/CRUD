@@ -40,7 +40,7 @@ class PagoDocumentoService
         }
 
         if ($monto > $doc->saldoPendiente() + 0.01) {
-            throw new RuntimeException('El monto supera el saldo pendiente ($' . number_format($doc->saldoPendiente(), 2) . ').');
+            throw new RuntimeException('El monto supera el saldo pendiente ($'.number_format($doc->saldoPendiente(), 2).').');
         }
 
         $metodo = MetodoPago::findOrFail($metodoPagoId);

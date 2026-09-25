@@ -8,7 +8,6 @@ use App\Models\Producto;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Validation\ValidationException;
 
 class ProductoController extends Controller
 {
@@ -20,7 +19,7 @@ class ProductoController extends Controller
             $buscar = $request->buscar;
             $query->where(function ($q) use ($buscar) {
                 $q->where('nombre', 'like', "%{$buscar}%")
-                  ->orWhere('codigo', 'like', "%{$buscar}%");
+                    ->orWhere('codigo', 'like', "%{$buscar}%");
             });
         }
 
@@ -60,7 +59,7 @@ class ProductoController extends Controller
     public function update(Request $request, Producto $producto): ProductoResource
     {
         $validated = $request->validate([
-            'codigo'        => ['required', 'string', 'max:100', 'unique:productos,codigo,' . $producto->id],
+            'codigo'        => ['required', 'string', 'max:100', 'unique:productos,codigo,'.$producto->id],
             'nombre'        => ['required', 'string', 'max:255'],
             'descripcion'   => ['nullable', 'string'],
             'categoria_id'  => ['required', 'exists:categorias,id'],

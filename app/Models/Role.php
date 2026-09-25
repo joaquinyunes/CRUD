@@ -15,9 +15,12 @@ class Role extends Model
     ];
 
     const ADMINISTRADOR = 'Administrador';
-    const SUPERVISOR    = 'Supervisor';
-    const EMPLEADO      = 'Empleado';
-    const CLIENTE       = 'Cliente';
+
+    const SUPERVISOR = 'Supervisor';
+
+    const EMPLEADO = 'Empleado';
+
+    const CLIENTE = 'Cliente';
 
     public function users(): HasMany
     {

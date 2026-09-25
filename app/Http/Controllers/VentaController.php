@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Events\VentaCreada;
+use App\Exceptions\StockInsuficienteException;
 use App\Models\Cliente;
+use App\Models\Deposito;
 use App\Models\MetodoPago;
 use App\Models\Producto;
 use App\Models\Setting;
@@ -13,6 +15,7 @@ use App\Services\StockDocumentoService;
 use App\Support\CalculadorTotales;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -40,9 +43,9 @@ class VentaController extends Controller
         }
 
         $ventas = $query->orderBy('fecha', 'desc')
-                        ->orderBy('id', 'desc')
-                        ->paginate(20)
-                        ->withQueryString();
+            ->orderBy('id', 'desc')
+            ->paginate(20)
+            ->withQueryString();
 
         return view('ventas.index', compact('ventas'));
     }
@@ -52,7 +55,7 @@ class VentaController extends Controller
         $clientes = Cliente::where('estado', 'activo')->orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
         $metodosPago = MetodoPago::activos()->get();
-        $depositos = \App\Models\Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
+        $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
 
         return view('ventas.form', compact('clientes', 'productos', 'metodosPago', 'depositos'));
     }
@@ -83,7 +86,7 @@ class VentaController extends Controller
                 $venta = Venta::create([
                     'numero'         => $this->generarNumero(),
                     'cliente_id'     => $request->cliente_id,
-                    'deposito_id'    => $request->deposito_id ?: \App\Models\Deposito::principalId(),
+                    'deposito_id'    => $request->deposito_id ?: Deposito::principalId(),
                     'fecha'          => $request->fecha,
                     'subtotal'       => $totales['subtotal'],
                     'descuento'      => $totales['descuento'],
@@ -104,7 +107,7 @@ class VentaController extends Controller
 
                 return $venta;
             });
-        } catch (\App\Exceptions\StockInsuficienteException $e) {
+        } catch (StockInsuficienteException $e) {
             return back()->withErrors(['detalles' => $e->getMessage()])->withInput();
         }
 
@@ -124,7 +127,7 @@ class VentaController extends Controller
         $clientes = Cliente::where('estado', 'activo')->orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
         $metodosPago = MetodoPago::activos()->get();
-        $depositos = \App\Models\Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
+        $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
 
         return view('ventas.form', compact('venta', 'clientes', 'productos', 'metodosPago', 'depositos'));
     }
@@ -176,7 +179,7 @@ class VentaController extends Controller
                     $this->stockDoc->aplicarVenta($venta);
                 }
             });
-        } catch (\App\Exceptions\StockInsuficienteException $e) {
+        } catch (StockInsuficienteException $e) {
             return back()->withErrors(['detalles' => $e->getMessage()])->withInput();
         }
 
@@ -232,9 +235,9 @@ class VentaController extends Controller
 
     /**
      * @param  array<int,array<string,mixed>>  $detalles
-     * @return \Illuminate\Support\Collection<int,array<string,mixed>>
+     * @return Collection<int,array<string,mixed>>
      */
-    private function construirDetalles(array $detalles): \Illuminate\Support\Collection
+    private function construirDetalles(array $detalles): Collection
     {
         $costos = Producto::whereIn('id', collect($detalles)->pluck('producto_id'))
             ->pluck('precio_compra', 'id');
@@ -295,8 +298,8 @@ class VentaController extends Controller
         $proyectado = $cliente->saldo() + $nuevoSaldo;
 
         if ($proyectado > $limite + 0.01) {
-            return 'Supera el límite de crédito del cliente ($' . number_format($limite, 2)
-                . '). Deuda proyectada: $' . number_format($proyectado, 2) . '.';
+            return 'Supera el límite de crédito del cliente ($'.number_format($limite, 2)
+                .'). Deuda proyectada: $'.number_format($proyectado, 2).'.';
         }
 
         return null;
@@ -350,12 +353,12 @@ class VentaController extends Controller
         $digitos = (int) Setting::obtener('ventas_cantidad_digitos', '5');
 
         $ultima = Venta::where('numero', 'like', "{$prefijo}-%")
-                       ->orderByRaw('CAST(SUBSTRING(numero, ' . (strlen($prefijo) + 2) . ') AS UNSIGNED) DESC')
-                       ->lockForUpdate()
-                       ->first();
+            ->orderByRaw('CAST(SUBSTRING(numero, '.(strlen($prefijo) + 2).') AS UNSIGNED) DESC')
+            ->lockForUpdate()
+            ->first();
 
         $nuevoNumero = $ultima ? ((int) substr($ultima->numero, strlen($prefijo) + 1)) + 1 : 1;
 
-        return $prefijo . '-' . str_pad((string) $nuevoNumero, $digitos, '0', STR_PAD_LEFT);
+        return $prefijo.'-'.str_pad((string) $nuevoNumero, $digitos, '0', STR_PAD_LEFT);
     }
 }

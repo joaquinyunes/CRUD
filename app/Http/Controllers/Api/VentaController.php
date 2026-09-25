@@ -25,7 +25,7 @@ class VentaController extends Controller
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
             $query->where('numero', 'like', "%{$buscar}%")
-                  ->orWhereHas('cliente', fn ($q) => $q->where('nombre', 'like', "%{$buscar}%"));
+                ->orWhereHas('cliente', fn ($q) => $q->where('nombre', 'like', "%{$buscar}%"));
         }
 
         if ($request->filled('estado')) {
@@ -59,7 +59,7 @@ class VentaController extends Controller
 
         try {
             $venta = DB::transaction(function () use ($validated) {
-                $numero = 'VTA-' . str_pad((string) (Venta::max('id') + 1), 5, '0', STR_PAD_LEFT);
+                $numero = 'VTA-'.str_pad((string) (Venta::max('id') + 1), 5, '0', STR_PAD_LEFT);
 
                 $costos = Producto::whereIn('id', collect($validated['detalles'])->pluck('producto_id'))
                     ->pluck('precio_compra', 'id');

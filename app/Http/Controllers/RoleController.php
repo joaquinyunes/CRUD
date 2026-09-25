@@ -61,7 +61,7 @@ class RoleController extends Controller
     public function usuarios(): View
     {
         $usuarios = User::with('role')->orderBy('name')->get();
-        $roles    = Role::all();
+        $roles = Role::all();
 
         return view('roles.usuarios', compact('usuarios', 'roles'));
     }

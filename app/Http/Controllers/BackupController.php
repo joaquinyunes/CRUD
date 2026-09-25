@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Process;
 
 class BackupController extends Controller
 {
@@ -22,7 +21,7 @@ class BackupController extends Controller
         $user = config('database.connections.mysql.username');
         $pass = config('database.connections.mysql.password');
 
-        $nombre = 'backup_' . now()->format('Y-m-d_His') . '.sql';
+        $nombre = 'backup_'.now()->format('Y-m-d_His').'.sql';
         $ruta = storage_path("app/backups/{$nombre}");
 
         $cmd = sprintf(
@@ -33,7 +32,7 @@ class BackupController extends Controller
             $ruta
         );
 
-        if (!empty($pass)) {
+        if (! empty($pass)) {
             $cmd = sprintf(
                 'mysqldump -h %s -u %s -p%s %s > "%s" 2>&1',
                 escapeshellarg($host),
@@ -46,9 +45,9 @@ class BackupController extends Controller
 
         exec($cmd, $output, $returnCode);
 
-        if ($returnCode !== 0 || !File::exists($ruta)) {
+        if ($returnCode !== 0 || ! File::exists($ruta)) {
             return redirect()->route('backup.index')
-                ->with('error', 'Error al crear backup: ' . implode("\n", $output));
+                ->with('error', 'Error al crear backup: '.implode("\n", $output));
         }
 
         $size = File::size($ruta);
@@ -62,7 +61,7 @@ class BackupController extends Controller
     {
         $ruta = storage_path("app/backups/{$archivo}");
 
-        if (!File::exists($ruta)) {
+        if (! File::exists($ruta)) {
             abort(404);
         }
 
@@ -93,7 +92,7 @@ class BackupController extends Controller
             $tmpFile
         );
 
-        if (!empty($pass)) {
+        if (! empty($pass)) {
             $cmd = sprintf(
                 'mysql -h %s -u %s -p%s %s < "%s" 2>&1',
                 escapeshellarg($host),
@@ -108,7 +107,7 @@ class BackupController extends Controller
 
         if ($returnCode !== 0) {
             return redirect()->route('backup.index')
-                ->with('error', 'Error al restaurar: ' . implode("\n", $output));
+                ->with('error', 'Error al restaurar: '.implode("\n", $output));
         }
 
         return redirect()->route('backup.index')
@@ -131,7 +130,7 @@ class BackupController extends Controller
     {
         $directorio = storage_path('app/backups');
 
-        if (!File::isDirectory($directorio)) {
+        if (! File::isDirectory($directorio)) {
             return [];
         }
 

@@ -18,8 +18,8 @@ class UnidadMedidaController extends Controller
 
         if ($request->filled('buscar')) {
             $query->where(function ($q) use ($request) {
-                $q->where('nombre', 'like', '%' . $request->input('buscar') . '%')
-                    ->orWhere('abreviacion', 'like', '%' . $request->input('buscar') . '%');
+                $q->where('nombre', 'like', '%'.$request->input('buscar').'%')
+                    ->orWhere('abreviacion', 'like', '%'.$request->input('buscar').'%');
             });
         }
 
@@ -35,9 +35,9 @@ class UnidadMedidaController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'nombre'     => ['required', 'string', 'max:100'],
+            'nombre'      => ['required', 'string', 'max:100'],
             'abreviacion' => ['required', 'string', 'max:10'],
-            'estado'     => ['boolean'],
+            'estado'      => ['boolean'],
         ]);
 
         $validated['estado'] = $request->boolean('estado');
@@ -53,9 +53,9 @@ class UnidadMedidaController extends Controller
     public function update(Request $request, UnidadMedida $unidad_medida): JsonResponse
     {
         $validated = $request->validate([
-            'nombre'     => ['required', 'string', 'max:100'],
+            'nombre'      => ['required', 'string', 'max:100'],
             'abreviacion' => ['required', 'string', 'max:10'],
-            'estado'     => ['boolean'],
+            'estado'      => ['boolean'],
         ]);
 
         $validated['estado'] = $request->boolean('estado');

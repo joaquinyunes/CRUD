@@ -46,11 +46,11 @@ return new class extends Migration
 
         // Depósito principal + backfill del stock actual de cada producto.
         $id = DB::table('depositos')->insertGetId([
-            'nombre' => 'Depósito principal',
+            'nombre'       => 'Depósito principal',
             'es_principal' => true,
-            'activo' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'activo'       => true,
+            'created_at'   => now(),
+            'updated_at'   => now(),
         ]);
 
         foreach (DB::table('productos')->select('id', 'stock')->get() as $p) {

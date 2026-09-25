@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Cliente;
 use App\Models\Presupuesto;
 use App\Models\Producto;
+use App\Models\Setting;
 use App\Models\Venta;
 use App\Support\CalculadorTotales;
 use App\Support\NumeradorDocumentos;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -134,7 +136,7 @@ class PresupuestoController extends Controller
             $costos = Producto::whereIn('id', $presupuesto->detalles->pluck('producto_id'))->pluck('precio_compra', 'id');
 
             $venta = Venta::create([
-                'numero'         => NumeradorDocumentos::proximo('ventas', \App\Models\Setting::obtener('ventas_prefijo_numero', 'VTA'), (int) \App\Models\Setting::obtener('ventas_cantidad_digitos', '5')),
+                'numero'         => NumeradorDocumentos::proximo('ventas', Setting::obtener('ventas_prefijo_numero', 'VTA'), (int) Setting::obtener('ventas_cantidad_digitos', '5')),
                 'cliente_id'     => $presupuesto->cliente_id,
                 'fecha'          => now()->toDateString(),
                 'subtotal'       => $presupuesto->subtotal,
@@ -183,7 +185,7 @@ class PresupuestoController extends Controller
         ]);
     }
 
-    private function construirDetalles(array $detalles): \Illuminate\Support\Collection
+    private function construirDetalles(array $detalles): Collection
     {
         return collect($detalles)->map(function ($item) {
             $cantidad = (int) $item['cantidad'];

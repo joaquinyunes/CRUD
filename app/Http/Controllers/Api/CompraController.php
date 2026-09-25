@@ -23,7 +23,7 @@ class CompraController extends Controller
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
             $query->where('numero', 'like', "%{$buscar}%")
-                  ->orWhereHas('proveedor', fn ($q) => $q->where('nombre', 'like', "%{$buscar}%"));
+                ->orWhereHas('proveedor', fn ($q) => $q->where('nombre', 'like', "%{$buscar}%"));
         }
 
         if ($request->filled('estado')) {
@@ -38,17 +38,17 @@ class CompraController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'proveedor_id'            => ['required', 'exists:proveedores,id'],
-            'fecha'                   => ['required', 'date'],
-            'estado'                  => ['required', 'in:pendiente,completada,cancelada'],
-            'detalles'                => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id'  => ['required', 'exists:productos,id'],
-            'detalles.*.cantidad'     => ['required', 'integer', 'min:1'],
-            'detalles.*.precio'       => ['required', 'numeric', 'min:0'],
+            'proveedor_id'           => ['required', 'exists:proveedores,id'],
+            'fecha'                  => ['required', 'date'],
+            'estado'                 => ['required', 'in:pendiente,completada,cancelada'],
+            'detalles'               => ['required', 'array', 'min:1'],
+            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
+            'detalles.*.cantidad'    => ['required', 'integer', 'min:1'],
+            'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
         ]);
 
         $compra = DB::transaction(function () use ($validated) {
-            $numero = 'COM-' . str_pad((string) (Compra::max('id') + 1), 5, '0', STR_PAD_LEFT);
+            $numero = 'COM-'.str_pad((string) (Compra::max('id') + 1), 5, '0', STR_PAD_LEFT);
 
             $detalles = collect($validated['detalles'])->map(function ($item) {
                 return [
@@ -106,7 +106,7 @@ class CompraController extends Controller
                 $compra->update(['estado' => 'anulada', 'motivo_anulacion' => 'Anulada vía API']);
             });
         } catch (StockInsuficienteException $e) {
-            abort(422, 'No se puede anular: ' . $e->getMessage());
+            abort(422, 'No se puede anular: '.$e->getMessage());
         }
 
         return response()->json(['message' => 'Compra anulada correctamente.']);

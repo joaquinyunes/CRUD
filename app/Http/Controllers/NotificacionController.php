@@ -12,12 +12,12 @@ class NotificacionController extends Controller
     public function index(Request $request): View
     {
         $notificaciones = Notificacion::paraUsuario(auth()->id())
-                                      ->orderBy('created_at', 'desc')
-                                      ->paginate(20);
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
         $noLeidas = Notificacion::paraUsuario(auth()->id())
-                                ->noLeidas()
-                                ->count();
+            ->noLeidas()
+            ->count();
 
         return view('notificaciones.index', compact('notificaciones', 'noLeidas'));
     }
@@ -40,8 +40,8 @@ class NotificacionController extends Controller
     public function marcarTodasLeidas(): RedirectResponse
     {
         Notificacion::paraUsuario(auth()->id())
-                    ->noLeidas()
-                    ->update(['leida' => true]);
+            ->noLeidas()
+            ->update(['leida' => true]);
 
         return back()->with('success', 'Todas las notificaciones marcadas como leídas.');
     }
@@ -49,7 +49,7 @@ class NotificacionController extends Controller
     public function noLeidasCount(): int
     {
         return Notificacion::paraUsuario(auth()->id())
-                           ->noLeidas()
-                           ->count();
+            ->noLeidas()
+            ->count();
     }
 }

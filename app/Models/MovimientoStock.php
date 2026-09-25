@@ -61,7 +61,7 @@ class MovimientoStock extends Model
             $query->where('created_at', '>=', $desde);
         }
         if ($hasta) {
-            $query->where('created_at', '<=', $hasta . ' 23:59:59');
+            $query->where('created_at', '<=', $hasta.' 23:59:59');
         }
 
         return $query;

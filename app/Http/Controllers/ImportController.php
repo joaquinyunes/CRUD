@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Categoria;
 use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\Proveedor;
@@ -71,7 +72,7 @@ class ImportController extends Controller
     private function importarProducto(array $data): void
     {
         $nombre = $data['nombre'] ?? null;
-        if (!$nombre) {
+        if (! $nombre) {
             throw new \Exception('El nombre es obligatorio.');
         }
 
@@ -94,7 +95,7 @@ class ImportController extends Controller
     private function importarCliente(array $data): void
     {
         $nombre = $data['nombre'] ?? null;
-        if (!$nombre) {
+        if (! $nombre) {
             throw new \Exception('El nombre es obligatorio.');
         }
 
@@ -112,7 +113,7 @@ class ImportController extends Controller
     private function importarProveedor(array $data): void
     {
         $nombre = $data['nombre'] ?? null;
-        if (!$nombre) {
+        if (! $nombre) {
             throw new \Exception('El nombre es obligatorio.');
         }
 
@@ -127,8 +128,11 @@ class ImportController extends Controller
 
     private function resolveCategoria(?string $nombre): ?int
     {
-        if (!$nombre) return null;
-        $cat = \App\Models\Categoria::where('nombre', $nombre)->first();
+        if (! $nombre) {
+            return null;
+        }
+        $cat = Categoria::where('nombre', $nombre)->first();
+
         return $cat?->id;
     }
 }

@@ -34,12 +34,12 @@ class Archivo extends Model
         $bytes = $this->tamano;
 
         if ($bytes >= 1048576) {
-            return round($bytes / 1048576, 2) . ' MB';
+            return round($bytes / 1048576, 2).' MB';
         } elseif ($bytes >= 1024) {
-            return round($bytes / 1024, 2) . ' KB';
+            return round($bytes / 1024, 2).' KB';
         }
 
-        return $bytes . ' B';
+        return $bytes.' B';
     }
 
     public function getEsImagenAttribute(): bool
@@ -56,7 +56,7 @@ class Archivo extends Model
     {
         if ($tipo && $id) {
             $query->where('relacionado_tipo', $tipo)
-                  ->where('relacionado_id', $id);
+                ->where('relacionado_id', $id);
         }
 
         return $query;

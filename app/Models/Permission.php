@@ -30,6 +30,6 @@ class Permission extends Model
 
     public static function agrupadosPorModulo($permisos)
     {
-        return $permisos->groupBy(fn(self $p) => $p->modulo());
+        return $permisos->groupBy(fn (self $p) => $p->modulo());
     }
 }

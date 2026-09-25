@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Events\CompraCreada;
+use App\Exceptions\StockInsuficienteException;
 use App\Models\Compra;
+use App\Models\Deposito;
 use App\Models\MetodoPago;
 use App\Models\Producto;
 use App\Models\Proveedor;
@@ -12,6 +14,7 @@ use App\Services\StockDocumentoService;
 use App\Support\CalculadorTotales;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -36,9 +39,9 @@ class CompraController extends Controller
         }
 
         $compras = $query->orderBy('fecha', 'desc')
-                         ->orderBy('id', 'desc')
-                         ->paginate(20)
-                         ->withQueryString();
+            ->orderBy('id', 'desc')
+            ->paginate(20)
+            ->withQueryString();
 
         return view('compras.index', compact('compras'));
     }
@@ -48,7 +51,7 @@ class CompraController extends Controller
         $proveedores = Proveedor::orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
         $metodosPago = MetodoPago::activos()->get();
-        $depositos = \App\Models\Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
+        $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
 
         return view('compras.form', compact('proveedores', 'productos', 'metodosPago', 'depositos'));
     }
@@ -69,7 +72,7 @@ class CompraController extends Controller
             $compra = Compra::create([
                 'numero'         => $this->generarNumero(),
                 'proveedor_id'   => $request->proveedor_id,
-                'deposito_id'    => $request->deposito_id ?: \App\Models\Deposito::principalId(),
+                'deposito_id'    => $request->deposito_id ?: Deposito::principalId(),
                 'fecha'          => $request->fecha,
                 'subtotal'       => $totales['subtotal'],
                 'descuento'      => $totales['descuento'],
@@ -106,7 +109,7 @@ class CompraController extends Controller
         $proveedores = Proveedor::orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
         $metodosPago = MetodoPago::activos()->get();
-        $depositos = \App\Models\Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
+        $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
 
         return view('compras.form', compact('compra', 'proveedores', 'productos', 'metodosPago', 'depositos'));
     }
@@ -150,7 +153,7 @@ class CompraController extends Controller
                     $this->actualizarCostos($detalles->all());
                 }
             });
-        } catch (\App\Exceptions\StockInsuficienteException $e) {
+        } catch (StockInsuficienteException $e) {
             return back()->withErrors(['detalles' => $e->getMessage()])->withInput();
         }
 
@@ -173,8 +176,8 @@ class CompraController extends Controller
                     'motivo_anulacion' => $request->input('motivo', 'Anulada por el usuario'),
                 ]);
             });
-        } catch (\App\Exceptions\StockInsuficienteException $e) {
-            return back()->withErrors(['general' => 'No se puede anular: ' . $e->getMessage()]);
+        } catch (StockInsuficienteException $e) {
+            return back()->withErrors(['general' => 'No se puede anular: '.$e->getMessage()]);
         }
 
         return redirect()->route('compras.index')->with('success', 'Compra anulada correctamente.');
@@ -203,7 +206,7 @@ class CompraController extends Controller
         ]);
     }
 
-    private function construirDetalles(array $detalles): \Illuminate\Support\Collection
+    private function construirDetalles(array $detalles): Collection
     {
         return collect($detalles)->map(function ($item) {
             $cantidad = (int) $item['cantidad'];
@@ -258,12 +261,12 @@ class CompraController extends Controller
         $digitos = (int) Setting::obtener('compras_cantidad_digitos', '5');
 
         $ultima = Compra::where('numero', 'like', "{$prefijo}-%")
-                        ->orderByRaw('CAST(SUBSTRING(numero, ' . (strlen($prefijo) + 2) . ') AS UNSIGNED) DESC')
-                        ->lockForUpdate()
-                        ->first();
+            ->orderByRaw('CAST(SUBSTRING(numero, '.(strlen($prefijo) + 2).') AS UNSIGNED) DESC')
+            ->lockForUpdate()
+            ->first();
 
         $nuevoNumero = $ultima ? ((int) substr($ultima->numero, strlen($prefijo) + 1)) + 1 : 1;
 
-        return $prefijo . '-' . str_pad((string) $nuevoNumero, $digitos, '0', STR_PAD_LEFT);
+        return $prefijo.'-'.str_pad((string) $nuevoNumero, $digitos, '0', STR_PAD_LEFT);
     }
 }

@@ -10,11 +10,11 @@ class AuditoriaController extends Controller
 {
     public function index(Request $request)
     {
-        $buscar    = $request->input('buscar');
-        $modelo    = $request->input('modelo');
+        $buscar = $request->input('buscar');
+        $modelo = $request->input('modelo');
         $usuarioId = $request->input('usuario_id');
-        $desde     = $request->input('desde');
-        $hasta     = $request->input('hasta');
+        $desde = $request->input('desde');
+        $hasta = $request->input('hasta');
 
         $registros = Auditoria::with('user')
             ->paraBuscar($buscar)

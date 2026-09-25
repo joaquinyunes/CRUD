@@ -6,6 +6,8 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Schema;
 
 class Producto extends Model
 {
@@ -38,7 +40,7 @@ class Producto extends Model
     {
         // Al alta, el stock inicial vive en el depósito principal.
         static::created(function (Producto $producto) {
-            if (! \Illuminate\Support\Facades\Schema::hasTable('depositos')) {
+            if (! Schema::hasTable('depositos')) {
                 return;
             }
             $depositoId = Deposito::principalId();
@@ -65,7 +67,7 @@ class Producto extends Model
     public function scopeStockCritico($query)
     {
         return $query->where('stock', '<=', \DB::raw('stock_minimo'))
-                     ->where('estado', 'activo');
+            ->where('estado', 'activo');
     }
 
     public function categoria(): BelongsTo
@@ -78,7 +80,7 @@ class Producto extends Model
         return $this->belongsTo(UnidadMedida::class);
     }
 
-    public function depositos(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function depositos(): BelongsToMany
     {
         return $this->belongsToMany(Deposito::class, 'stock_deposito')
             ->withPivot('cantidad');
@@ -95,8 +97,9 @@ class Producto extends Model
     public function getImagenUrlAttribute(): string
     {
         if ($this->imagen) {
-            return asset('storage/' . $this->imagen);
+            return asset('storage/'.$this->imagen);
         }
+
         return asset('images/producto-placeholder.png');
     }
 

@@ -16,6 +16,7 @@ class PdfController extends Controller
         $empresa = Setting::obtenerGrupo('empresa');
         $moneda = Setting::obtener('sistema_simbolo_moneda', '$');
         $pdf = Pdf::loadView('pdf.factura-venta', compact('venta', 'empresa', 'moneda'));
+
         return $pdf->stream("factura-{$venta->numero}.pdf");
     }
 
@@ -25,6 +26,7 @@ class PdfController extends Controller
         $empresa = Setting::obtenerGrupo('empresa');
         $moneda = Setting::obtener('sistema_simbolo_moneda', '$');
         $pdf = Pdf::loadView('pdf.boleta-venta', compact('venta', 'empresa', 'moneda'));
+
         return $pdf->stream("boleta-{$venta->numero}.pdf");
     }
 
@@ -32,6 +34,7 @@ class PdfController extends Controller
     {
         $compra = Compra::with(['detalles.producto', 'proveedor', 'user'])->findOrFail($id);
         $pdf = Pdf::loadView('pdf.factura-compra', compact('compra'));
+
         return $pdf->stream("compra-{$compra->numero}.pdf");
     }
 
@@ -39,7 +42,8 @@ class PdfController extends Controller
     {
         $productos = Producto::with('categoria')->where('estado', 'activo')->orderBy('nombre')->get();
         $pdf = Pdf::loadView('pdf.catalogo-productos', compact('productos'));
-        return $pdf->stream("catalogo-productos.pdf");
+
+        return $pdf->stream('catalogo-productos.pdf');
     }
 
     public function reporteStock()
@@ -49,6 +53,7 @@ class PdfController extends Controller
             ->orderBy('stock')
             ->get();
         $pdf = Pdf::loadView('pdf.reporte-stock', compact('productos'));
-        return $pdf->stream("reporte-stock.pdf");
+
+        return $pdf->stream('reporte-stock.pdf');
     }
 }

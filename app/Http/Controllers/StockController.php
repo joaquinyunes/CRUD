@@ -26,9 +26,9 @@ class StockController extends Controller
         }
 
         $movimientos = $query->orderBy('created_at', 'desc')
-                             ->orderBy('id', 'desc')
-                             ->paginate(20)
-                             ->withQueryString();
+            ->orderBy('id', 'desc')
+            ->paginate(20)
+            ->withQueryString();
 
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
 

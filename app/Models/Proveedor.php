@@ -38,12 +38,12 @@ class Proveedor extends Model
 
     public function scopeBuscar($query, ?string $buscar)
     {
-        if (!$buscar) {
+        if (! $buscar) {
             return $query;
         }
 
         return $query->where('nombre', 'like', "%{$buscar}%")
-                    ->orWhere('cuit', 'like', "%{$buscar}%")
-                    ->orWhere('email', 'like', "%{$buscar}%");
+            ->orWhere('cuit', 'like', "%{$buscar}%")
+            ->orWhere('email', 'like', "%{$buscar}%");
     }
 }

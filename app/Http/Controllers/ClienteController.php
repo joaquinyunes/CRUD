@@ -27,15 +27,15 @@ class ClienteController extends Controller
 
         return view('clientes.index', [
             'clientes' => $clientes,
-            'buscar' => $request->input('buscar'),
-            'estado' => $estado,
+            'buscar'   => $request->input('buscar'),
+            'estado'   => $estado,
         ]);
     }
 
     public function create(): View
     {
         return view('clientes.form', [
-            'cliente' => new Cliente(),
+            'cliente' => new Cliente,
         ]);
     }
 
@@ -80,14 +80,14 @@ class ClienteController extends Controller
     private function validarDatos(Request $request): array
     {
         return $request->validate([
-            'nombre'       => ['required', 'string', 'max:255'],
-            'apellido'     => ['required', 'string', 'max:255'],
-            'documento'    => ['nullable', 'string', 'max:50'],
-            'email'        => ['nullable', 'email', 'max:255'],
-            'telefono'     => ['nullable', 'string', 'max:50'],
-            'direccion'    => ['nullable', 'string', 'max:255'],
-            'observaciones' => ['nullable', 'string'],
-            'estado'       => ['required', 'in:activo,archivado,eliminado'],
+            'nombre'         => ['required', 'string', 'max:255'],
+            'apellido'       => ['required', 'string', 'max:255'],
+            'documento'      => ['nullable', 'string', 'max:50'],
+            'email'          => ['nullable', 'email', 'max:255'],
+            'telefono'       => ['nullable', 'string', 'max:50'],
+            'direccion'      => ['nullable', 'string', 'max:255'],
+            'observaciones'  => ['nullable', 'string'],
+            'estado'         => ['required', 'in:activo,archivado,eliminado'],
             'limite_credito' => ['nullable', 'numeric', 'min:0'],
         ]);
     }

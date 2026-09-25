@@ -93,13 +93,13 @@ class Venta extends Model
 
     public function scopeBuscar($query, ?string $buscar)
     {
-        if (!$buscar) {
+        if (! $buscar) {
             return $query;
         }
 
         return $query->whereHas('cliente', function ($q) use ($buscar) {
             $q->where('nombre', 'like', "%{$buscar}%")
-              ->orWhere('apellido', 'like', "%{$buscar}%");
+                ->orWhere('apellido', 'like', "%{$buscar}%");
         })->orWhere('numero', 'like', "%{$buscar}%");
     }
 

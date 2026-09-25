@@ -38,20 +38,20 @@ class TareaController extends Controller
 
         if ($vista === 'kanban') {
             $pendientes = Tarea::with('asignada', 'creadaPor')
-                               ->where('estado', 'pendiente')
-                               ->orderByRaw("FIELD(prioridad, 'alta', 'media', 'baja')")
-                               ->get();
+                ->where('estado', 'pendiente')
+                ->orderByRaw("FIELD(prioridad, 'alta', 'media', 'baja')")
+                ->get();
 
             $enProgreso = Tarea::with('asignada', 'creadaPor')
-                               ->where('estado', 'en_progreso')
-                               ->orderByRaw("FIELD(prioridad, 'alta', 'media', 'baja')")
-                               ->get();
+                ->where('estado', 'en_progreso')
+                ->orderByRaw("FIELD(prioridad, 'alta', 'media', 'baja')")
+                ->get();
 
             $completadas = Tarea::with('asignada', 'creadaPor')
-                                ->where('estado', 'completada')
-                                ->latest()
-                                ->limit(20)
-                                ->get();
+                ->where('estado', 'completada')
+                ->latest()
+                ->limit(20)
+                ->get();
 
             return view('tareas.kanban', compact('pendientes', 'enProgreso', 'completadas', 'usuarios'));
         }
@@ -82,7 +82,7 @@ class TareaController extends Controller
         Tarea::create($validated);
 
         return redirect()->route('tareas.index')
-                         ->with('success', 'Tarea creada correctamente.');
+            ->with('success', 'Tarea creada correctamente.');
     }
 
     public function edit(Tarea $tarea): View
@@ -106,7 +106,7 @@ class TareaController extends Controller
         $tarea->update($validated);
 
         return redirect()->route('tareas.index')
-                         ->with('success', 'Tarea actualizada correctamente.');
+            ->with('success', 'Tarea actualizada correctamente.');
     }
 
     public function destroy(Tarea $tarea): RedirectResponse
@@ -114,7 +114,7 @@ class TareaController extends Controller
         $tarea->delete();
 
         return redirect()->route('tareas.index')
-                         ->with('success', 'Tarea eliminada correctamente.');
+            ->with('success', 'Tarea eliminada correctamente.');
     }
 
     public function cambiarEstado(Tarea $tarea, string $estado): RedirectResponse

@@ -39,7 +39,7 @@ class CategoriaController extends Controller
     public function update(Request $request, Categoria $categoria): CategoriaResource
     {
         $validated = $request->validate([
-            'nombre'      => ['required', 'string', 'max:255', 'unique:categorias,nombre,' . $categoria->id],
+            'nombre'      => ['required', 'string', 'max:255', 'unique:categorias,nombre,'.$categoria->id],
             'descripcion' => ['nullable', 'string'],
             'estado'      => ['required', 'boolean'],
         ]);

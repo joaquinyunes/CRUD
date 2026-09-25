@@ -14,14 +14,14 @@ trait Auditable
             }
 
             Auditoria::create([
-                'user_id'          => auth()->id(),
-                'ip'               => request()->ip(),
-                'accion'           => 'created',
-                'modelo_afectado'  => get_class($model),
-                'modelo_id'        => $model->getKey(),
-                'valor_anterior'   => null,
-                'valor_nuevo'      => $model->getAttributes(),
-                'created_at'       => now(),
+                'user_id'         => auth()->id(),
+                'ip'              => request()->ip(),
+                'accion'          => 'created',
+                'modelo_afectado' => get_class($model),
+                'modelo_id'       => $model->getKey(),
+                'valor_anterior'  => null,
+                'valor_nuevo'     => $model->getAttributes(),
+                'created_at'      => now(),
             ]);
         });
 
@@ -31,7 +31,7 @@ trait Auditable
             }
 
             $anterior = $model->getOriginal();
-            $nuevo    = $model->getChanges();
+            $nuevo = $model->getChanges();
 
             if (empty($nuevo)) {
                 return;
@@ -40,14 +40,14 @@ trait Auditable
             unset($anterior['updated_at'], $nuevo['updated_at']);
 
             Auditoria::create([
-                'user_id'          => auth()->id(),
-                'ip'               => request()->ip(),
-                'accion'           => 'updated',
-                'modelo_afectado'  => get_class($model),
-                'modelo_id'        => $model->getKey(),
-                'valor_anterior'   => array_intersect_key($anterior, $nuevo),
-                'valor_nuevo'      => $nuevo,
-                'created_at'       => now(),
+                'user_id'         => auth()->id(),
+                'ip'              => request()->ip(),
+                'accion'          => 'updated',
+                'modelo_afectado' => get_class($model),
+                'modelo_id'       => $model->getKey(),
+                'valor_anterior'  => array_intersect_key($anterior, $nuevo),
+                'valor_nuevo'     => $nuevo,
+                'created_at'      => now(),
             ]);
         });
 
@@ -57,14 +57,14 @@ trait Auditable
             }
 
             Auditoria::create([
-                'user_id'          => auth()->id(),
-                'ip'               => request()->ip(),
-                'accion'           => 'deleted',
-                'modelo_afectado'  => get_class($model),
-                'modelo_id'        => $model->getKey(),
-                'valor_anterior'   => $model->getAttributes(),
-                'valor_nuevo'      => null,
-                'created_at'       => now(),
+                'user_id'         => auth()->id(),
+                'ip'              => request()->ip(),
+                'accion'          => 'deleted',
+                'modelo_afectado' => get_class($model),
+                'modelo_id'       => $model->getKey(),
+                'valor_anterior'  => $model->getAttributes(),
+                'valor_nuevo'     => null,
+                'created_at'      => now(),
             ]);
         });
 
@@ -75,14 +75,14 @@ trait Auditable
                 }
 
                 Auditoria::create([
-                    'user_id'          => auth()->id(),
-                    'ip'               => request()->ip(),
-                    'accion'           => 'restored',
-                    'modelo_afectado'  => get_class($model),
-                    'modelo_id'        => $model->getKey(),
-                    'valor_anterior'   => null,
-                    'valor_nuevo'      => $model->getAttributes(),
-                    'created_at'       => now(),
+                    'user_id'         => auth()->id(),
+                    'ip'              => request()->ip(),
+                    'accion'          => 'restored',
+                    'modelo_afectado' => get_class($model),
+                    'modelo_id'       => $model->getKey(),
+                    'valor_anterior'  => null,
+                    'valor_nuevo'     => $model->getAttributes(),
+                    'created_at'      => now(),
                 ]);
             });
         }

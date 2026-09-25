@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Compra;
+use App\Models\Deposito;
 use App\Models\OrdenCompra;
 use App\Models\Producto;
 use App\Models\Proveedor;
+use App\Models\Setting;
+use App\Services\StockService;
 use App\Support\CalculadorTotales;
 use App\Support\NumeradorDocumentos;
-use App\Services\StockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -32,7 +35,7 @@ class OrdenCompraController extends Controller
     {
         $proveedores = Proveedor::orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
-        $depositos = \App\Models\Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
+        $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
 
         return view('ordenes_compra.form', compact('proveedores', 'productos', 'depositos'));
     }
@@ -47,7 +50,7 @@ class OrdenCompraController extends Controller
             $orden = OrdenCompra::create([
                 'numero'                 => NumeradorDocumentos::proximo('ordenes_compra', 'OC'),
                 'proveedor_id'           => $request->proveedor_id,
-                'deposito_id'            => $request->deposito_id ?: \App\Models\Deposito::principalId(),
+                'deposito_id'            => $request->deposito_id ?: Deposito::principalId(),
                 'fecha'                  => $request->fecha,
                 'fecha_entrega_estimada' => $request->fecha_entrega_estimada,
                 'total'                  => round($detalles->sum('subtotal'), 2),
@@ -77,7 +80,7 @@ class OrdenCompraController extends Controller
 
         $proveedores = Proveedor::orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
-        $depositos = \App\Models\Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
+        $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
 
         return view('ordenes_compra.form', compact('orden', 'proveedores', 'productos', 'depositos'));
     }
@@ -198,7 +201,7 @@ class OrdenCompraController extends Controller
             $totales = CalculadorTotales::calcular($lineas->all(), null, 0);
 
             $compra = Compra::create([
-                'numero'         => NumeradorDocumentos::proximo('compras', \App\Models\Setting::obtener('compras_prefijo_numero', 'COM'), (int) \App\Models\Setting::obtener('compras_cantidad_digitos', '5')),
+                'numero'         => NumeradorDocumentos::proximo('compras', Setting::obtener('compras_prefijo_numero', 'COM'), (int) Setting::obtener('compras_cantidad_digitos', '5')),
                 'proveedor_id'   => $orden->proveedor_id,
                 'fecha'          => now()->toDateString(),
                 'subtotal'       => $totales['subtotal'],
@@ -242,7 +245,7 @@ class OrdenCompraController extends Controller
         ]);
     }
 
-    private function construirDetalles(array $detalles): \Illuminate\Support\Collection
+    private function construirDetalles(array $detalles): Collection
     {
         return collect($detalles)->map(function ($item) {
             $cantidad = (int) $item['cantidad'];

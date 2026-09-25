@@ -20,9 +20,9 @@ class NotificarCompraCreada
         foreach ($admins as $admin) {
             Notificacion::create([
                 'titulo'  => 'Nueva compra registrada',
-                'mensaje' => "Compra #{$compra->numero} a {$proveedor} por $" . number_format($compra->total, 2, ',', '.'),
+                'mensaje' => "Compra #{$compra->numero} a {$proveedor} por $".number_format($compra->total, 2, ',', '.'),
                 'tipo'    => 'compra',
-                'url'     => '/compras/' . $compra->id,
+                'url'     => '/compras/'.$compra->id,
                 'user_id' => $admin->id,
             ]);
         }

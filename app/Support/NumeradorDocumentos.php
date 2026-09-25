@@ -22,6 +22,6 @@ class NumeradorDocumentos
 
         $n = $ultimo ? ((int) substr($ultimo, strlen($prefijo) + 1)) + 1 : 1;
 
-        return $prefijo . '-' . str_pad((string) $n, $digitos, '0', STR_PAD_LEFT);
+        return $prefijo.'-'.str_pad((string) $n, $digitos, '0', STR_PAD_LEFT);
     }
 }
