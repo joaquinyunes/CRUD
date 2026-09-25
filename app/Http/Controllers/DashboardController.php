@@ -8,6 +8,7 @@ use App\Models\MovimientoStock;
 use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
+use App\Support\PeriodoSql;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -39,7 +40,10 @@ class DashboardController extends Controller
             ->whereYear('fecha', now()->year)
             ->sum('total');
 
-        $gananciaMes = $ventasMes - $comprasMes;
+        // Ganancia = margen bruto sobre lo efectivamente vendido (facturado menos
+        // el costo de esa mercaderia), NO ventas menos compras: reponer stock no
+        // es una perdida. Es la misma formula que usa el reporte de rentabilidad.
+        $gananciaMes = $this->gananciaBruta(now()->year, now()->month);
         $margenMes = $ventasMes > 0 ? ($gananciaMes / $ventasMes) * 100 : 0;
 
         $ventasMesAnterior = Venta::where('estado', 'completada')
@@ -50,7 +54,10 @@ class DashboardController extends Controller
             ->whereMonth('fecha', now()->subMonth()->month)
             ->whereYear('fecha', now()->subMonth()->year)
             ->sum('total');
-        $gananciaMesAnterior = $ventasMesAnterior - $comprasMesAnterior;
+        $gananciaMesAnterior = $this->gananciaBruta(
+            now()->subMonth()->year,
+            now()->subMonth()->month
+        );
 
         $variacionVentas = $ventasMesAnterior > 0 ? (($ventasMes - $ventasMesAnterior) / $ventasMesAnterior) * 100 : 0;
         $variacionGanancia = $gananciaMesAnterior != 0 ? (($gananciaMes - $gananciaMesAnterior) / abs($gananciaMesAnterior)) * 100 : 0;
@@ -79,9 +86,9 @@ class DashboardController extends Controller
 
         $chartVentasDiarias = Venta::where('estado', 'completada')
             ->whereBetween('fecha', [$fechaDesde, $fechaHasta])
-            ->selectRaw('DATE(fecha) as fecha, SUM(total) as total')
-            ->groupBy('fecha')
-            ->orderBy('fecha')
+            ->selectRaw(PeriodoSql::dia().' as fecha, SUM(total) as total')
+            ->groupBy(DB::raw(PeriodoSql::dia()))
+            ->orderBy(DB::raw(PeriodoSql::dia()))
             ->get();
 
         $chartTopProductos = DB::table('ventas_detalle')
@@ -132,5 +139,25 @@ class DashboardController extends Controller
             'fechaDesde',
             'fechaHasta'
         ));
+    }
+
+    /**
+     * Margen bruto de un mes: lo facturado menos el costo de la mercaderia
+     * vendida. Comparte formula con ReporteController@ganancias para que el
+     * panel y el reporte no digan cosas distintas.
+     */
+    private function gananciaBruta(int $anio, int $mes): float
+    {
+        $fila = DB::table('ventas_detalle')
+            ->join('ventas', 'ventas.id', '=', 'ventas_detalle.venta_id')
+            ->join('productos', 'productos.id', '=', 'ventas_detalle.producto_id')
+            ->where('ventas.estado', 'completada')
+            ->whereYear('ventas.fecha', $anio)
+            ->whereMonth('ventas.fecha', $mes)
+            ->selectRaw('COALESCE(SUM(ventas_detalle.subtotal), 0) as facturado')
+            ->selectRaw('COALESCE(SUM(ventas_detalle.cantidad * productos.precio_compra), 0) as costo')
+            ->first();
+
+        return round((float) $fila->facturado - (float) $fila->costo, 2);
     }
 }

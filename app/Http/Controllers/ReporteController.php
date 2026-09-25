@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Models\Compra;
 use App\Models\Producto;
+use App\Models\Proveedor;
 use App\Models\Venta;
+use App\Support\PeriodoSql;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -18,31 +21,31 @@ class ReporteController extends Controller
 
         $ventasHoy = Venta::whereDate('fecha', $hoy)->where('estado', 'completada')->sum('total');
         $ventasMes = Venta::whereMonth('fecha', $hoy->month)
-                          ->whereYear('fecha', $hoy->year)
-                          ->where('estado', 'completada')
-                          ->sum('total');
+            ->whereYear('fecha', $hoy->year)
+            ->where('estado', 'completada')
+            ->sum('total');
 
-        $comprasMes = \App\Models\Compra::whereMonth('fecha', $hoy->month)
-                          ->whereYear('fecha', $hoy->year)
-                          ->where('estado', 'completada')
-                          ->sum('total');
+        $comprasMes = Compra::whereMonth('fecha', $hoy->month)
+            ->whereYear('fecha', $hoy->year)
+            ->where('estado', 'completada')
+            ->sum('total');
 
         $totalVentasMes = Venta::whereMonth('fecha', $hoy->month)
-                               ->whereYear('fecha', $hoy->year)
-                               ->where('estado', 'completada')
-                               ->count();
+            ->whereYear('fecha', $hoy->year)
+            ->where('estado', 'completada')
+            ->count();
 
         $productosStockCritico = Producto::where('estado', 'activo')
-                                         ->whereColumn('stock', '<=', 'stock_minimo')
-                                         ->count();
+            ->whereColumn('stock', '<=', 'stock_minimo')
+            ->count();
 
         $productosAgotados = Producto::where('estado', 'activo')
-                                      ->where('stock', 0)
-                                      ->count();
+            ->where('stock', 0)
+            ->count();
 
         $totalClientes = Cliente::where('estado', 'activo')->count();
 
-        $totalProveedores = \App\Models\Proveedor::whereHas('compras', function ($q) {
+        $totalProveedores = Proveedor::whereHas('compras', function ($q) {
             $q->where('estado', 'completada');
         })->count();
 
@@ -65,36 +68,36 @@ class ReporteController extends Controller
 
         if ($periodo === 'diario') {
             $datos = Venta::select(
-                    DB::raw('DATE(fecha) as periodo'),
-                    DB::raw('COUNT(*) as cantidad'),
-                    DB::raw('SUM(total) as total')
-                )
+                DB::raw(PeriodoSql::dia().' as periodo'),
+                DB::raw('COUNT(*) as cantidad'),
+                DB::raw('SUM(total) as total')
+            )
                 ->where('estado', 'completada')
                 ->where('fecha', '>=', $hoy->copy()->subDays(30))
-                ->groupBy(DB::raw('DATE(fecha)'))
+                ->groupBy(DB::raw(PeriodoSql::dia()))
                 ->orderBy('periodo', 'desc')
                 ->get();
         } elseif ($periodo === 'semanal') {
             $datos = Venta::select(
-                    DB::raw('YEARWEEK(fecha, 1) as semana'),
-                    DB::raw('MIN(fecha) as periodo'),
-                    DB::raw('COUNT(*) as cantidad'),
-                    DB::raw('SUM(total) as total')
-                )
+                DB::raw(PeriodoSql::semana().' as semana'),
+                DB::raw('MIN(fecha) as periodo'),
+                DB::raw('COUNT(*) as cantidad'),
+                DB::raw('SUM(total) as total')
+            )
                 ->where('estado', 'completada')
                 ->where('fecha', '>=', $hoy->copy()->subWeeks(12))
-                ->groupBy(DB::raw('YEARWEEK(fecha, 1)'))
+                ->groupBy(DB::raw(PeriodoSql::semana()))
                 ->orderBy('semana', 'desc')
                 ->get();
         } else {
             $datos = Venta::select(
-                    DB::raw("DATE_FORMAT(fecha, '%Y-%m') as periodo"),
-                    DB::raw('COUNT(*) as cantidad'),
-                    DB::raw('SUM(total) as total')
-                )
+                DB::raw(PeriodoSql::mes().' as periodo'),
+                DB::raw('COUNT(*) as cantidad'),
+                DB::raw('SUM(total) as total')
+            )
                 ->where('estado', 'completada')
                 ->where('fecha', '>=', $hoy->copy()->subMonths(12))
-                ->groupBy(DB::raw("DATE_FORMAT(fecha, '%Y-%m')"))
+                ->groupBy(DB::raw(PeriodoSql::mes()))
                 ->orderBy('periodo', 'desc')
                 ->get();
         }
@@ -134,12 +137,12 @@ class ReporteController extends Controller
         $fechaHasta = $request->get('fecha_hasta', now()->toDateString());
 
         $datos = Venta::select(
-                'clientes.nombre',
-                'clientes.apellido',
-                'clientes.email',
-                DB::raw('COUNT(*) as total_compras'),
-                DB::raw('SUM(ventas.total) as total_gastado')
-            )
+            'clientes.nombre',
+            'clientes.apellido',
+            'clientes.email',
+            DB::raw('COUNT(*) as total_compras'),
+            DB::raw('SUM(ventas.total) as total_gastado')
+        )
             ->join('clientes', 'ventas.cliente_id', '=', 'clientes.id')
             ->where('ventas.estado', 'completada')
             ->whereBetween('ventas.fecha', [$fechaDesde, $fechaHasta])
@@ -154,17 +157,17 @@ class ReporteController extends Controller
     public function stockCritico(): View
     {
         $criticos = Producto::where('estado', 'activo')
-                            ->whereColumn('stock', '<=', 'stock_minimo')
-                            ->where('stock', '>', 0)
-                            ->with('categoria')
-                            ->orderBy('stock', 'asc')
-                            ->get();
+            ->whereColumn('stock', '<=', 'stock_minimo')
+            ->where('stock', '>', 0)
+            ->with('categoria')
+            ->orderBy('stock', 'asc')
+            ->get();
 
         $agotados = Producto::where('estado', 'activo')
-                            ->where('stock', 0)
-                            ->with('categoria')
-                            ->orderBy('nombre')
-                            ->get();
+            ->where('stock', 0)
+            ->with('categoria')
+            ->orderBy('nombre')
+            ->get();
 
         return view('reportes.stock-critico', compact('criticos', 'agotados'));
     }
@@ -198,18 +201,18 @@ class ReporteController extends Controller
 
         $totales = [
             'facturado' => $productos->sum('total_facturado'),
-            'costo' => $productos->sum('costo_total'),
-            'ganancia' => $productos->sum('ganancia_total'),
-            'unidades' => $productos->sum('unidades_vendidas'),
-            'margen' => $productos->sum('facturado') > 0 ? ($productos->sum('ganancia_total') / $productos->sum('facturado')) * 100 : 0,
+            'costo'     => $productos->sum('costo_total'),
+            'ganancia'  => $productos->sum('ganancia_total'),
+            'unidades'  => $productos->sum('unidades_vendidas'),
+            'margen'    => $productos->sum('facturado') > 0 ? ($productos->sum('ganancia_total') / $productos->sum('facturado')) * 100 : 0,
         ];
 
         $porCategoria = $productos->groupBy('categoria')->map(function ($items) {
             return [
                 'facturado' => $items->sum('total_facturado'),
-                'costo' => $items->sum('costo_total'),
-                'ganancia' => $items->sum('ganancia_total'),
-                'unidades' => $items->sum('unidades_vendidas'),
+                'costo'     => $items->sum('costo_total'),
+                'ganancia'  => $items->sum('ganancia_total'),
+                'unidades'  => $items->sum('unidades_vendidas'),
             ];
         })->sortByDesc('ganancia');
 
@@ -220,40 +223,40 @@ class ReporteController extends Controller
     {
         $periodo = $request->get('periodo', 'diario');
         $hoy = Carbon::now();
-        $compras = \App\Models\Compra::with('proveedor');
+        $compras = Compra::with('proveedor');
 
         if ($periodo === 'diario') {
             $datos = $compras->select(
-                    DB::raw('DATE(fecha) as periodo'),
-                    DB::raw('COUNT(*) as cantidad'),
-                    DB::raw('SUM(total) as total')
-                )
+                DB::raw(PeriodoSql::dia().' as periodo'),
+                DB::raw('COUNT(*) as cantidad'),
+                DB::raw('SUM(total) as total')
+            )
                 ->where('estado', 'completada')
                 ->where('fecha', '>=', $hoy->copy()->subDays(30))
-                ->groupBy(DB::raw('DATE(fecha)'))
+                ->groupBy(DB::raw(PeriodoSql::dia()))
                 ->orderBy('periodo', 'desc')
                 ->get();
         } elseif ($periodo === 'semanal') {
             $datos = $compras->select(
-                    DB::raw('YEARWEEK(fecha, 1) as semana'),
-                    DB::raw('MIN(fecha) as periodo'),
-                    DB::raw('COUNT(*) as cantidad'),
-                    DB::raw('SUM(total) as total')
-                )
+                DB::raw(PeriodoSql::semana().' as semana'),
+                DB::raw('MIN(fecha) as periodo'),
+                DB::raw('COUNT(*) as cantidad'),
+                DB::raw('SUM(total) as total')
+            )
                 ->where('estado', 'completada')
                 ->where('fecha', '>=', $hoy->copy()->subWeeks(12))
-                ->groupBy(DB::raw('YEARWEEK(fecha, 1)'))
+                ->groupBy(DB::raw(PeriodoSql::semana()))
                 ->orderBy('semana', 'desc')
                 ->get();
         } else {
             $datos = $compras->select(
-                    DB::raw("DATE_FORMAT(fecha, '%Y-%m') as periodo"),
-                    DB::raw('COUNT(*) as cantidad'),
-                    DB::raw('SUM(total) as total')
-                )
+                DB::raw(PeriodoSql::mes().' as periodo'),
+                DB::raw('COUNT(*) as cantidad'),
+                DB::raw('SUM(total) as total')
+            )
                 ->where('estado', 'completada')
                 ->where('fecha', '>=', $hoy->copy()->subMonths(12))
-                ->groupBy(DB::raw("DATE_FORMAT(fecha, '%Y-%m')"))
+                ->groupBy(DB::raw(PeriodoSql::mes()))
                 ->orderBy('periodo', 'desc')
                 ->get();
         }
