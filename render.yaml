@@ -88,3 +88,41 @@ services:
         value: stderr
       - key: MAIL_MAILER
         value: log
+
+      # --- Cola y tareas programadas ---
+      # En el plan gratuito no hay servicios de fondo, así que el worker de
+      # colas y el programador corren dentro del mismo contenedor web (ver
+      # docker/entrypoint.sh). Para una instalación real conviene ponerlos en su
+      # propio servicio —descomentar el bloque "worker" de abajo— y dejar esto
+      # en "false", para que un reinicio del web no interrumpa un job a medias.
+      - key: RUN_WORKERS
+        value: "true"
+
+      # --- Archivos subidos (adjuntos, PDFs, backups) ---
+      # IMPORTANTE para una instalación real: el disco del contenedor es
+      # efímero y se borra en cada deploy. Con "local", los adjuntos y los
+      # backups desaparecen. Para producción hay que poner s3 y cargar las
+      # cuatro variables de abajo (sirve cualquier S3: AWS, Cloudflare R2,
+      # Backblaze B2, MinIO).
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_DEFAULT_REGION
+        sync: false
+      - key: AWS_BUCKET
+        sync: false
+
+# --- Worker dedicado (instalación real) ---
+# Descomentar junto con RUN_WORKERS=false en el servicio web. Requiere un plan
+# pago: Render no ofrece workers en el plan gratuito.
+#
+#  - type: worker
+#    name: crud-erp-worker
+#    runtime: docker
+#    dockerfilePath: ./Dockerfile
+#    dockerCommand: php artisan queue:work --tries=3 --max-time=3600
+#    envVars:
+#      - fromGroup: crud-erp   # mismas variables que el servicio web

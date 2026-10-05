@@ -16,11 +16,6 @@ export SERVER_NAME=":${PORT:-8080}"
 echo "==> Ejecutando migraciones"
 php artisan migrate --force
 
-# Cuántas filas hay en users nos dice si la base ya fue poblada alguna vez.
-# Si la consulta falla por lo que sea, asumimos base vacía y sembramos.
-usuarios=$(php artisan tinker --execute="echo \DB::table('users')->count();" 2>/dev/null | tr -dc '0-9') || usuarios=""
-[ -n "$usuarios" ] || usuarios=0
-
 # DatabaseSeeder es idempotente (firstOrCreate + sync): crea permisos, roles y
 # cuentas base sin pisar nada. Se corre en cada arranque de la demo para que un
 # permiso o un rol nuevo llegue a una base que ya tiene datos. En una instalación
@@ -30,13 +25,13 @@ if [ "$DB_SEED_ON_BOOT" = "true" ] || [ "$DB_SEED_ALWAYS" = "true" ]; then
     php artisan db:seed --force
 fi
 
-# DemoSeeder sí borra y regenera las tablas de negocio: sólo con la base vacía
-# (o si se pide explícitamente reiniciar la demo en cada arranque).
-if [ "$DB_SEED_ALWAYS" = "true" ] || { [ "$DB_SEED_ON_BOOT" = "true" ] && [ "$usuarios" -eq 0 ]; }; then
-    echo "==> Cargando datos de demostración"
-    php artisan db:seed --class=DemoSeeder --force
-else
-    echo "==> La base ya tiene datos; se omiten los datos de demostración"
+# DemoSeeder sí borra y regenera las tablas de negocio. El comando decide solo:
+# siembra únicamente si la base está vacía, y ante cualquier duda no toca nada.
+# DB_SEED_ALWAYS=true reinicia la demo pública en cada arranque.
+if [ "$DB_SEED_ALWAYS" = "true" ]; then
+    php artisan demo:sembrar --forzar
+elif [ "$DB_SEED_ON_BOOT" = "true" ]; then
+    php artisan demo:sembrar
 fi
 
 echo "==> Enlazando storage público"
@@ -46,6 +41,16 @@ echo "==> Cacheando configuración, rutas y vistas"
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+
+# La cola y el programador corren dentro del contenedor web porque el plan
+# gratuito de Render no incluye servicios de fondo. En una instalación real
+# conviene ponerlos en su propio servicio (ver render.yaml) y apagarlos acá con
+# RUN_WORKERS=false, para que un reinicio del web no interrumpa un job.
+if [ "${RUN_WORKERS:-true}" = "true" ]; then
+    echo "==> Levantando worker de colas y programador de tareas"
+    php artisan queue:work --tries=3 --max-time=3600 --sleep=3 &
+    php artisan schedule:work &
+fi
 
 echo "==> Iniciando servidor en el puerto ${PORT:-8080}"
 exec "$@"
