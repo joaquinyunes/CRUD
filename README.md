@@ -86,6 +86,11 @@ proveedores; stock crítico; y rentabilidad con margen por producto y por catego
 Roles y permisos por módulo, auditoría de cambios, configuración del negocio, notificaciones, tareas,
 calendario, backup e importación/exportación en Excel y CSV.
 
+**Doble factor de autenticación** por aplicación (TOTP): cada usuario lo activa desde su perfil
+escaneando un QR con Google Authenticator, Authy, 1Password o la que use. Con el doble factor
+activo, saber la contraseña no alcanza para entrar. Ocho códigos de recuperación de un solo uso para
+cuando no está el teléfono.
+
 Todo el sistema se puede operar también por **API REST** (Sanctum), no sólo por la interfaz web. Los
 comprobantes se emiten en **PDF** y los listados se exportan a **Excel** y **CSV**.
 
@@ -108,6 +113,9 @@ comprobantes se emiten en **PDF** y los listados se exportan a **Excel** y **CSV
 | **SQL independiente del motor** | Los reportes agrupaban con `YEARWEEK()` y `DATE_FORMAT()`, exclusivas de MySQL. El dialecto se resuelve en un solo lugar y el CI corre los tests contra los tres motores. | `app/Support/PeriodoSql.php` |
 | **Permisos por clave, no roles hardcodeados** | El middleware pide `permiso:ventas.crear`. Ni siquiera "poder todo" es un nombre de rol: es el permiso comodín `*`. Un rol nuevo llamado "Dueño" con ese permiso manda igual que "Administrador", y a "Administrador" se le puede sacar una parte sin tocar código. | `app/Http/Middleware/CheckPermission.php` |
 | **La API exige los mismos permisos que la web** | Un token pertenece a un usuario, y ese usuario tiene un rol: el token de un usuario de solo lectura recibe 403 al intentar escribir, igual que el botón que no le aparece en pantalla. | `routes/api.php` |
+| **Un solo lugar emite un comprobante** | La API tenía su propia copia de "crear una venta", y había divergido: numeraba con `MAX(id) + 1` e ignoraba el descuento y los medios de pago. Las dos puertas llaman al mismo servicio, así que una venta cargada por pantalla y otra por API salen de la misma serie y con las mismas reglas. | `app/Services/VentaService.php` |
+| **Los totales se calculan en centavos enteros** | Con float, los importes de dos decimales no tienen representación exacta y el error se acumula: cien líneas de 0,07 no daban 7,00. En un comprobante eso es que el total impreso no coincide con la suma de los renglones. | `app/Support/CalculadorTotales.php` |
+| **Los formularios no embeben el catálogo** | Traían la lista completa de productos y clientes dentro del HTML, una vez por cada fila. Medido con 5.000 productos: el formulario de venta pesaba 2 MB y ahora pesa 35 KB. | `public/js/buscador.js` |
 | **Nada con historial se borra: se archiva** | Un proveedor con compras o un usuario con ventas no se pueden borrar sin perder los comprobantes. En vez de dejar que reviente la clave foránea, el sistema los archiva o los desactiva y lo explica. | `ProveedorController@destroy`, `UserController@destroy` |
 | **Auditoría en todos los módulos** | Ventas, compras, caja, devoluciones, presupuestos, usuarios, roles y configuración registran quién cambió qué y desde dónde, con el valor anterior y el nuevo. Nunca se guardan hashes de contraseña ni tokens. | `app/Traits/Auditable.php` |
 | **Rutas separadas por módulo** | 30 archivos de rutas en lugar de un `web.php` de 800 líneas. | `routes/` |
@@ -231,7 +239,7 @@ viejos. Está todo en [`routes/console.php`](routes/console.php).
 php artisan test
 ```
 
-**114 tests.** Cubren las reglas que importan, no getters y setters:
+**165 tests.** Cubren las reglas que importan, no getters y setters:
 
 **Negocio**
 - el stock se descuenta al confirmar una venta y se repone al anularla;
@@ -242,7 +250,8 @@ php artisan test
 - la caja cierra con la diferencia correcta;
 - la cuenta corriente imputa cada pago al comprobante correcto;
 - una orden de compra recibida parcialmente queda abierta por el resto;
-- los reportes por período funcionan en SQLite, MySQL y PostgreSQL.
+- los reportes por período funcionan en SQLite, MySQL y PostgreSQL;
+- el total cierra contra la suma de sus partes al centavo, con descuentos en porcentaje y decimales.
 
 **Permisos y seguridad**
 - un vendedor no puede ver ni editar las ventas de otro;
@@ -250,7 +259,10 @@ php artisan test
 - cambiar los permisos de un rol se aplica en el acto, no cuando expira la caché;
 - la API devuelve 401 sin token y 403 cuando el token es de alguien que no tiene ese permiso;
 - el login de API se bloquea a los 5 intentos fallidos;
-- un usuario desactivado no entra, y si tenía la sesión abierta lo echa en el próximo request.
+- un usuario desactivado no entra, y si tenía la sesión abierta lo echa en el próximo request;
+- con doble factor activo, la contraseña correcta no abre sesión: queda esperando el código;
+- un código de recuperación entra una sola vez y después deja de servir;
+- el secreto del doble factor no queda en claro en la base.
 
 **Integridad de datos**
 - borrar un proveedor con compras lo archiva en vez de romper; sin compras, sí lo borra;
@@ -258,7 +270,10 @@ php artisan test
 - crear, cambiar y anular queda en la auditoría con su autor, el antes y el después;
 - la auditoría nunca guarda el hash de la contraseña;
 - un cambio hecho sin sesión (consola, cola, tarea programada) también queda registrado;
-- el valor por defecto de una configuración no se cachea pisando al de otra llamada.
+- el valor por defecto de una configuración no se cachea pisando al de otra llamada;
+- una venta cargada por API y otra por pantalla comparten la misma serie de números;
+- la API aplica el límite de crédito y el control de stock, igual que la interfaz;
+- las pantallas que usan el layout como componente muestran su contenido (un 200 en blanco no delata nada).
 
 El CI corre, en cada push: la suite contra los **tres motores de base de datos**, las **migraciones de punta a punta contra una base limpia** en los tres, **PHPStan nivel 5**, el estilo con **Pint**, y `composer audit` + `npm audit` para no arrastrar dependencias con vulnerabilidades conocidas.
 
@@ -301,20 +316,22 @@ Ver [`routes/api.php`](routes/api.php).
 ```
 app/
   Console/Commands/     tareas programadas y el sembrado seguro de la demo
-  Http/Controllers/     46 controllers web + API
-  Http/Requests/        validación fuera de los controllers (ventas y compras comparten reglas)
+  Http/Controllers/     48 controllers web + API, finos: traducen el pedido y poco más
+  Http/Requests/        29 FormRequests; los documentos con líneas comparten reglas
   Http/Middleware/      CheckPermission (permisos por clave), EnsureUserIsActive
   Models/               31 modelos Eloquent
-  Services/             StockService, CajaService, PagoDocumentoService
+  Services/             VentaService, CompraService, StockService, CajaService,
+                        PagoDocumentoService, DobleFactorService
   Support/              CalculadorTotales, NumeradorDocumentos, PeriodoSql, Orden
   Policies/             autorización por dueño del comprobante
   Traits/Auditable      registro automático de cambios, en todos los módulos
 database/
-  migrations/           38 migraciones
+  migrations/           39 migraciones
   seeders/DemoSeeder    datos de demostración realistas
 routes/                 32 archivos, uno por módulo
 resources/views/        Blade + Alpine, design system propio (public/css/rhythm.css)
-tests/                  114 tests: negocio, permisos e integridad de datos
+public/js/buscador.js   autocompletado de los formularios de carga
+tests/                  165 tests: negocio, permisos, integridad de datos y seguridad
 phpstan.neon            análisis estático nivel 5
 docker/ Dockerfile render.yaml docker-compose.yml
 ```

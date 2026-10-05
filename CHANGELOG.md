@@ -5,6 +5,52 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 ## [No publicado]
 
 ### Seguridad
+- **Doble factor de autenticación por aplicación (TOTP).** Donde antes había una columna
+  `two_factor_enabled` sin implementación detrás, ahora está el circuito completo: alta con QR,
+  confirmación contra un código real, ocho códigos de recuperación de un solo uso y baja pidiendo
+  la contraseña. Con el doble factor activo, la contraseña correcta ya no abre sesión. El secreto
+  y los códigos se guardan cifrados con APP_KEY.
+- `TRUSTED_PROXIES` acota de qué proxies se acepta un `X-Forwarded-For`, que es la IP con la que se
+  cuentan los intentos de login. El default sigue siendo `*`, que es lo correcto detrás de un PaaS.
+
+### Corregido
+- **El perfil del usuario y el editor de permisos salían completamente en blanco.** Las dos usan el
+  layout como componente (`<x-app-layout>`), que entrega el contenido en `$slot`, y el layout solo
+  renderizaba `@yield('content')`. Nadie podía cambiar su nombre, su correo ni su contraseña, y la
+  pantalla de permisos que el README muestra en una captura estaba vacía. Los tests que había solo
+  miraban el código de respuesta, y un 200 en blanco no delata nada.
+- **La API numeraba los comprobantes con `MAX(id) + 1`.** Sin bloqueo, ignorando el prefijo
+  configurado, reutilizando números al borrar una venta y siguiendo los ids en vez de la serie: una
+  venta cargada por API y otra por pantalla podían salir con el mismo número. Era una tercera
+  implementación de la numeración, además de las dos que ya se habían unificado.
+- **Los totales se calculaban en punto flotante.** Cien líneas de 0,07 no daban 7,00. En un
+  comprobante eso significa que el total impreso no coincide con la suma de los renglones. Ahora la
+  aritmética entra en centavos enteros y es exacta por construcción.
+- La API ignoraba el descuento, el depósito y los medios de pago de una venta: los aceptaba y los
+  tiraba. Y no aplicaba el límite de crédito del cliente ni rechazaba vender sobre un cliente
+  archivado, porque esas reglas vivían sueltas en el controller web.
+- Las reglas de validación de la API habían divergido de las de la web: el documento del cliente
+  aceptaba 20 caracteres por una puerta y 50 por la otra, el estado "eliminado" no existía por API,
+  el proveedor no validaba estado, y el código de un producto borrado bloqueaba la reutilización
+  solo en una de las dos. Los valores por defecto del alta de un producto vivían dentro del
+  controller web, así que la misma alta por API guardaba nulos.
+
+### Cambiado
+- **Emitir una venta o una compra pasa a un servicio.** Estaba implementado dos veces, una por cada
+  puerta, y ahí es donde se escaparon la numeración y las reglas de negocio. `VentaController` pasó
+  de 372 a 144 líneas.
+- **Ningún controller valida inline.** Los catorce que quedaban pasaron a FormRequests, y
+  presupuestos y órdenes de compra se suman a las reglas compartidas de ventas y compras, que
+  estaban copiadas por cuarta y quinta vez. Al unificar aparecieron reglas que faltaban en algunos
+  módulos: descuento mayor al 100%, entrega estimada anterior a la orden, evento que termina antes
+  de empezar, movimiento de caja en cero, código de método de pago repetido al editar.
+- **Los formularios de carga dejan de embeber el catálogo.** Traían la lista completa de productos,
+  clientes y proveedores dentro del HTML, una vez como `<option>` por cada fila y otra como JSON.
+  Medido contra una base con 5.000 productos: el formulario de venta embebía 2 MB y ahora pesa
+  35 KB. En su lugar hay un autocompletado que busca contra endpoints a medida que se escribe,
+  funciona con teclado y avisa antes de enviar si se escribió algo sin elegir de la lista.
+
+### Seguridad
 - **La API exige permisos.** Todas las rutas de `routes/api.php` colgaban solo de `auth:sanctum`:
   cualquier token autenticado podía crear y borrar productos, clientes, proveedores, ventas y
   compras, aunque su dueño fuera un usuario de solo lectura. Ahora cada verbo pide el permiso que le
