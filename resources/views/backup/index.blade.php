@@ -16,7 +16,7 @@
 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:var(--space-6);" class="r-mb-8">
     <div class="r-card" data-reveal="fade-up" data-reveal-delay="0">
         <h3 class="r-display-m" style="font-size:1.125rem; margin-bottom:var(--space-2);">Crear Backup</h3>
-        <p class="r-body" style="margin-bottom:var(--space-4);">Exporta la base de datos completa a un archivo .sql</p>
+        <p class="r-body" style="margin-bottom:var(--space-4);">Exporta todos los datos a un archivo .json.gz. Además se crea uno solo cada noche, y se conservan los últimos 14.</p>
         <form method="POST" action="{{ route('backup.crear') }}">
             @csrf
             <button type="submit" class="r-btn r-btn-primary">Crear Backup Ahora</button>
@@ -24,14 +24,14 @@
     </div>
     <div class="r-card" data-reveal="fade-up" data-reveal-delay="0.1">
         <h3 class="r-display-m" style="font-size:1.125rem; margin-bottom:var(--space-2);">Restaurar Backup</h3>
-        <p class="r-body" style="margin-bottom:var(--space-4);">Importa un archivo .sql para restaurar la base de datos</p>
+        <p class="r-body" style="margin-bottom:var(--space-4);">Reemplaza los datos actuales por los de un respaldo creado por este sistema. Es todo o nada: si algo falla, no se toca nada.</p>
         <form method="POST" action="{{ route('backup.restaurar') }}" enctype="multipart/form-data">
             @csrf
             <div class="r-flex r-gap-3" style="align-items:flex-end;">
                 <div style="flex:1;">
-                    <input type="file" name="backup_file" accept=".sql,.txt" required class="r-input" style="padding:8px;">
+                    <input type="file" name="backup_file" accept=".gz" required class="r-input" style="padding:8px;">
                 </div>
-                <button type="submit" class="r-btn r-btn-accent r-btn-sm" style="white-space:nowrap;">Restaurar</button>
+                <button type="submit" class="r-btn r-btn-accent r-btn-sm" style="white-space:nowrap;" onclick="return confirm('Esto reemplaza TODOS los datos actuales por los del respaldo. ¿Continuar?')">Restaurar</button>
             </div>
         </form>
     </div>
@@ -55,7 +55,7 @@
                         <tr>
                             <td><span class="r-mono" style="font-size:0.8125rem;">{{ $backup['nombre'] }}</span></td>
                             <td style="text-align:right; color:var(--color-ink-soft);">{{ $backup['tamano'] }} KB</td>
-                            <td style="color:var(--color-ink-soft);">{{ \Carbon\Carbon::fromTimestamp($backup['fecha'])->format('d/m/Y H:i:s') }}</td>
+                            <td style="color:var(--color-ink-soft);">{{ \Carbon\Carbon::createFromTimestamp($backup['fecha'])->format('d/m/Y H:i:s') }}</td>
                             <td style="text-align:right;">
                                 <div class="r-flex r-gap-3" style="justify-content:flex-end;">
                                     <a href="{{ route('backup.descargar', $backup['nombre']) }}" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px;">Descargar</a>

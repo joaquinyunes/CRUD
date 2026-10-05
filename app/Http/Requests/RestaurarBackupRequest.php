@@ -21,7 +21,7 @@ class RestaurarBackupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'backup_file' => ['required', 'file', 'mimes:sql,txt', 'max:51240'],
+            'backup_file' => ['required', 'file', 'extensions:gz', 'max:51240'],
         ];
     }
 
@@ -29,9 +29,9 @@ class RestaurarBackupRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'backup_file.required' => 'Hay que elegir el archivo de respaldo.',
-            'backup_file.mimes'    => 'El respaldo tiene que ser un archivo .sql.',
-            'backup_file.max'      => 'El respaldo no puede pasar de 50 MB.',
+            'backup_file.required'   => 'Hay que elegir el archivo de respaldo.',
+            'backup_file.extensions' => 'El respaldo tiene que ser un archivo .json.gz creado por este sistema.',
+            'backup_file.max'        => 'El respaldo no puede pasar de 50 MB.',
         ];
     }
 }

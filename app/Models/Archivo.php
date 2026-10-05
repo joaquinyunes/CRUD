@@ -11,9 +11,6 @@ class Archivo extends Model
 {
     use HasFactory;
 
-    /** Donde se guardan los archivos nuevos: un disco que no se sirve por URL. */
-    public const DISCO = 'local';
-
     protected $fillable = [
         'nombre',
         'ruta',
@@ -40,11 +37,22 @@ class Archivo extends Model
      */
     public function disco(): string
     {
-        if (Storage::disk(self::DISCO)->exists($this->ruta)) {
-            return self::DISCO;
+        if (Storage::disk(self::discoNuevo())->exists($this->ruta)) {
+            return self::discoNuevo();
         }
 
         return 'public';
+    }
+
+    /**
+     * Donde se guardan los archivos nuevos: el disco por defecto (FILESYSTEM_DISK),
+     * que es privado —local o un bucket S3—, nunca el que se sirve por URL directa.
+     */
+    public static function discoNuevo(): string
+    {
+        $disco = (string) config('filesystems.default');
+
+        return $disco === 'public' ? 'local' : $disco;
     }
 
     public function getTamanoFormateadoAttribute(): string

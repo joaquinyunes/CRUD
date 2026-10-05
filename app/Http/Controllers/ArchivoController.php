@@ -45,7 +45,7 @@ class ArchivoController extends Controller
         $nombreOriginal = $file->getClientOriginalName();
         $nombreGuardado = time().'_'.preg_replace('/[^a-zA-Z0-9._-]/', '_', $nombreOriginal);
         // Disco privado: se sirve solo a través de las rutas con permiso, nunca por URL directa.
-        $ruta = $file->storeAs('archivos', $nombreGuardado, Archivo::DISCO);
+        $ruta = $file->storeAs('archivos', $nombreGuardado, Archivo::discoNuevo());
 
         Archivo::create([
             'nombre'           => $nombreOriginal,

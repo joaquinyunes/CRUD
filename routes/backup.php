@@ -10,7 +10,7 @@ Route::middleware(['auth'])->prefix('backup')->name('backup.')->group(function (
     Route::middleware('permiso:backup.gestionar')->group(function () {
         Route::post('/crear', [BackupController::class, 'crear'])->name('crear');
         Route::post('/restaurar', [BackupController::class, 'restaurar'])->name('restaurar');
-        Route::get('/descargar/{archivo}', [BackupController::class, 'descargar'])->name('descargar');
-        Route::delete('/eliminar/{archivo}', [BackupController::class, 'eliminar'])->name('eliminar');
+        Route::get('/descargar/{archivo}', [BackupController::class, 'descargar'])->where('archivo', '[A-Za-z0-9_.-]+')->name('descargar');
+        Route::delete('/eliminar/{archivo}', [BackupController::class, 'eliminar'])->where('archivo', '[A-Za-z0-9_.-]+')->name('eliminar');
     });
 });

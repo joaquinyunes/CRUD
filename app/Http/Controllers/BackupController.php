@@ -2,149 +2,65 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ReglaDeNegocioException;
 use App\Http\Requests\RestaurarBackupRequest;
-use Illuminate\Support\Facades\File;
+use App\Services\BackupService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class BackupController extends Controller
 {
-    public function index()
-    {
-        $backups = $this->listarBackups();
+    public function __construct(private BackupService $backups) {}
 
-        return view('backup.index', compact('backups'));
+    public function index(): View
+    {
+        return view('backup.index', ['backups' => $this->backups->listar()]);
     }
 
-    public function crear()
+    public function crear(): RedirectResponse
     {
-        $db = config('database.connections.mysql.database');
-        $host = config('database.connections.mysql.host');
-        $user = config('database.connections.mysql.username');
-        $pass = config('database.connections.mysql.password');
+        try {
+            $nombre = $this->backups->crear();
+        } catch (Throwable $e) {
+            report($e);
 
-        $nombre = 'backup_'.now()->format('Y-m-d_His').'.sql';
-        $ruta = storage_path("app/backups/{$nombre}");
-
-        $cmd = sprintf(
-            'mysqldump -h %s -u %s %s > "%s" 2>&1',
-            escapeshellarg($host),
-            escapeshellarg($user),
-            escapeshellarg($db),
-            $ruta
-        );
-
-        if (! empty($pass)) {
-            $cmd = sprintf(
-                'mysqldump -h %s -u %s -p%s %s > "%s" 2>&1',
-                escapeshellarg($host),
-                escapeshellarg($user),
-                escapeshellarg($pass),
-                escapeshellarg($db),
-                $ruta
-            );
+            return redirect()->route('backup.index')->with('error', 'No se pudo crear el backup: '.$e->getMessage());
         }
 
-        exec($cmd, $output, $returnCode);
+        return redirect()->route('backup.index')->with('success', "Backup creado: {$nombre}");
+    }
 
-        if ($returnCode !== 0 || ! File::exists($ruta)) {
+    public function descargar(string $archivo): StreamedResponse
+    {
+        abort_unless($this->backups->existe($archivo), 404);
+
+        return $this->backups->descargar($archivo);
+    }
+
+    public function restaurar(RestaurarBackupRequest $request): RedirectResponse
+    {
+        try {
+            $this->backups->restaurar($request->file('backup_file')->getPathname());
+        } catch (ReglaDeNegocioException $e) {
+            return redirect()->route('backup.index')->with('error', $e->getMessage());
+        } catch (Throwable $e) {
+            report($e);
+
             return redirect()->route('backup.index')
-                ->with('error', 'Error al crear backup: '.implode("\n", $output));
+                ->with('error', 'No se pudo restaurar y la base quedó como estaba: '.$e->getMessage());
         }
 
-        $size = File::size($ruta);
-        $sizeKB = round($size / 1024, 1);
-
-        return redirect()->route('backup.index')
-            ->with('success', "Backup creado: {$nombre} ({$sizeKB} KB)");
+        return redirect()->route('backup.index')->with('success', 'Base de datos restaurada correctamente.');
     }
 
-    public function descargar($archivo)
+    public function eliminar(string $archivo): RedirectResponse
     {
-        $ruta = storage_path("app/backups/{$archivo}");
+        abort_unless($this->backups->nombreValido($archivo), 404);
 
-        if (! File::exists($ruta)) {
-            abort(404);
-        }
+        $this->backups->eliminar($archivo);
 
-        return response()->download($ruta, $archivo, [
-            'Content-Type' => 'application/sql',
-        ]);
-    }
-
-    public function restaurar(RestaurarBackupRequest $request)
-    {
-        $file = $request->file('backup_file');
-        $db = config('database.connections.mysql.database');
-        $host = config('database.connections.mysql.host');
-        $user = config('database.connections.mysql.username');
-        $pass = config('database.connections.mysql.password');
-
-        $tmpFile = $file->getPathname();
-
-        $cmd = sprintf(
-            'mysql -h %s -u %s %s < "%s" 2>&1',
-            escapeshellarg($host),
-            escapeshellarg($user),
-            escapeshellarg($db),
-            $tmpFile
-        );
-
-        if (! empty($pass)) {
-            $cmd = sprintf(
-                'mysql -h %s -u %s -p%s %s < "%s" 2>&1',
-                escapeshellarg($host),
-                escapeshellarg($user),
-                escapeshellarg($pass),
-                escapeshellarg($db),
-                $tmpFile
-            );
-        }
-
-        exec($cmd, $output, $returnCode);
-
-        if ($returnCode !== 0) {
-            return redirect()->route('backup.index')
-                ->with('error', 'Error al restaurar: '.implode("\n", $output));
-        }
-
-        return redirect()->route('backup.index')
-            ->with('success', 'Base de datos restaurada correctamente.');
-    }
-
-    public function eliminar($archivo)
-    {
-        $ruta = storage_path("app/backups/{$archivo}");
-
-        if (File::exists($ruta)) {
-            File::delete($ruta);
-        }
-
-        return redirect()->route('backup.index')
-            ->with('success', "Backup {$archivo} eliminado.");
-    }
-
-    private function listarBackups(): array
-    {
-        $directorio = storage_path('app/backups');
-
-        if (! File::isDirectory($directorio)) {
-            return [];
-        }
-
-        $archivos = File::files($directorio);
-        $backups = [];
-
-        foreach ($archivos as $archivo) {
-            if ($archivo->getExtension() === 'sql') {
-                $backups[] = [
-                    'nombre' => $archivo->getFilename(),
-                    'tamano' => round($archivo->getSize() / 1024, 1),
-                    'fecha'  => $archivo->getMTime(),
-                ];
-            }
-        }
-
-        usort($backups, fn ($a, $b) => $b['fecha'] <=> $a['fecha']);
-
-        return $backups;
+        return redirect()->route('backup.index')->with('success', "Backup {$archivo} eliminado.");
     }
 }

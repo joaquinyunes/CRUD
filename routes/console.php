@@ -16,6 +16,9 @@ Schedule::command('presupuestos:vencer')->dailyAt('01:00')->withoutOverlapping()
 // esté mirando la pantalla justo cuando una venta deja un producto en rojo.
 Schedule::command('stock:avisar-critico')->dailyAt('08:00')->withoutOverlapping();
 
+// Una copia por noche de toda la base, quedándose con las últimas dos semanas.
+Schedule::command('backup:crear --conservar=14')->dailyAt('03:00')->withoutOverlapping();
+
 // Higiene: tokens de API vencidos y jobs fallidos viejos no se acumulan.
 Schedule::command('sanctum:prune-expired --hours=24')->daily();
 Schedule::command('queue:prune-failed --hours=168')->daily();
