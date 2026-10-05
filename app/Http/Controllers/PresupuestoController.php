@@ -38,12 +38,16 @@ class PresupuestoController extends Controller
         return view('presupuestos.index', compact('presupuestos'));
     }
 
+    /**
+     * El formulario busca clientes y productos contra sus endpoints en vez de
+     * traer los catálogos embebidos en el HTML.
+     */
     public function create(): View
     {
-        $clientes = Cliente::where('estado', 'activo')->orderBy('nombre')->get();
-        $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
-
-        return view('presupuestos.form', compact('clientes', 'productos'));
+        return view('presupuestos.form', [
+            'clienteElegido'  => null,
+            'nombresProducto' => $this->nombresDeProductosEnPantalla(),
+        ]);
     }
 
     public function store(PresupuestoRequest $request): RedirectResponse
@@ -83,12 +87,36 @@ class PresupuestoController extends Controller
     public function edit(Presupuesto $presupuesto): View
     {
         abort_if((bool) $presupuesto->venta_id, 404, 'El presupuesto ya fue convertido en venta.');
-        $presupuesto->load('detalles.producto');
+        $presupuesto->load('detalles.producto', 'cliente');
 
-        $clientes = Cliente::where('estado', 'activo')->orderBy('nombre')->get();
-        $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
+        return view('presupuestos.form', [
+            'presupuesto'     => $presupuesto,
+            'clienteElegido'  => $presupuesto->cliente,
+            'nombresProducto' => $this->nombresDeProductosEnPantalla($presupuesto),
+        ]);
+    }
 
-        return view('presupuestos.form', compact('presupuesto', 'clientes', 'productos'));
+    /**
+     * Los nombres de los productos que el formulario va a mostrar, por id.
+     *
+     * Hacen falta para que el autocompletado arranque con el texto puesto. Sale
+     * de las líneas guardadas o, si el formulario vuelve con errores, de lo que
+     * el usuario había cargado.
+     *
+     * @return array<int,string>
+     */
+    private function nombresDeProductosEnPantalla(?Presupuesto $presupuesto = null): array
+    {
+        $ids = collect(old('detalles', $presupuesto?->detalles->toArray() ?? []))
+            ->pluck('producto_id')
+            ->filter()
+            ->unique();
+
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        return Producto::whereIn('id', $ids)->pluck('nombre', 'id')->all();
     }
 
     public function update(PresupuestoRequest $request, Presupuesto $presupuesto): RedirectResponse

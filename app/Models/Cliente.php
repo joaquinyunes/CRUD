@@ -42,6 +42,12 @@ class Cliente extends Model
     /**
      * Deuda actual: ventas no anuladas menos lo pagado y lo devuelto.
      */
+    /** Como se nombra al cliente en los selectores y comprobantes. */
+    public function etiquetaCorta(): string
+    {
+        return trim($this->apellido.', '.$this->nombre, ', ');
+    }
+
     public function saldo(): float
     {
         return (float) $this->ventas()

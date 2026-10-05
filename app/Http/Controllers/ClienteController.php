@@ -5,12 +5,42 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ClienteRequest;
 use App\Models\Cliente;
 use App\Support\Orden;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ClienteController extends Controller
 {
+    /**
+     * Búsqueda para el autocompletado de los formularios de carga.
+     *
+     * Los formularios traían la lista completa de clientes embebida en el HTML.
+     * Con la demo eso son treinta; con la cartera real de un comercio son miles,
+     * y la pantalla tarda segundos en abrir.
+     */
+    public function buscar(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->input('q', ''));
+
+        if (mb_strlen($q) < 1) {
+            return response()->json([]);
+        }
+
+        $clientes = Cliente::where('estado', 'activo')
+            ->buscar($q)
+            ->orderBy('apellido')
+            ->orderBy('nombre')
+            ->limit(10)
+            ->get(['id', 'nombre', 'apellido', 'documento', 'limite_credito']);
+
+        return response()->json($clientes->map(fn (Cliente $c) => [
+            'id'       => $c->id,
+            'etiqueta' => trim($c->apellido.', '.$c->nombre),
+            'detalle'  => $c->documento ? 'Doc. '.$c->documento : null,
+        ]));
+    }
+
     public function index(Request $request): View
     {
         $query = Cliente::query()

@@ -7,7 +7,6 @@ use App\Http\Requests\CompraRequest;
 use App\Models\Compra;
 use App\Models\Deposito;
 use App\Models\MetodoPago;
-use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Services\CompraService;
 use App\Services\StockDocumentoService;
@@ -55,12 +54,11 @@ class CompraController extends Controller
 
     public function create(): View
     {
-        $proveedores = Proveedor::activos()->orderBy('nombre')->get();
-        $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
-        $metodosPago = MetodoPago::activos()->get();
-        $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
-
-        return view('compras.form', compact('proveedores', 'productos', 'metodosPago', 'depositos'));
+        return view('compras.form', [
+            'proveedorElegido' => null,
+            'metodosPago'      => MetodoPago::activos()->get(),
+            'depositos'        => Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get(),
+        ]);
     }
 
     public function store(CompraRequest $request): RedirectResponse
@@ -78,16 +76,15 @@ class CompraController extends Controller
     {
         $this->authorize('update', $compra);
         abort_if($compra->estado === 'anulada', 404);
-        $compra->load(['detalles.producto', 'pagos.metodoPago']);
+        // El proveedor de la compra se muestra aunque lo hayan archivado después.
+        $compra->load(['detalles.producto', 'pagos.metodoPago', 'proveedor']);
 
-        // El proveedor de la compra sigue en la lista aunque lo hayan archivado.
-        $proveedores = Proveedor::activos()->orWhere('id', $compra->proveedor_id)
-            ->orderBy('nombre')->get();
-        $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
-        $metodosPago = MetodoPago::activos()->get();
-        $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
-
-        return view('compras.form', compact('compra', 'proveedores', 'productos', 'metodosPago', 'depositos'));
+        return view('compras.form', [
+            'compra'           => $compra,
+            'proveedorElegido' => $compra->proveedor,
+            'metodosPago'      => MetodoPago::activos()->get(),
+            'depositos'        => Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get(),
+        ]);
     }
 
     public function update(CompraRequest $request, Compra $compra): RedirectResponse

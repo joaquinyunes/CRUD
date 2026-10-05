@@ -11,6 +11,11 @@ Route::middleware(['auth', 'verified'])
             ->middleware('permiso:clientes.ver')
             ->name('index');
 
+        // Autocompletado de los formularios de carga.
+        Route::get('/buscar', [ClienteController::class, 'buscar'])
+            ->middleware('permiso:clientes.ver')
+            ->name('buscar');
+
         Route::get('/crear', [ClienteController::class, 'create'])
             ->middleware('permiso:clientes.crear')
             ->name('create');

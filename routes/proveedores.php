@@ -8,6 +8,11 @@ Route::middleware(['auth', 'verified'])->prefix('proveedores')->name('proveedore
         ->middleware('permiso:proveedores.ver')
         ->name('index');
 
+    // Autocompletado de los formularios de carga.
+    Route::get('/buscar', [ProveedorController::class, 'buscar'])
+        ->middleware('permiso:proveedores.ver')
+        ->name('buscar');
+
     Route::get('/crear', [ProveedorController::class, 'create'])
         ->middleware('permiso:proveedores.crear')
         ->name('create');

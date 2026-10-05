@@ -42,13 +42,17 @@ class OrdenCompraController extends Controller
         return view('ordenes_compra.index', compact('ordenes'));
     }
 
+    /**
+     * El formulario busca proveedores y productos contra sus endpoints en vez
+     * de traer los catálogos embebidos en el HTML.
+     */
     public function create(): View
     {
-        $proveedores = Proveedor::activos()->orderBy('nombre')->get();
-        $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
-        $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
-
-        return view('ordenes_compra.form', compact('proveedores', 'productos', 'depositos'));
+        return view('ordenes_compra.form', [
+            'proveedorElegido' => null,
+            'nombresProducto'  => $this->nombresDeProductosEnPantalla(),
+            'depositos'        => Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get(),
+        ]);
     }
 
     public function store(OrdenCompraRequest $request): RedirectResponse
@@ -85,15 +89,38 @@ class OrdenCompraController extends Controller
     {
         $orden = $ordenCompra;
         abort_if($orden->tieneRecepciones() || $orden->compra_id, 404, 'La orden ya tiene recepciones o factura.');
-        $orden->load('detalles.producto');
+        // El proveedor de la orden se muestra aunque lo hayan archivado después.
+        $orden->load('detalles.producto', 'proveedor');
 
-        // El proveedor de la orden sigue en la lista aunque lo hayan archivado.
-        $proveedores = Proveedor::activos()->orWhere('id', $orden->proveedor_id)
-            ->orderBy('nombre')->get();
-        $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
-        $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
+        return view('ordenes_compra.form', [
+            'orden'            => $orden,
+            'proveedorElegido' => $orden->proveedor,
+            'nombresProducto'  => $this->nombresDeProductosEnPantalla($orden),
+            'depositos'        => Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get(),
+        ]);
+    }
 
-        return view('ordenes_compra.form', compact('orden', 'proveedores', 'productos', 'depositos'));
+    /**
+     * Los nombres de los productos que el formulario va a mostrar, por id.
+     *
+     * Hacen falta para que el autocompletado arranque con el texto puesto. Sale
+     * de las líneas guardadas o, si el formulario vuelve con errores, de lo que
+     * el usuario había cargado.
+     *
+     * @return array<int,string>
+     */
+    private function nombresDeProductosEnPantalla(?OrdenCompra $orden = null): array
+    {
+        $ids = collect(old('detalles', $orden?->detalles->toArray() ?? []))
+            ->pluck('producto_id')
+            ->filter()
+            ->unique();
+
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        return Producto::whereIn('id', $ids)->pluck('nombre', 'id')->all();
     }
 
     public function update(OrdenCompraRequest $request, OrdenCompra $ordenCompra): RedirectResponse

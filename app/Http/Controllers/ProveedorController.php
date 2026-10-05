@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProveedorRequest;
 use App\Models\Proveedor;
 use App\Support\Orden;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -35,6 +36,28 @@ class ProveedorController extends Controller
         ], 'nombre')->paginate(20)->withQueryString();
 
         return view('proveedores.index', compact('proveedores'));
+    }
+
+    /** Búsqueda para el autocompletado de los formularios de carga. */
+    public function buscar(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->input('q', ''));
+
+        if (mb_strlen($q) < 1) {
+            return response()->json([]);
+        }
+
+        $proveedores = Proveedor::activos()
+            ->buscar($q)
+            ->orderBy('nombre')
+            ->limit(10)
+            ->get(['id', 'nombre', 'cuit']);
+
+        return response()->json($proveedores->map(fn (Proveedor $p) => [
+            'id'       => $p->id,
+            'etiqueta' => $p->nombre,
+            'detalle'  => $p->cuit,
+        ]));
     }
 
     public function create(): View

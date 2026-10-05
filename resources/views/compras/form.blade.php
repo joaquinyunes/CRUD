@@ -48,12 +48,12 @@
                     @endif
                     <div style="flex: 1; min-width: 200px;">
                         <label for="proveedor_id" class="r-label">Proveedor <span style="color:var(--r-color-danger);">*</span></label>
-                        <select name="proveedor_id" id="proveedor_id" class="r-select" required>
-                            <option value="">— Seleccioná un proveedor —</option>
-                            @foreach($proveedores as $prov)
-                                <option value="{{ $prov->id }}" {{ old('proveedor_id', $compra->proveedor_id ?? '') == $prov->id ? 'selected' : '' }}>{{ $prov->nombre }}</option>
-                            @endforeach
-                        </select>
+                        <x-buscador name="proveedor_id"
+                                    :url="route('proveedores.buscar')"
+                                    :valor="old('proveedor_id', $compra->proveedor_id ?? null)"
+                                    :etiqueta="$proveedorElegido?->nombre"
+                                    placeholder="Nombre, CUIT o correo…"
+                                    requerido />
                         @error('proveedor_id') <p class="r-caption" style="color: var(--r-color-danger);">{{ $message }}</p> @enderror
                     </div>
                     <div style="flex: 1; min-width: 200px;">
@@ -94,12 +94,12 @@
                             <div class="detalle-row r-flex r-items-center r-gap-3 r-card-flat">
                                 <div style="flex: 1; min-width: 200px;">
                                     <label class="r-caption">Producto</label>
-                                    <select name="detalles[{{ $index }}][producto_id]" class="r-select" required>
-                                        <option value="">— Seleccioná —</option>
-                                        @foreach($productos as $prod)
-                                            <option value="{{ $prod->id }}" {{ $detalle->producto_id == $prod->id ? 'selected' : '' }}>{{ $prod->nombre }}</option>
-                                        @endforeach
-                                    </select>
+                                    <x-buscador :name="'detalles['.$index.'][producto_id]'"
+                                                :url="route('productos.buscar')"
+                                                :valor="$detalle->producto_id"
+                                                :etiqueta="$detalle->producto?->nombre"
+                                                placeholder="Nombre, código o marca…"
+                                                requerido />
                                 </div>
                                 <div style="width: 100px;">
                                     <label class="r-caption">Cantidad</label>
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnAgregarPago = document.getElementById('agregar-pago');
     let indicePago = pagosContainer.querySelectorAll('.pago-row').length;
 
-    const productos = @json($productos);
+    const urlProductos = @json(route('productos.buscar'));
     const metodosPago = @json($metodosPago);
     const ivaPorcentaje = {{ \App\Models\Setting::obtener('sistema_iva', '21') }};
     const ivaHabilitado = {{ \App\Models\Setting::obtener('sistema_impuesto_habilitado', '1') === '1' ? 'true' : 'false' }};
@@ -217,8 +217,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function filaDeProducto(id) {
         return [...container.querySelectorAll('.detalle-row')].find(row => {
-            const sel = row.querySelector('select[name*="[producto_id]"]');
-            return sel && sel.value == id;
+            const campo = row.querySelector('[data-buscador-valor][name*="[producto_id]"]');
+            return campo && campo.value == id;
         });
     }
     function agregarOIncrementar(prod) {
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
             setMsg(`+1 ${prod.nombre} (cantidad ${c.value})`);
             return;
         }
-        agregarFila(indice, { producto_id: prod.id, precio: prod.precio_compra });
+        agregarFila(indice, { producto_id: prod.id, precio: prod.precio_compra, etiqueta: prod.nombre });
         indice++;
         setMsg(`Agregado: ${prod.nombre}`);
     }
@@ -256,11 +256,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function agregarFila(idx, preset) {
-        const options = productos.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
         const html = `
             <div class="detalle-row r-flex r-items-center r-gap-3 r-card-flat">
                 <div style="flex: 1; min-width: 200px;"><label class="r-caption">Producto</label>
-                    <select name="detalles[${idx}][producto_id]" class="r-select" required><option value="">— Seleccioná —</option>${options}</select></div>
+                    <div class="r-buscador" data-buscador data-url="${urlProductos}" data-al-elegir="producto-elegido">
+                        <input type="hidden" name="detalles[${idx}][producto_id]" data-buscador-valor>
+                        <input type="text" class="r-input" autocomplete="off" role="combobox"
+                               placeholder="Nombre, código o marca…" required data-buscador-texto>
+                        <ul class="r-buscador-lista" role="listbox" hidden data-buscador-lista></ul>
+                    </div></div>
                 <div style="width: 100px;"><label class="r-caption">Cantidad</label>
                     <input type="number" name="detalles[${idx}][cantidad]" value="1" min="1" class="r-input cantidad-input" required></div>
                 <div style="width: 130px;"><label class="r-caption">Precio</label>
@@ -273,8 +277,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const row = container.lastElementChild;
         bindEvents();
         if (preset) {
-            const sel = row.querySelector('select[name*="[producto_id]"]');
-            if (preset.producto_id) sel.value = preset.producto_id;
+            if (preset.producto_id) {
+                row.querySelector('[data-buscador-valor]').value = preset.producto_id;
+                const texto = row.querySelector('[data-buscador-texto]');
+                texto.value = preset.etiqueta || '';
+                texto.required = false;
+            }
             if (preset.precio != null) row.querySelector('.precio-input').value = parseFloat(preset.precio).toFixed(2);
             row.querySelector('.cantidad-input').dispatchEvent(new Event('input'));
         }
@@ -298,15 +306,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function bindEvents() {
-        container.querySelectorAll('select[name*="[producto_id]"]').forEach(sel => {
-            sel.onchange = function () {
-                const prod = productos.find(p => p.id == this.value);
-                const precioInput = this.closest('.detalle-row').querySelector('.precio-input');
-                if (prod && !parseFloat(precioInput.value)) {
-                    precioInput.value = parseFloat(prod.precio_compra).toFixed(2);
-                    this.closest('.detalle-row').querySelector('.cantidad-input').dispatchEvent(new Event('input'));
+        // Al elegir un producto, el autocompletado emite el item completo: de
+        // ahi sale el ultimo costo, salvo que el usuario ya haya puesto otro.
+        container.querySelectorAll('.detalle-row [data-buscador]').forEach(raiz => {
+            if (raiz.dataset.precioAtado) return;
+            raiz.dataset.precioAtado = '1';
+            raiz.dataset.alElegir = 'producto-elegido';
+            raiz.addEventListener('producto-elegido', function (e) {
+                const row = this.closest('.detalle-row');
+                const precioInput = row.querySelector('.precio-input');
+                if (!parseFloat(precioInput.value) && e.detail.precio_compra != null) {
+                    precioInput.value = parseFloat(e.detail.precio_compra).toFixed(2);
                 }
-            };
+                row.querySelector('.cantidad-input').dispatchEvent(new Event('input'));
+            });
         });
         container.querySelectorAll('.quitar-detalle').forEach(btn => {
             btn.onclick = function () { this.closest('.detalle-row').remove(); recalcular(); };

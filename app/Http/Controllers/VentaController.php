@@ -8,7 +8,6 @@ use App\Http\Requests\VentaRequest;
 use App\Models\Cliente;
 use App\Models\Deposito;
 use App\Models\MetodoPago;
-use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
 use App\Services\StockDocumentoService;
@@ -56,14 +55,19 @@ class VentaController extends Controller
         return view('ventas.index', compact('ventas'));
     }
 
+    /**
+     * El formulario ya no trae el catálogo embebido: clientes y productos se
+     * buscan contra sus endpoints a medida que se escribe. Con los datos de
+     * demostración no se notaba; con un catálogo real la pantalla tardaba
+     * segundos en abrir y el HTML pesaba megas.
+     */
     public function create(): View
     {
-        $clientes = Cliente::where('estado', 'activo')->orderBy('nombre')->get();
-        $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
-        $metodosPago = MetodoPago::activos()->get();
-        $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
-
-        return view('ventas.form', compact('clientes', 'productos', 'metodosPago', 'depositos'));
+        return view('ventas.form', [
+            'clienteElegido' => null,
+            'metodosPago'    => MetodoPago::activos()->get(),
+            'depositos'      => Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get(),
+        ]);
     }
 
     public function store(VentaRequest $request): RedirectResponse
@@ -83,14 +87,14 @@ class VentaController extends Controller
     {
         $this->authorize('update', $venta);
         abort_if($venta->estado === 'anulada', 404);
-        $venta->load(['detalles.producto', 'pagos.metodoPago']);
+        $venta->load(['detalles.producto', 'pagos.metodoPago', 'cliente']);
 
-        $clientes = Cliente::where('estado', 'activo')->orderBy('nombre')->get();
-        $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
-        $metodosPago = MetodoPago::activos()->get();
-        $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
-
-        return view('ventas.form', compact('venta', 'clientes', 'productos', 'metodosPago', 'depositos'));
+        return view('ventas.form', [
+            'venta'          => $venta,
+            'clienteElegido' => $venta->cliente,
+            'metodosPago'    => MetodoPago::activos()->get(),
+            'depositos'      => Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get(),
+        ]);
     }
 
     public function update(VentaRequest $request, Venta $venta): RedirectResponse

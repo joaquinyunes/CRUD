@@ -94,6 +94,7 @@
     </script>
 
     <script src="{{ asset('js/rhythm.js') }}" defer></script>
+    <script src="{{ asset('js/buscador.js') }}" defer></script>
 
     @yield('scripts')
 </body>
