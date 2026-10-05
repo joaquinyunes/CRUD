@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProductoRequest;
 use App\Models\Categoria;
 use App\Models\Producto;
 use App\Models\UnidadMedida;
@@ -10,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ProductoController extends Controller
@@ -86,9 +86,9 @@ class ProductoController extends Controller
         return view('productos.form', compact('categorias', 'unidadesMedida'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(ProductoRequest $request): RedirectResponse
     {
-        $validated = $this->validar($request);
+        $validated = $request->validated();
 
         $validated['codigo'] = $validated['codigo'] ?? $this->generarCodigo();
         $validated['categoria_id'] = $validated['categoria_id'] ?? Categoria::where('estado', true)->orderBy('id')->value('id');
@@ -119,13 +119,13 @@ class ProductoController extends Controller
         return view('productos.form', compact('producto', 'categorias', 'unidadesMedida'));
     }
 
-    public function update(Request $request, Producto $producto): RedirectResponse
+    public function update(ProductoRequest $request, Producto $producto): RedirectResponse
     {
         if ($producto->estado === 'eliminado') {
             abort(404);
         }
 
-        $validated = $this->validar($request, $producto->id);
+        $validated = $request->validated();
 
         if ($request->hasFile('imagen')) {
             $this->eliminarImagenAnterior($producto);
@@ -166,30 +166,6 @@ class ProductoController extends Controller
             ->with('success', 'Producto duplicado. Revisá los datos antes de activarlo.');
     }
 
-    private function validar(Request $request, ?int $ignorarId = null): array
-    {
-        return $request->validate([
-            'codigo' => ['nullable', 'string', 'max:100',
-                Rule::unique('productos', 'codigo')
-                    ->ignore($ignorarId)
-                    ->where(fn ($q) => $q->where('estado', '!=', 'eliminado'))],
-            'codigo_barra' => ['nullable', 'string', 'max:100',
-                Rule::unique('productos', 'codigo_barra')
-                    ->ignore($ignorarId)
-                    ->where(fn ($q) => $q->where('estado', '!=', 'eliminado'))],
-            'nombre'           => ['required', 'string', 'max:255'],
-            'descripcion'      => ['nullable', 'string'],
-            'categoria_id'     => ['nullable', 'exists:categorias,id'],
-            'marca'            => ['nullable', 'string', 'max:100'],
-            'precio_compra'    => ['nullable', 'numeric', 'min:0'],
-            'precio_venta'     => ['nullable', 'numeric', 'min:0'],
-            'stock_minimo'     => ['nullable', 'integer', 'min:0'],
-            'unidad_medida_id' => ['nullable', 'exists:unidades_medida,id'],
-            'estado'           => ['nullable', 'in:activo,inactivo'],
-            'imagen'           => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-        ]);
-    }
-
     private function manejarImagen(Request $request): ?string
     {
         if ($request->hasFile('imagen')) {
@@ -224,6 +200,6 @@ class ProductoController extends Controller
     {
         $ultimo = Producto::orderBy('id', 'desc')->value('id') ?? 0;
 
-        return 'PROD-'.str_pad($ultimo + 1, 4, '0', STR_PAD_LEFT);
+        return 'PROD-'.str_pad((string) ($ultimo + 1), 4, '0', STR_PAD_LEFT);
     }
 }

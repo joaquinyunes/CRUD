@@ -2,40 +2,109 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\Auditable;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
+    use Auditable;
+
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
+
+    /**
+     * Un usuario nace activo. Sin esto, el modelo recién creado no trae el
+     * valor que puso la base y el sistema lo ve como desactivado.
+     */
+    protected $attributes = [
+        'activo' => true,
+    ];
 
     protected $fillable = [
         'name',
         'email',
         'password',
         'role_id',
-        'two_factor_enabled',
+        'activo',
     ];
 
     protected function casts(): array
     {
         return [
-            'email_verified_at'  => 'datetime',
-            'password'           => 'hashed',
-            'two_factor_enabled' => 'boolean',
+            'email_verified_at' => 'datetime',
+            'password'          => 'hashed',
+            'activo'            => 'boolean',
         ];
     }
 
+    /** @return BelongsTo<Role, $this> */
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /** @return HasMany<Venta, $this> */
+    public function ventas(): HasMany
+    {
+        return $this->hasMany(Venta::class);
+    }
+
+    /** @return HasMany<Compra, $this> */
+    public function compras(): HasMany
+    {
+        return $this->hasMany(Compra::class);
+    }
+
+    /** @return HasMany<MovimientoStock, $this> */
+    public function movimientosStock(): HasMany
+    {
+        return $this->hasMany(MovimientoStock::class);
+    }
+
+    /** @return HasMany<CajaSesion, $this> */
+    public function sesionesCaja(): HasMany
+    {
+        return $this->hasMany(CajaSesion::class);
+    }
+
+    /**
+     * True si el usuario ya dejó rastro en el sistema. Un usuario así no se
+     * borra: se desactiva, para que sus comprobantes conserven el nombre de
+     * quien los hizo.
+     */
+    public function tieneHistorial(): bool
+    {
+        return $this->ventas()->exists()
+            || $this->compras()->exists()
+            || $this->movimientosStock()->exists()
+            || $this->sesionesCaja()->exists();
+    }
+
+    public function scopeActivos($query)
+    {
+        return $query->where('activo', true);
+    }
+
+    /**
+     * Los usuarios que pueden todo.
+     *
+     * Se resuelve por el permiso comodín: un rol que alguien creó y llamó
+     * "Dueño" cuenta igual que uno llamado "Administrador".
+     */
+    public function scopeAdministradores($query)
+    {
+        return $query->activos()->whereHas(
+            'role.permissions',
+            fn ($q) => $q->where('clave', Role::TODO)
+        );
     }
 }

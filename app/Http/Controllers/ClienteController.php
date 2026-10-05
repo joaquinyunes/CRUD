@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ClienteRequest;
 use App\Models\Cliente;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
@@ -46,9 +47,9 @@ class ClienteController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(ClienteRequest $request): RedirectResponse
     {
-        $datos = $this->validarDatos($request);
+        $datos = $request->validated();
 
         Cliente::create($datos);
 
@@ -64,9 +65,9 @@ class ClienteController extends Controller
         ]);
     }
 
-    public function update(Request $request, Cliente $cliente): RedirectResponse
+    public function update(ClienteRequest $request, Cliente $cliente): RedirectResponse
     {
-        $datos = $this->validarDatos($request);
+        $datos = $request->validated();
 
         $cliente->update($datos);
 
@@ -82,20 +83,5 @@ class ClienteController extends Controller
         return redirect()
             ->route('clientes.index')
             ->with('success', 'Cliente archivado correctamente.');
-    }
-
-    private function validarDatos(Request $request): array
-    {
-        return $request->validate([
-            'nombre'         => ['required', 'string', 'max:255'],
-            'apellido'       => ['required', 'string', 'max:255'],
-            'documento'      => ['nullable', 'string', 'max:50'],
-            'email'          => ['nullable', 'email', 'max:255'],
-            'telefono'       => ['nullable', 'string', 'max:50'],
-            'direccion'      => ['nullable', 'string', 'max:255'],
-            'observaciones'  => ['nullable', 'string'],
-            'estado'         => ['required', 'in:activo,archivado,eliminado'],
-            'limite_credito' => ['nullable', 'numeric', 'min:0'],
-        ]);
     }
 }

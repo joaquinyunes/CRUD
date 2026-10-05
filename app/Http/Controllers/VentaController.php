@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\VentaCreada;
 use App\Exceptions\StockInsuficienteException;
+use App\Http\Requests\VentaRequest;
 use App\Models\Cliente;
 use App\Models\Deposito;
 use App\Models\MetodoPago;
@@ -14,6 +15,7 @@ use App\Models\Venta;
 use App\Services\CajaService;
 use App\Services\StockDocumentoService;
 use App\Support\CalculadorTotales;
+use App\Support\NumeradorDocumentos;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -68,9 +70,8 @@ class VentaController extends Controller
         return view('ventas.form', compact('clientes', 'productos', 'metodosPago', 'depositos'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(VentaRequest $request): RedirectResponse
     {
-        $this->validar($request);
 
         $cliente = Cliente::findOrFail($request->cliente_id);
         if ($cliente->estado !== 'activo') {
@@ -140,12 +141,10 @@ class VentaController extends Controller
         return view('ventas.form', compact('venta', 'clientes', 'productos', 'metodosPago', 'depositos'));
     }
 
-    public function update(Request $request, Venta $venta): RedirectResponse
+    public function update(VentaRequest $request, Venta $venta): RedirectResponse
     {
         $this->authorize('update', $venta);
         abort_if($venta->estado === 'anulada', 404);
-        $this->validar($request);
-
         $cliente = Cliente::findOrFail($request->cliente_id);
         if ($cliente->estado !== 'activo') {
             return back()->withErrors(['cliente_id' => 'El cliente seleccionado no está activo.'])->withInput();
@@ -225,25 +224,12 @@ class VentaController extends Controller
         return view('ventas.show', compact('venta'));
     }
 
-    private function validar(Request $request): void
-    {
-        $request->validate([
-            'cliente_id'             => ['required', 'exists:clientes,id'],
-            'deposito_id'            => ['nullable', 'exists:depositos,id'],
-            'fecha'                  => ['required', 'date'],
-            'estado'                 => ['required', 'in:pendiente,completada,cancelada'],
-            'detalles'               => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
-            'detalles.*.cantidad'    => ['required', 'integer', 'min:1'],
-            'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
-            'descuento'              => ['nullable', 'numeric', 'min:0'],
-            'descuento_tipo'         => ['nullable', 'in:fijo,porcentaje'],
-        ]);
-    }
-
     /**
+     * Cada línea de la venta, con el costo del producto congelado al momento de
+     * emitirla (lo usa el reporte de rentabilidad).
+     *
      * @param  array<int,array<string,mixed>>  $detalles
-     * @return Collection<int,array<string,mixed>>
+     * @return Collection<int,array{producto_id:mixed,cantidad:int,precio:float,costo_unitario:float,subtotal:float}>
      */
     private function construirDetalles(array $detalles): Collection
     {
@@ -357,16 +343,10 @@ class VentaController extends Controller
 
     private function generarNumero(): string
     {
-        $prefijo = Setting::obtener('ventas_prefijo_numero', 'VTA');
-        $digitos = (int) Setting::obtener('ventas_cantidad_digitos', '5');
-
-        $ultima = Venta::where('numero', 'like', "{$prefijo}-%")
-            ->orderByRaw('CAST(SUBSTRING(numero, '.(strlen($prefijo) + 2).') AS UNSIGNED) DESC')
-            ->lockForUpdate()
-            ->first();
-
-        $nuevoNumero = $ultima ? ((int) substr($ultima->numero, strlen($prefijo) + 1)) + 1 : 1;
-
-        return $prefijo.'-'.str_pad((string) $nuevoNumero, $digitos, '0', STR_PAD_LEFT);
+        return NumeradorDocumentos::proximo(
+            'ventas',
+            Setting::obtener('ventas_prefijo_numero', 'VTA'),
+            (int) Setting::obtener('ventas_cantidad_digitos', '5'),
+        );
     }
 }

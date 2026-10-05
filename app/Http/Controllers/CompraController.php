@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\CompraCreada;
 use App\Exceptions\StockInsuficienteException;
+use App\Http\Requests\CompraRequest;
 use App\Models\Compra;
 use App\Models\Deposito;
 use App\Models\MetodoPago;
@@ -54,7 +55,7 @@ class CompraController extends Controller
 
     public function create(): View
     {
-        $proveedores = Proveedor::orderBy('nombre')->get();
+        $proveedores = Proveedor::activos()->orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
         $metodosPago = MetodoPago::activos()->get();
         $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
@@ -62,9 +63,8 @@ class CompraController extends Controller
         return view('compras.form', compact('proveedores', 'productos', 'metodosPago', 'depositos'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(CompraRequest $request): RedirectResponse
     {
-        $this->validar($request);
 
         $compra = DB::transaction(function () use ($request) {
             $detalles = $this->construirDetalles($request->detalles);
@@ -112,7 +112,9 @@ class CompraController extends Controller
         abort_if($compra->estado === 'anulada', 404);
         $compra->load(['detalles.producto', 'pagos.metodoPago']);
 
-        $proveedores = Proveedor::orderBy('nombre')->get();
+        // El proveedor de la compra sigue en la lista aunque lo hayan archivado.
+        $proveedores = Proveedor::activos()->orWhere('id', $compra->proveedor_id)
+            ->orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
         $metodosPago = MetodoPago::activos()->get();
         $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
@@ -120,12 +122,10 @@ class CompraController extends Controller
         return view('compras.form', compact('compra', 'proveedores', 'productos', 'metodosPago', 'depositos'));
     }
 
-    public function update(Request $request, Compra $compra): RedirectResponse
+    public function update(CompraRequest $request, Compra $compra): RedirectResponse
     {
         $this->authorize('update', $compra);
         abort_if($compra->estado === 'anulada', 404);
-        $this->validar($request);
-
         try {
             DB::transaction(function () use ($request, $compra) {
                 $this->stockDoc->revertirCompra($compra);
@@ -194,22 +194,6 @@ class CompraController extends Controller
         $compra->load(['detalles.producto', 'proveedor', 'user']);
 
         return view('compras.show', compact('compra'));
-    }
-
-    private function validar(Request $request): void
-    {
-        $request->validate([
-            'proveedor_id'           => ['required', 'exists:proveedores,id'],
-            'deposito_id'            => ['nullable', 'exists:depositos,id'],
-            'fecha'                  => ['required', 'date'],
-            'estado'                 => ['required', 'in:pendiente,completada,cancelada'],
-            'detalles'               => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
-            'detalles.*.cantidad'    => ['required', 'integer', 'min:1'],
-            'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
-            'descuento'              => ['nullable', 'numeric', 'min:0'],
-            'descuento_tipo'         => ['nullable', 'in:fijo,porcentaje'],
-        ]);
     }
 
     private function construirDetalles(array $detalles): Collection

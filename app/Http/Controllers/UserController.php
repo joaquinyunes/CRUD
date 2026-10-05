@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UsuarioRequest;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -51,15 +50,12 @@ class UserController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(UsuarioRequest $request): RedirectResponse
     {
-        $datos = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'email', 'max:255', 'unique:users,email'],
-            'role_id'  => ['nullable', 'exists:roles,id'],
-            'password' => ['required', 'confirmed', Password::min(8)],
-        ]);
+        $datos = $request->validated();
 
+        // Los usuarios los da de alta un administrador, no se auto-registran:
+        // no tiene sentido mandarles a verificar el correo.
         $datos['email_verified_at'] = now();
 
         User::create($datos);
@@ -77,14 +73,9 @@ class UserController extends Controller
         ]);
     }
 
-    public function update(Request $request, User $usuario): RedirectResponse
+    public function update(UsuarioRequest $request, User $usuario): RedirectResponse
     {
-        $datos = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($usuario->id)],
-            'role_id'  => ['nullable', 'exists:roles,id'],
-            'password' => ['nullable', 'confirmed', Password::min(8)],
-        ]);
+        $datos = $request->validated();
 
         // Nadie puede dejarse a si mismo sin rol y quedar afuera del sistema.
         if ($usuario->id === Auth::id() && empty($datos['role_id'])) {
@@ -130,6 +121,13 @@ class UserController extends Controller
         return back()->with('success', "Rol de \"{$usuario->name}\" actualizado a \"{$nombreRol}\".");
     }
 
+    /**
+     * Un usuario que ya operó no se borra: se desactiva.
+     *
+     * Sus ventas, compras, movimientos de stock y sesiones de caja lo
+     * referencian, y la auditoría necesita saber quién hizo cada cosa. Borrarlo
+     * fallaba con un error de base de datos apenas tenía un comprobante encima.
+     */
     public function destroy(User $usuario): RedirectResponse
     {
         if ($usuario->id === Auth::id()) {
@@ -140,7 +138,19 @@ class UserController extends Controller
             return back()->with('error', 'Tiene que quedar al menos un usuario con rol de administrador.');
         }
 
+        if ($usuario->tieneHistorial()) {
+            $usuario->update(['activo' => false]);
+            $usuario->tokens()->delete();
+
+            return redirect()->route('usuarios.index')->with(
+                'success',
+                "Usuario \"{$usuario->name}\" desactivado: ya no puede entrar al sistema, ".
+                'y sus comprobantes siguen en el historial con su nombre.'
+            );
+        }
+
         $nombre = $usuario->name;
+        $usuario->tokens()->delete();
         $usuario->delete();
 
         return redirect()
@@ -148,12 +158,26 @@ class UserController extends Controller
             ->with('success', "Usuario \"{$nombre}\" eliminado.");
     }
 
+    /** Vuelve a habilitar la entrada de un usuario desactivado. */
+    public function reactivar(User $usuario): RedirectResponse
+    {
+        $usuario->update(['activo' => true]);
+
+        return redirect()
+            ->route('usuarios.index')
+            ->with('success', "Usuario \"{$usuario->name}\" reactivado.");
+    }
+
     /**
-     * True si cambiarle el rol (o borrarlo) deja al sistema sin ningun administrador.
+     * True si cambiarle el rol (o darlo de baja) deja al sistema sin nadie que
+     * pueda administrarlo.
+     *
+     * Se mide por el permiso comodín, no por el nombre del rol: un rol que
+     * alguien creó y llamó "Dueño" cuenta igual que "Administrador".
      */
     private function dejariaAlSistemaSinAdmin(User $usuario, ?int $nuevoRoleId): bool
     {
-        $idsAdmin = Role::whereIn('nombre', [Role::ADMINISTRADOR, 'admin'])->pluck('id');
+        $idsAdmin = Role::whereHas('permissions', fn ($q) => $q->where('clave', Role::TODO))->pluck('id');
 
         if (! $idsAdmin->contains($usuario->role_id)) {
             return false;                       // no era admin: nada que proteger
@@ -163,6 +187,9 @@ class UserController extends Controller
             return false;                       // sigue siendo admin
         }
 
-        return User::whereIn('role_id', $idsAdmin)->where('id', '!=', $usuario->id)->doesntExist();
+        return User::whereIn('role_id', $idsAdmin)
+            ->where('id', '!=', $usuario->id)
+            ->where('activo', true)
+            ->doesntExist();
     }
 }
