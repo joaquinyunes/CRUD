@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrdenCompra extends Model
 {
+    use Auditable;
+
     protected $table = 'ordenes_compra';
 
     protected $fillable = [
@@ -21,21 +24,25 @@ class OrdenCompra extends Model
         'total'                  => 'decimal:2',
     ];
 
+    /** @return BelongsTo<Proveedor, $this> */
     public function proveedor(): BelongsTo
     {
         return $this->belongsTo(Proveedor::class);
     }
 
+    /** @return BelongsTo<Compra, $this> */
     public function compra(): BelongsTo
     {
         return $this->belongsTo(Compra::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return HasMany<OrdenCompraDetalle, $this> */
     public function detalles(): HasMany
     {
         return $this->hasMany(OrdenCompraDetalle::class, 'orden_compra_id');

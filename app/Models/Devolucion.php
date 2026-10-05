@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Devolucion extends Model
 {
+    use Auditable;
+
     protected $table = 'devoluciones';
 
     protected $fillable = [
@@ -27,21 +30,25 @@ class Devolucion extends Model
         'total' => 'decimal:2',
     ];
 
+    /** @return HasMany<DevolucionDetalle, $this> */
     public function detalles(): HasMany
     {
         return $this->hasMany(DevolucionDetalle::class);
     }
 
+    /** @return BelongsTo<Venta, $this> */
     public function venta(): BelongsTo
     {
         return $this->belongsTo(Venta::class);
     }
 
+    /** @return BelongsTo<Compra, $this> */
     public function compra(): BelongsTo
     {
         return $this->belongsTo(Compra::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

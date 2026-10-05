@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CajaSesion extends Model
 {
+    use Auditable;
+
     protected $table = 'caja_sesiones';
 
     protected $fillable = [
@@ -31,11 +34,13 @@ class CajaSesion extends Model
         'cerrada_en'            => 'datetime',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return HasMany<CajaMovimiento, $this> */
     public function movimientos(): HasMany
     {
         return $this->hasMany(CajaMovimiento::class);

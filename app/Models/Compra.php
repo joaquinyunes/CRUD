@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Compra extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     protected $fillable = [
         'numero',
@@ -43,31 +44,37 @@ class Compra extends Model
 
     public const ESTADOS = ['pendiente', 'completada', 'cancelada', 'anulada'];
 
+    /** @return BelongsTo<Proveedor, $this> */
     public function proveedor(): BelongsTo
     {
         return $this->belongsTo(Proveedor::class);
     }
 
+    /** @return BelongsTo<Deposito, $this> */
     public function deposito(): BelongsTo
     {
         return $this->belongsTo(Deposito::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return HasMany<CompraDetalle, $this> */
     public function detalles(): HasMany
     {
         return $this->hasMany(CompraDetalle::class);
     }
 
+    /** @return HasMany<CompraPago, $this> */
     public function pagos(): HasMany
     {
         return $this->hasMany(CompraPago::class);
     }
 
+    /** @return HasMany<Devolucion, $this> */
     public function devoluciones(): HasMany
     {
         return $this->hasMany(Devolucion::class);
