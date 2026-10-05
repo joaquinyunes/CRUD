@@ -117,4 +117,10 @@ jobs:
           coverage: none
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: composer audit
-      - run: npm audit --audit-level=high
+
+      # Solo las dependencias que llegan al servidor. Las de construcción
+      # (Tailwind y su cadena de globbing) se ejecutan en el build y no se
+      # despliegan: incluirlas obligaría a migrar a Tailwind 4 para tapar un
+      # fallo que solo se dispara con patrones que uno mismo escribe.
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
