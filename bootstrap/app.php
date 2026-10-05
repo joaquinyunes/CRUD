@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CheckPermission;
+use App\Http\Middleware\EncabezadosDeSeguridad;
 use App\Http\Middleware\EnsureUserIsActive;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -31,6 +32,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // o un token de API ya emitido.
         $middleware->web(append: [EnsureUserIsActive::class]);
         $middleware->api(append: [EnsureUserIsActive::class]);
+
+        // Global y no del grupo web: también las respuestas 404 y las de error los llevan.
+        $middleware->append(EncabezadosDeSeguridad::class);
 
         // Detrás de un balanceador (Render, Fly, Heroku, nginx) la petición
         // llega por HTTP aunque el visitante haya entrado por HTTPS. Sin esto

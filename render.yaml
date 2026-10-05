@@ -68,6 +68,8 @@ services:
       # --- Sesión, caché y colas sobre la misma base ---
       - key: SESSION_DRIVER
         value: database
+      - key: SESSION_SECURE_COOKIE   # la demo se sirve solo por HTTPS
+        value: "true"
       - key: CACHE_STORE
         value: database
       - key: QUEUE_CONNECTION
