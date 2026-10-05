@@ -6,6 +6,7 @@ use App\Exceptions\ReglaDeNegocioException;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -42,7 +43,10 @@ class BackupService
     public function crear(): string
     {
         $nombre = 'backup_'.now()->format('Y-m-d_His').'.json.gz';
-        $temporal = tempnam(sys_get_temp_dir(), 'bkp');
+        // En storage y no en el directorio temporal del sistema: en Windows y en
+        // algunos contenedores ese directorio no es escribible por el proceso web.
+        File::ensureDirectoryExists(storage_path('app/tmp'));
+        $temporal = (string) tempnam(storage_path('app/tmp'), 'bkp');
 
         $gz = gzopen($temporal, 'wb6');
         gzwrite($gz, json_encode([
