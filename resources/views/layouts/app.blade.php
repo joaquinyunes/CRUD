@@ -77,8 +77,20 @@
         @endif
 
         {{-- Page Content --}}
+        {{--
+            Dos formas de usar este layout conviven en el proyecto: la mayoría de
+            las vistas lo extienden con @section('content'), y perfil y edición
+            de roles lo usan como componente (<x-app-layout>), que entrega su
+            contenido en $slot. Sin renderizar $slot, esas dos pantallas salían
+            completamente en blanco.
+        --}}
         <div class="r-page-body">
+            @isset($header)
+                <div class="r-mb-6">{{ $header }}</div>
+            @endisset
+
             @yield('content')
+            {{ $slot ?? '' }}
         </div>
     </div>
 

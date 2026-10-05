@@ -32,11 +32,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [EnsureUserIsActive::class]);
         $middleware->api(append: [EnsureUserIsActive::class]);
 
-        // Detras de un balanceador (Render, Fly, Heroku, nginx) la peticion
+        // Detrás de un balanceador (Render, Fly, Heroku, nginx) la petición
         // llega por HTTP aunque el visitante haya entrado por HTTPS. Sin esto
         // Laravel genera los enlaces y las redirecciones en http://, y el
         // navegador los bloquea como contenido inseguro.
-        $middleware->trustProxies(at: '*');
+        //
+        // Confiar en cualquier proxy ("*") significa creerle a cualquiera que
+        // mande un X-Forwarded-For, y esa es la IP con la que se cuentan los
+        // intentos de login. En un PaaS no queda otra, porque la IP del
+        // balanceador cambia; en un VPS, TRUSTED_PROXIES acota a la red real.
+        $middleware->trustProxies(at: explode(',', (string) env('TRUSTED_PROXIES', '*')));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

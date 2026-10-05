@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Auth\DesafioDobleFactorController;
+use App\Http\Controllers\Auth\DobleFactorController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -11,6 +13,17 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
+    // Segundo paso del login: la contraseña ya se verificó y falta el código.
+    Route::get('doble-factor', [DesafioDobleFactorController::class, 'create'])
+        ->name('doble-factor.desafio');
+
+    Route::post('doble-factor', [DesafioDobleFactorController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('doble-factor.verificar');
+
+    Route::delete('doble-factor', [DesafioDobleFactorController::class, 'destroy'])
+        ->name('doble-factor.cancelar');
+
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
@@ -50,4 +63,18 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+    // Alta y baja del doble factor, desde el perfil del propio usuario.
+    Route::post('perfil/doble-factor', [DobleFactorController::class, 'iniciar'])
+        ->name('doble-factor.iniciar');
+
+    Route::post('perfil/doble-factor/confirmar', [DobleFactorController::class, 'confirmar'])
+        ->middleware('throttle:10,1')
+        ->name('doble-factor.confirmar');
+
+    Route::delete('perfil/doble-factor', [DobleFactorController::class, 'desactivar'])
+        ->name('doble-factor.desactivar');
+
+    Route::post('perfil/doble-factor/codigos', [DobleFactorController::class, 'regenerarCodigos'])
+        ->name('doble-factor.codigos');
 });

@@ -13,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     use Auditable;
@@ -40,9 +40,10 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'activo'            => 'boolean',
+            'email_verified_at'       => 'datetime',
+            'password'                => 'hashed',
+            'activo'                  => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
@@ -87,6 +88,12 @@ class User extends Authenticatable implements MustVerifyEmail
             || $this->compras()->exists()
             || $this->movimientosStock()->exists()
             || $this->sesionesCaja()->exists();
+    }
+
+    /** True si el usuario terminó de dar de alta su doble factor. */
+    public function tieneDobleFactor(): bool
+    {
+        return $this->two_factor_confirmed_at !== null;
     }
 
     public function scopeActivos($query)
