@@ -118,6 +118,9 @@ comprobantes se emiten en **PDF** y los listados se exportan a **Excel** y **CSV
 | **Los formularios no embeben el catálogo** | Traían la lista completa de productos y clientes dentro del HTML, una vez por cada fila. Medido con 5.000 productos: el formulario de venta pesaba 2 MB y ahora pesa 35 KB. | `public/js/buscador.js` |
 | **Nada con historial se borra: se archiva** | Un proveedor con compras o un usuario con ventas no se pueden borrar sin perder los comprobantes. En vez de dejar que reviente la clave foránea, el sistema los archiva o los desactiva y lo explica. | `ProveedorController@destroy`, `UserController@destroy` |
 | **Auditoría en todos los módulos** | Ventas, compras, caja, devoluciones, presupuestos, usuarios, roles y configuración registran quién cambió qué y desde dónde, con el valor anterior y el nuevo. Nunca se guardan hashes de contraseña ni tokens. | `app/Traits/Auditable.php` |
+| **Backup y restauración sin binarios externos** | Antes ejecutaba `mysqldump` por línea de comandos: no funcionaba en PostgreSQL (la base que se despliega), la contraseña viajaba en el comando y el contenedor no trae esos clientes. Ahora es un servicio en PHP que escribe un `.json.gz` fila por fila, restaura todo o nada, se niega a restaurar sobre otra estructura y corre solo cada noche conservando 14 copias. | `app/Services/BackupService.php` |
+| **Los adjuntos se sirven con permiso** | Los archivos subidos iban al disco público: cualquiera con la URL los descargaba sin sesión. Ahora van al disco privado (o al bucket S3) y se entregan por rutas que piden `archivos.ver`. | `app/Http/Controllers/ArchivoController.php` |
+| **Lo que la configuración promete, se cumple** | Apagar los descuentos y el límite de descuento se guardaban pero nadie los leía. Ahora el servicio de ventas los aplica; por encima del límite descuenta solo quien tiene `ventas.descuento_libre`. | `app/Services/VentaService.php` |
 | **Rutas separadas por módulo** | 30 archivos de rutas en lugar de un `web.php` de 800 líneas. | `routes/` |
 
 ---
@@ -239,7 +242,7 @@ viejos. Está todo en [`routes/console.php`](routes/console.php).
 php artisan test
 ```
 
-**165 tests.** Cubren las reglas que importan, no getters y setters:
+**207 tests.** Cubren las reglas que importan, no getters y setters:
 
 **Negocio**
 - el stock se descuenta al confirmar una venta y se repone al anularla;
@@ -254,7 +257,9 @@ php artisan test
 - el total cierra contra la suma de sus partes al centavo, con descuentos en porcentaje y decimales.
 
 **Permisos y seguridad**
-- un vendedor no puede ver ni editar las ventas de otro;
+- un vendedor no puede ver ni editar las ventas de otro, y quien puede es quien tiene el permiso `ventas.gestionar_todas`, se llame como se llame su rol;
+- los PDF, los archivos, las tareas, el calendario y la configuración piden su permiso aunque se escriba la URL a mano;
+- los adjuntos nuevos no quedan accesibles por URL directa;
 - un rol inventado con el permiso comodín puede todo, y uno llamado "Administrador" sin permisos no puede nada;
 - cambiar los permisos de un rol se aplica en el acto, no cuando expira la caché;
 - la API devuelve 401 sin token y 403 cuando el token es de alguien que no tiene ese permiso;
@@ -265,6 +270,10 @@ php artisan test
 - el secreto del doble factor no queda en claro en la base.
 
 **Integridad de datos**
+- un backup se restaura con los mismos datos e ids, y uno dañado o de otra estructura no toca nada;
+- importar un CSV de Excel (con BOM, punto y coma, Windows-1252, línea final en blanco, `1.234,50`) funciona, y reimportarlo actualiza en vez de duplicar;
+- una pantalla de lectura cualquiera del sistema, con los datos de la demo, no devuelve error;
+- cerrar la propia cuenta no deja al sistema sin administrador ni rompe por el historial de ventas;
 - borrar un proveedor con compras lo archiva en vez de romper; sin compras, sí lo borra;
 - borrar un usuario con ventas lo desactiva y conserva sus comprobantes;
 - crear, cambiar y anular queda en la auditoría con su autor, el antes y el después;
@@ -331,7 +340,7 @@ database/
 routes/                 32 archivos, uno por módulo
 resources/views/        Blade + Alpine, design system propio (public/css/rhythm.css)
 public/js/buscador.js   autocompletado de los formularios de carga
-tests/                  165 tests: negocio, permisos, integridad de datos y seguridad
+tests/                  207 tests: negocio, permisos, integridad de datos y seguridad
 phpstan.neon            análisis estático nivel 5
 docker/ Dockerfile render.yaml docker-compose.yml
 ```

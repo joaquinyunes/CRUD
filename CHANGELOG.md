@@ -5,6 +5,56 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 ## [No publicado]
 
 ### Seguridad
+- **Pantallas que solo pedían haber iniciado sesión.** Los PDF de ventas y compras (con costos y
+  márgenes), los archivos adjuntos, las tareas, el calendario y la configuración no exigían permiso:
+  el menú los ocultaba, pero escribir la URL a mano entraba igual. Ahora cada una pide el suyo.
+- **Los adjuntos eran descargables sin sesión.** Iban al disco público, con un nombre predecible.
+  Los nuevos van al disco privado (o al bucket S3 si `FILESYSTEM_DISK=s3`) y se entregan por rutas
+  con permiso. Los que ya existían se siguen encontrando.
+- Las políticas de ventas y compras comparaban el nombre del rol ("Administrador", "admin",
+  "Supervisor"), la misma trampa que ya se había sacado del middleware. Ahora deciden por el permiso
+  `ventas.gestionar_todas` / `compras.gestionar_todas`; una migración se lo da a Supervisor para que
+  actualizar no le quite nada a nadie.
+- El panel de indicadores (ventas del día, ingresos, ganancia) es de quien tiene `dashboard.ver`.
+- El IVA configurado entraba sin escapar a un `<script>` de tres formularios.
+- Los nombres de archivo de los backups se validan contra un patrón estricto.
+
+### Corregido
+- **Backup y restauración no funcionaban en PostgreSQL**, que es la base que se despliega: ejecutaban
+  `mysqldump` con la conexión "mysql" escrita a mano, con la contraseña en la línea de comandos, en un
+  contenedor que no trae esos clientes. Y la lista de backups reventaba en cuanto había uno
+  (`Carbon::fromTimestamp` no existe). Ahora es un servicio en PHP que anda igual en los tres motores,
+  restaura todo o nada, y hay un backup nocturno que conserva los últimos 14.
+- **Una segunda devolución parcial de la misma venta daba error 500.** La consulta de lo ya devuelto
+  hacía `pluck(DB::raw('SUM(...)'))`, que busca una columna llamada "SUM(...)".
+- **Las devoluciones tenían un cuarto numerador**, con `CAST(... AS UNSIGNED)`: no existe en
+  PostgreSQL y repetía números con la tabla vacía. Usan el numerador central.
+- **El tablero kanban de tareas ordenaba con `FIELD()`**, exclusivo de MySQL.
+- **Importar un CSV casi nunca funcionaba**: el de Excel trae BOM, separa con punto y coma, está en
+  Windows-1252 y termina con una línea en blanco que tiraba un fatal. Y importar productos fallaba
+  siempre por `categoria_id NOT NULL` si la planilla no traía categoría. Ahora hay un lector que
+  entiende todo eso (y "1.234,50"), crea las categorías que falten y reimportar actualiza en vez de
+  duplicar clientes y proveedores.
+- **La configuración ofrecía opciones que no hacían nada.** Una casilla destildada no viaja en el
+  formulario, así que "Permite descuento" no se podía apagar; el límite de descuento y el "tipo de
+  negocio" se guardaban sin que nadie los leyera. Ahora el servicio de ventas aplica el descuento
+  apagado y el límite (por encima, solo quien tiene `ventas.descuento_libre`), la pantalla valida, y
+  se quitaron las dos opciones muertas. El prefijo "VTA-" daba comprobantes "VTA--00001".
+- **Los errores de validación de una petición JSON de la web devolvían un 302.** El manejador de
+  excepciones solo respondía JSON a `/api/*`. Arrastrar un evento del calendario con fechas
+  inválidas se perdía en silencio; ahora se valida y el evento vuelve a su lugar.
+- **Cerrar la propia cuenta daba 500 si había ventas**, y dejaba al sistema sin administrador si era
+  el último. Ahora se desactiva o se bloquea, igual que en la pantalla de usuarios.
+- Quien no tiene `dashboard.ver` ya no ve las cifras del negocio en la página de inicio.
+- El color de un evento del calendario acepta solo un hexadecimal.
+
+### Agregado
+- `php artisan backup:crear` y su versión programada.
+- Test que entra a todas las pantallas de lectura con los datos de la demo y exige que ninguna
+  devuelva un error, y tests de altas/bajas de cada módulo, cuentas corrientes, notificaciones,
+  exportaciones, importación y backup.
+
+### Seguridad
 - **Doble factor de autenticación por aplicación (TOTP).** Donde antes había una columna
   `two_factor_enabled` sin implementación detrás, ahora está el circuito completo: alta con QR,
   confirmación contra un código real, ocho códigos de recuperación de un solo uso y baja pidiendo
