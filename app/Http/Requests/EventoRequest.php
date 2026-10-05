@@ -17,7 +17,7 @@ class EventoRequest extends FormRequest
         return [
             'titulo'      => ['required', 'string', 'max:255'],
             'descripcion' => ['nullable', 'string'],
-            'color'       => ['nullable', 'string', 'max:7'],
+            'color'       => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'inicio'      => ['required', 'date'],
             'fin'         => ['nullable', 'date', 'after_or_equal:inicio'],
             'todo_el_dia' => ['nullable', 'boolean'],

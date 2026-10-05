@@ -2,13 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ConfiguracionRequest;
 use App\Models\Setting;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redirect;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class ConfiguracionController extends Controller
 {
-    public function index()
+    /** Campo del formulario => grupo en que se guarda. */
+    private const TEXTOS = [
+        'empresa_nombre'          => 'empresa',
+        'empresa_ruc'             => 'empresa',
+        'empresa_direccion'       => 'empresa',
+        'empresa_telefono'        => 'empresa',
+        'empresa_email'           => 'empresa',
+        'empresa_logo'            => 'empresa',
+        'sistema_moneda'          => 'sistema',
+        'sistema_simbolo_moneda'  => 'sistema',
+        'sistema_iva'             => 'sistema',
+        'ventas_prefijo_numero'   => 'ventas',
+        'ventas_cantidad_digitos' => 'ventas',
+        'ventas_limite_descuento' => 'ventas',
+    ];
+
+    /**
+     * Las casillas. Una casilla destildada no viaja en el formulario, así que
+     * "no vino" tiene que leerse como "apagada": con el criterio de los textos
+     * (guardar solo lo que llega) un descuento habilitado no se podía apagar.
+     */
+    private const CASILLAS = [
+        'sistema_impuesto_habilitado' => 'sistema',
+        'ventas_permite_descuento'    => 'ventas',
+    ];
+
+    public function index(): View
     {
         $configuracion = [
             'empresa' => Setting::obtenerGrupo('empresa'),
@@ -19,25 +46,20 @@ class ConfiguracionController extends Controller
         return view('configuracion.index', compact('configuracion'));
     }
 
-    public function update(Request $request)
+    public function update(ConfiguracionRequest $request): RedirectResponse
     {
-        $camposEmpresa = ['empresa_nombre', 'empresa_ruc', 'empresa_direccion', 'empresa_telefono', 'empresa_email', 'empresa_logo'];
-        $camposSistema = ['sistema_moneda', 'sistema_simbolo_moneda', 'sistema_iva'];
-        $camposVentas = ['ventas_prefijo_numero', 'ventas_cantidad_digitos', 'ventas_permite_descuento', 'ventas_limite_descuento', 'ventas_numero_comprobante'];
+        $datos = $request->validated();
 
-        $todos = array_merge($camposEmpresa, $camposSistema, $camposVentas);
-
-        foreach ($todos as $campo) {
-            if ($request->has($campo) || $request->filled($campo)) {
-                $grupo = (str_starts_with($campo, 'empresa') ? 'empresa'
-                       : (str_starts_with($campo, 'ventas') ? 'ventas'
-                       : 'sistema'));
-                Setting::establecer($campo, $request->input($campo), $grupo);
+        foreach (self::TEXTOS as $campo => $grupo) {
+            if (array_key_exists($campo, $datos) && $datos[$campo] !== null) {
+                Setting::establecer($campo, (string) $datos[$campo], $grupo);
             }
         }
 
-        Setting::establecer('sistema_impuesto_habilitado', $request->boolean('sistema_impuesto_habilitado') ? '1' : '0', 'sistema');
+        foreach (self::CASILLAS as $campo => $grupo) {
+            Setting::establecer($campo, $request->boolean($campo) ? '1' : '0', $grupo);
+        }
 
-        return Redirect::route('configuracion.index')->with('success', 'Configuración actualizada correctamente.');
+        return redirect()->route('configuracion.index')->with('success', 'Configuración actualizada correctamente.');
     }
 }

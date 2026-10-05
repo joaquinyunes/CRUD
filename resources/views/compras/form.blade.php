@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const urlProductos = @json(route('productos.buscar'));
     const metodosPago = @json($metodosPago);
-    const ivaPorcentaje = {{ \App\Models\Setting::obtener('sistema_iva', '21') }};
+    const ivaPorcentaje = {{ (float) \App\Models\Setting::obtener('sistema_iva', '21') }};
     const ivaHabilitado = {{ \App\Models\Setting::obtener('sistema_impuesto_habilitado', '1') === '1' ? 'true' : 'false' }};
 
     const fmt = (v) => '$' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');

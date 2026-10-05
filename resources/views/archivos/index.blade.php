@@ -47,7 +47,7 @@
                     <tr>
                         <td>
                             @if($archivo->esImagen)
-                                <img src="{{ asset('storage/' . $archivo->ruta) }}" alt="{{ $archivo->nombre }}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;">
+                                <img src="{{ route('archivos.show', $archivo) }}" alt="{{ $archivo->nombre }}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;">
                             @else
                                 <div style="width:40px;height:40px;background:rgba(220,38,38,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;">
                                     <span style="font-size:0.625rem; font-weight:700; color:#dc2626;">PDF</span>

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('tareas')->name('tareas.')->group(function () {
     Route::get('/', [TareaController::class, 'index'])
+        ->middleware('permiso:tareas.ver')
         ->name('index');
 
     Route::get('/crear', [TareaController::class, 'create'])

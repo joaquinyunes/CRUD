@@ -5,9 +5,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('calendario')->name('calendario.')->group(function () {
     Route::get('/', [CalendarioController::class, 'index'])
+        ->middleware('permiso:calendario.ver')
         ->name('index');
 
     Route::get('/eventos', [CalendarioController::class, 'eventosJson'])
+        ->middleware('permiso:calendario.ver')
         ->name('eventos-json');
 
     Route::post('/', [CalendarioController::class, 'store'])

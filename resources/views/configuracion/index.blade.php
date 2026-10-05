@@ -9,27 +9,14 @@
     <div class="r-flash-success r-mb-6">{{ session('success') }}</div>
 @endif
 
+@if($errors->any())
+    <div class="r-card-flat r-mb-6" style="border-left:3px solid #dc2626;">
+        <ul class="list-disc list-inside">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+    </div>
+@endif
+
 <form method="POST" action="{{ route('configuracion.update') }}">
     @csrf
-
-    <div class="r-mb-8" data-reveal="fade-up">
-        <h3 class="r-caption r-mb-4">Tipo de Negocio</h3>
-        <div class="r-card-flat">
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:var(--space-4); align-items:end;">
-                <div>
-                    <label class="r-label">Tipo de Negocio</label>
-                    <select name="negocio_tipo" class="r-select" style="width:100%;">
-                        <option value="tienda" {{ ($configuracion['negocio']['negocio_tipo'] ?? '') === 'tienda' ? 'selected' : '' }}>Tienda</option>
-                        <option value="kiosco" {{ ($configuracion['negocio']['negocio_tipo'] ?? '') === 'kiosco' ? 'selected' : '' }}>Kiosco</option>
-                        <option value="restaurante" {{ ($configuracion['negocio']['negocio_tipo'] ?? '') === 'restaurante' ? 'selected' : '' }}>Restaurante</option>
-                        <option value="servicios" {{ ($configuracion['negocio']['negocio_tipo'] ?? '') === 'servicios' ? 'selected' : '' }}>Servicios</option>
-                        <option value="empresa" {{ ($configuracion['negocio']['negocio_tipo'] ?? '') === 'empresa' ? 'selected' : '' }}>Empresa</option>
-                        <option value="otro" {{ ($configuracion['negocio']['negocio_tipo'] ?? '') === 'otro' ? 'selected' : '' }}>Otro</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div class="r-mb-8" data-reveal="fade-up" data-reveal-delay="0.05">
         <h3 class="r-caption r-mb-4">Unidades de Medida</h3>
@@ -106,7 +93,7 @@
         <h3 class="r-caption r-mb-4">Ventas</h3>
         <div class="r-card-flat">
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:var(--space-4); align-items:end;">
-                <div><label class="r-label">Prefijo Número (ej: VTA-)</label><input type="text" name="ventas_prefijo_numero" value="{{ $configuracion['ventas']['ventas_prefijo_numero'] ?? 'VTA' }}" class="r-input"></div>
+                <div><label class="r-label">Prefijo del número (ej: VTA)</label><input type="text" name="ventas_prefijo_numero" value="{{ $configuracion['ventas']['ventas_prefijo_numero'] ?? 'VTA' }}" class="r-input"></div>
                 <div><label class="r-label">Cantidad Dígitos</label><input type="number" name="ventas_cantidad_digitos" value="{{ $configuracion['ventas']['ventas_cantidad_digitos'] ?? '5' }}" class="r-input" min="3" max="10"></div>
                 <div>
                     <label class="r-label">Permite descuento</label>
@@ -116,13 +103,6 @@
                     </label>
                 </div>
                 <div><label class="r-label">Límite descuento sin autorización (%)</label><input type="number" name="ventas_limite_descuento" value="{{ $configuracion['ventas']['ventas_limite_descuento'] ?? '10' }}" class="r-input" min="0" max="100" step="1"></div>
-                <div>
-                    <label class="r-label">Número de comprobante</label>
-                    <select name="ventas_numero_comprobante" class="r-select" style="width:100%;">
-                        <option value="manual" {{ ($configuracion['ventas']['ventas_numero_comprobante'] ?? '') === 'manual' ? 'selected' : '' }}>Manual</option>
-                        <option value="automatico" {{ ($configuracion['ventas']['ventas_numero_comprobante'] ?? '') === 'automatico' ? 'selected' : '' }}>Automático</option>
-                    </select>
-                </div>
             </div>
         </div>
     </div>

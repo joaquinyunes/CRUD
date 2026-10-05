@@ -46,14 +46,16 @@ class TareaController extends Controller
         $usuarios = User::orderBy('name')->get();
 
         if ($vista === 'kanban') {
+            $porPrioridad = "CASE prioridad WHEN 'alta' THEN 1 WHEN 'media' THEN 2 ELSE 3 END";
+
             $pendientes = Tarea::with('asignada', 'creadaPor')
                 ->where('estado', 'pendiente')
-                ->orderByRaw("FIELD(prioridad, 'alta', 'media', 'baja')")
+                ->orderByRaw($porPrioridad)
                 ->get();
 
             $enProgreso = Tarea::with('asignada', 'creadaPor')
                 ->where('estado', 'en_progreso')
-                ->orderByRaw("FIELD(prioridad, 'alta', 'media', 'baja')")
+                ->orderByRaw($porPrioridad)
                 ->get();
 
             $completadas = Tarea::with('asignada', 'creadaPor')

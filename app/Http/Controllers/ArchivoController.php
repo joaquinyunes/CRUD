@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ArchivoController extends Controller
 {
@@ -43,7 +44,8 @@ class ArchivoController extends Controller
         $file = $request->file('archivo');
         $nombreOriginal = $file->getClientOriginalName();
         $nombreGuardado = time().'_'.preg_replace('/[^a-zA-Z0-9._-]/', '_', $nombreOriginal);
-        $ruta = $file->storeAs('archivos', $nombreGuardado, 'public');
+        // Disco privado: se sirve solo a través de las rutas con permiso, nunca por URL directa.
+        $ruta = $file->storeAs('archivos', $nombreGuardado, Archivo::DISCO);
 
         Archivo::create([
             'nombre'           => $nombreOriginal,
@@ -60,8 +62,10 @@ class ArchivoController extends Controller
 
     public function destroy(Archivo $archivo): RedirectResponse
     {
-        if (Storage::disk('public')->exists($archivo->ruta)) {
-            Storage::disk('public')->delete($archivo->ruta);
+        $disco = Storage::disk($archivo->disco());
+
+        if ($disco->exists($archivo->ruta)) {
+            $disco->delete($archivo->ruta);
         }
 
         $archivo->delete();
@@ -69,10 +73,21 @@ class ArchivoController extends Controller
         return back()->with('success', 'Archivo eliminado correctamente.');
     }
 
-    public function download(Archivo $archivo)
+    public function download(Archivo $archivo): StreamedResponse
     {
-        $rutaCompleta = Storage::disk('public')->path($archivo->ruta);
+        abort_unless(Storage::disk($archivo->disco())->exists($archivo->ruta), 404);
 
-        return response()->download($rutaCompleta, $archivo->nombre);
+        return Storage::disk($archivo->disco())->download($archivo->ruta, $archivo->nombre);
+    }
+
+    /** Muestra el archivo en el navegador (miniaturas y vista previa de PDF). */
+    public function show(Archivo $archivo): StreamedResponse
+    {
+        abort_unless(Storage::disk($archivo->disco())->exists($archivo->ruta), 404);
+
+        return Storage::disk($archivo->disco())->response($archivo->ruta, $archivo->nombre, [
+            'Content-Type'           => $archivo->tipo,
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 }

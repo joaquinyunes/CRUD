@@ -10,6 +10,7 @@ use App\Models\Producto;
 use App\Models\Venta;
 use App\Services\CajaService;
 use App\Services\StockService;
+use App\Support\NumeradorDocumentos;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -204,18 +205,13 @@ class DevolucionController extends Controller
             ->where("devoluciones.{$col}", $docId)
             ->where('devoluciones.estado', 'registrada')
             ->groupBy('devoluciones_detalle.producto_id')
-            ->pluck(DB::raw('SUM(devoluciones_detalle.cantidad)'), 'devoluciones_detalle.producto_id')
+            ->selectRaw('devoluciones_detalle.producto_id, SUM(devoluciones_detalle.cantidad) as devuelto')
+            ->pluck('devuelto', 'producto_id')
             ->map(fn ($v) => (int) $v)->toArray();
     }
 
     private function generarNumero(): string
     {
-        $ultimo = Devolucion::where('numero', 'like', 'DEV-%')
-            ->orderByRaw('CAST(SUBSTRING(numero, 5) AS UNSIGNED) DESC')
-            ->lockForUpdate()->first();
-
-        $n = $ultimo ? ((int) substr($ultimo->numero, 4)) + 1 : 1;
-
-        return 'DEV-'.str_pad((string) $n, 5, '0', STR_PAD_LEFT);
+        return NumeradorDocumentos::proximo('devoluciones', 'DEV');
     }
 }

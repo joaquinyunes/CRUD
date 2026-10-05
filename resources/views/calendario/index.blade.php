@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
         selectable: true,
         select: function(info) { abrirModalCrear(); document.getElementById('inicio').value = info.startStr.replace('Z', '').substring(0, 16); if (info.endStr) document.getElementById('fin').value = info.endStr.replace('Z', '').substring(0, 16); },
         eventClick: function(info) { editarEvento(info.event.id); },
-        eventDrop: function(info) { fetch('{{ route("calendario.mover", ":id") }}'.replace(':id', info.event.id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }, body: JSON.stringify({ start: info.event.startStr, end: info.event.endStr }) }); }
+        eventDrop: function(info) { fetch('{{ route("calendario.mover", ":id") }}'.replace(':id', info.event.id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }, body: JSON.stringify({ start: info.event.startStr, end: info.event.endStr }) }).then(r => { if (!r.ok) info.revert(); }).catch(() => info.revert()); }
     });
     calendar.render();
     window.calendar = calendar;

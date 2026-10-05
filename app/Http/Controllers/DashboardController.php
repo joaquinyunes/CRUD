@@ -16,6 +16,11 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        // Las cifras del negocio son de quien tiene el permiso, no de quien inició sesión.
+        if (! $request->user()->role?->tienePermiso('dashboard.ver')) {
+            return view('dashboard-restringido');
+        }
+
         $fechaDesde = $request->fecha_desde ?? now()->subDays(30)->toDateString();
         $fechaHasta = $request->fecha_hasta ?? now()->toDateString();
 

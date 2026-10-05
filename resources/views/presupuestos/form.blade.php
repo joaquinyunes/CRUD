@@ -110,7 +110,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const rows = document.getElementById('rows');
     const urlProductos = @json(route('productos.buscar'));
-    const iva = {{ \App\Models\Setting::obtener('sistema_iva', '21') }};
+    const iva = {{ (float) \App\Models\Setting::obtener('sistema_iva', '21') }};
     const ivaOn = {{ \App\Models\Setting::obtener('sistema_impuesto_habilitado', '1') === '1' ? 'true' : 'false' }};
     let idx = rows.querySelectorAll('.row').length;
     const fmt = v => '$' + v.toFixed(2);

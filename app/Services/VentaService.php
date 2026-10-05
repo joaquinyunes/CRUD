@@ -10,6 +10,7 @@ use App\Models\Deposito;
 use App\Models\MetodoPago;
 use App\Models\Producto;
 use App\Models\Setting;
+use App\Models\User;
 use App\Models\Venta;
 use App\Support\CalculadorTotales;
 use App\Support\NumeradorDocumentos;
@@ -55,6 +56,7 @@ class VentaService
             (float) ($datos['descuento'] ?? 0)
         );
 
+        $this->verificarDescuento($totales, $autorId);
         $this->verificarCredito($cliente, $totales['total'], $pagos);
 
         $venta = DB::transaction(function () use ($datos, $detalles, $totales, $pagos, $autorId) {
@@ -124,6 +126,8 @@ class VentaService
                 $datos['descuento_tipo'] ?? null,
                 (float) ($datos['descuento'] ?? 0)
             );
+
+            $this->verificarDescuento($totales, auth()->id());
 
             $venta->update([
                 'cliente_id'     => $datos['cliente_id'],
@@ -268,6 +272,44 @@ class VentaService
             Setting::obtener('ventas_prefijo_numero', 'VTA'),
             (int) Setting::obtener('ventas_cantidad_digitos', '5'),
         );
+    }
+
+    /**
+     * Aplica lo que la configuración promete: si los descuentos están apagados no
+     * hay ninguno, y por encima del límite solo descuenta quien tiene el permiso
+     * `ventas.descuento_libre` (el comodín lo incluye).
+     *
+     * @param  array{subtotal:float,descuento:float}  $totales
+     *
+     * @throws ReglaDeNegocioException
+     */
+    private function verificarDescuento(array $totales, ?int $autorId): void
+    {
+        if ($totales['descuento'] <= 0) {
+            return;
+        }
+
+        if (Setting::obtener('ventas_permite_descuento', '1') !== '1') {
+            throw new ReglaDeNegocioException('Los descuentos están desactivados en la configuración.', 'descuento');
+        }
+
+        $limite = (float) Setting::obtener('ventas_limite_descuento', '10');
+        $porcentaje = $totales['subtotal'] > 0 ? $totales['descuento'] / $totales['subtotal'] * 100 : 0;
+
+        if ($porcentaje <= $limite + 0.005) {
+            return;
+        }
+
+        $autorId ??= auth()->id();
+        $autor = $autorId ? User::with('role')->find($autorId) : null;
+
+        if (! $autor?->role?->tienePermiso('ventas.descuento_libre')) {
+            throw new ReglaDeNegocioException(
+                'Un descuento de '.number_format($porcentaje, 1).'% supera el límite de '
+                .rtrim(rtrim(number_format($limite, 2, '.', ''), '0'), '.').'% sin autorización.',
+                'descuento'
+            );
+        }
     }
 
     /**
