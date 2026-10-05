@@ -48,9 +48,25 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        if ($user->dejariaSinAdministrador()) {
+            return Redirect::route('profile.edit')->with(
+                'error',
+                'Sos el único administrador: nombrá a otro antes de cerrar tu cuenta.'
+            );
+        }
+
         Auth::logout();
 
-        $user->delete();
+        $user->tokens()->delete();
+
+        // Quien ya firmó comprobantes no se borra: se desactiva, y sus ventas
+        // conservan el nombre de quien las hizo (un borrado físico da error de
+        // clave foránea y, aunque no lo diera, borraría el historial).
+        if ($user->tieneHistorial()) {
+            $user->update(['activo' => false]);
+        } else {
+            $user->delete();
+        }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

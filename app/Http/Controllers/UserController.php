@@ -83,7 +83,7 @@ class UserController extends Controller
             return back()->with('error', 'No podés quitarte el rol a vos mismo.');
         }
 
-        if ($this->dejariaAlSistemaSinAdmin($usuario, $datos['role_id'] ?? null)) {
+        if ($usuario->dejariaSinAdministrador($datos['role_id'] ?? null)) {
             return back()->with('error', 'Tiene que quedar al menos un usuario con rol de administrador.');
         }
 
@@ -106,7 +106,7 @@ class UserController extends Controller
             return back()->with('error', 'No podés quitarte el rol a vos mismo.');
         }
 
-        if ($this->dejariaAlSistemaSinAdmin($usuario, $roleId)) {
+        if ($usuario->dejariaSinAdministrador($roleId)) {
             return back()->with('error', 'Tiene que quedar al menos un usuario con rol de administrador.');
         }
 
@@ -131,7 +131,7 @@ class UserController extends Controller
             return back()->with('error', 'No podés eliminar tu propia cuenta desde acá.');
         }
 
-        if ($this->dejariaAlSistemaSinAdmin($usuario, null)) {
+        if ($usuario->dejariaSinAdministrador(null)) {
             return back()->with('error', 'Tiene que quedar al menos un usuario con rol de administrador.');
         }
 
@@ -163,30 +163,5 @@ class UserController extends Controller
         return redirect()
             ->route('usuarios.index')
             ->with('success', "Usuario \"{$usuario->name}\" reactivado.");
-    }
-
-    /**
-     * True si cambiarle el rol (o darlo de baja) deja al sistema sin nadie que
-     * pueda administrarlo.
-     *
-     * Se mide por el permiso comodín, no por el nombre del rol: un rol que
-     * alguien creó y llamó "Dueño" cuenta igual que "Administrador".
-     */
-    private function dejariaAlSistemaSinAdmin(User $usuario, ?int $nuevoRoleId): bool
-    {
-        $idsAdmin = Role::whereHas('permissions', fn ($q) => $q->where('clave', Role::TODO))->pluck('id');
-
-        if (! $idsAdmin->contains($usuario->role_id)) {
-            return false;                       // no era admin: nada que proteger
-        }
-
-        if ($nuevoRoleId !== null && $idsAdmin->contains($nuevoRoleId)) {
-            return false;                       // sigue siendo admin
-        }
-
-        return User::whereIn('role_id', $idsAdmin)
-            ->where('id', '!=', $usuario->id)
-            ->where('activo', true)
-            ->doesntExist();
     }
 }

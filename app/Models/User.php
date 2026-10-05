@@ -90,6 +90,30 @@ class User extends Authenticatable implements MustVerifyEmail
             || $this->sesionesCaja()->exists();
     }
 
+    /**
+     * True si quitarle el rol de administrador (o desactivarlo o borrarlo) dejaría
+     * al sistema sin ningún usuario activo que pueda administrarlo.
+     *
+     * "Administrador" es quien tiene el permiso comodín, no un nombre de rol.
+     */
+    public function dejariaSinAdministrador(?int $nuevoRoleId = null): bool
+    {
+        $idsAdmin = Role::whereHas('permissions', fn ($q) => $q->where('clave', Role::TODO))->pluck('id');
+
+        if (! $idsAdmin->contains($this->role_id)) {
+            return false;                       // no era admin: nada que proteger
+        }
+
+        if ($nuevoRoleId !== null && $idsAdmin->contains($nuevoRoleId)) {
+            return false;                       // sigue siendo admin
+        }
+
+        return static::whereIn('role_id', $idsAdmin)
+            ->where('id', '!=', $this->id)
+            ->where('activo', true)
+            ->doesntExist();
+    }
+
     /** True si el usuario terminó de dar de alta su doble factor. */
     public function tieneDobleFactor(): bool
     {

@@ -7,6 +7,7 @@ use App\Models\Categoria;
 use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\Proveedor;
+use App\Support\LectorCsv;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Str;
 
@@ -19,42 +20,25 @@ class ImportController extends Controller
 
     public function importar(ImportarRequest $request)
     {
-        $file = $request->file('archivo');
-        $handle = fopen($file->getPathname(), 'r');
-        $headers = fgetcsv($handle, 0, ',');
-
-        $headers = array_map('strtolower', array_map('trim', $headers));
+        $lector = new LectorCsv($request->file('archivo')->getPathname());
 
         $importados = 0;
-        $errores = 0;
         $errorMessages = [];
 
-        $rowNumber = 1;
-        while (($row = fgetcsv($handle, 0, ',')) !== false) {
-            $rowNumber++;
-            $data = array_combine($headers, $row);
-
+        foreach ($lector->filas() as $numeroFila => $data) {
             try {
-                switch ($request->tipo) {
-                    case 'productos':
-                        $this->importarProducto($data);
-                        break;
-                    case 'clientes':
-                        $this->importarCliente($data);
-                        break;
-                    case 'proveedores':
-                        $this->importarProveedor($data);
-                        break;
-                }
+                match ($request->tipo) {
+                    'productos'   => $this->importarProducto($data),
+                    'clientes'    => $this->importarCliente($data),
+                    'proveedores' => $this->importarProveedor($data),
+                };
                 $importados++;
             } catch (\Throwable $e) {
-                $errores++;
-                $errorMessages[] = "Fila {$rowNumber}: {$e->getMessage()}";
+                $errorMessages[] = "Fila {$numeroFila}: {$e->getMessage()}";
             }
         }
 
-        fclose($handle);
-
+        $errores = count($errorMessages);
         $mensaje = "Importación completada: {$importados} registros importados.";
         if ($errores > 0) {
             $mensaje .= " {$errores} errores encontrados.";
@@ -78,10 +62,10 @@ class ImportController extends Controller
                 'nombre'        => $nombre,
                 'descripcion'   => $data['descripcion'] ?? null,
                 'marca'         => $data['marca'] ?? null,
-                'precio_compra' => (float) ($data['precio_compra'] ?? 0),
-                'precio_venta'  => (float) ($data['precio_venta'] ?? 0),
-                'stock'         => (int) ($data['stock'] ?? 0),
-                'stock_minimo'  => (int) ($data['stock_minimo'] ?? 0),
+                'precio_compra' => LectorCsv::numero($data['precio_compra'] ?? null),
+                'precio_venta'  => LectorCsv::numero($data['precio_venta'] ?? null),
+                'stock'         => (int) LectorCsv::numero($data['stock'] ?? null),
+                'stock_minimo'  => (int) LectorCsv::numero($data['stock_minimo'] ?? null),
                 'categoria_id'  => $this->resolveCategoria($data['categoria'] ?? null),
                 'estado'        => 'activo',
             ]
@@ -115,15 +99,23 @@ class ImportController extends Controller
             throw new \Exception('El nombre es obligatorio.');
         }
 
-        Cliente::create([
-            'nombre'    => $nombre,
-            'apellido'  => $data['apellido'] ?? '',
-            'documento' => $data['documento'] ?? null,
-            'email'     => $data['email'] ?? null,
-            'telefono'  => $data['telefono'] ?? null,
-            'direccion' => $data['direccion'] ?? null,
-            'estado'    => 'activo',
-        ]);
+        $this->verificarEmail($data['email'] ?? null);
+
+        // Con documento, reimportar la planilla actualiza al cliente en vez de duplicarlo.
+        $documento = ($data['documento'] ?? '') !== '' ? $data['documento'] : null;
+
+        Cliente::updateOrCreate(
+            $documento ? ['documento' => $documento] : ['nombre' => $nombre, 'apellido' => $data['apellido'] ?? '', 'email' => $data['email'] ?? null],
+            [
+                'nombre'    => $nombre,
+                'apellido'  => $data['apellido'] ?? '',
+                'documento' => $documento,
+                'email'     => ($data['email'] ?? '') !== '' ? $data['email'] : null,
+                'telefono'  => $data['telefono'] ?? null,
+                'direccion' => $data['direccion'] ?? null,
+                'estado'    => 'activo',
+            ]
+        );
     }
 
     private function importarProveedor(array $data): void
@@ -133,22 +125,38 @@ class ImportController extends Controller
             throw new \Exception('El nombre es obligatorio.');
         }
 
-        Proveedor::create([
-            'nombre'    => $nombre,
-            'cuit'      => $data['cuit'] ?? null,
-            'telefono'  => $data['telefono'] ?? null,
-            'email'     => $data['email'] ?? null,
-            'direccion' => $data['direccion'] ?? null,
-        ]);
+        $this->verificarEmail($data['email'] ?? null);
+
+        $cuit = ($data['cuit'] ?? '') !== '' ? $data['cuit'] : null;
+
+        Proveedor::updateOrCreate(
+            $cuit ? ['cuit' => $cuit] : ['nombre' => $nombre],
+            [
+                'nombre'    => $nombre,
+                'cuit'      => $cuit,
+                'telefono'  => $data['telefono'] ?? null,
+                'email'     => ($data['email'] ?? '') !== '' ? $data['email'] : null,
+                'direccion' => $data['direccion'] ?? null,
+            ]
+        );
     }
 
-    private function resolveCategoria(?string $nombre): ?int
+    private function verificarEmail(?string $email): void
     {
-        if (! $nombre) {
-            return null;
+        if ($email !== null && $email !== '' && ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \Exception("El correo «{$email}» no es válido.");
         }
-        $cat = Categoria::where('nombre', $nombre)->first();
+    }
 
-        return $cat?->id;
+    /**
+     * La categoría del producto es obligatoria en la base, y una planilla de
+     * productos casi nunca la trae completa: la que no existe se crea, y los
+     * productos sin categoría van a "Sin categoría" en vez de fallar fila por fila.
+     */
+    private function resolveCategoria(?string $nombre): int
+    {
+        $nombre = trim((string) $nombre) !== '' ? trim((string) $nombre) : 'Sin categoría';
+
+        return Categoria::firstOrCreate(['nombre' => $nombre], ['estado' => true])->id;
     }
 }
