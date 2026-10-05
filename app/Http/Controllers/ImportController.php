@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ImportarRequest;
 use App\Models\Categoria;
 use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\Proveedor;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Str;
 
@@ -17,13 +17,8 @@ class ImportController extends Controller
         return view('importar.index');
     }
 
-    public function importar(Request $request)
+    public function importar(ImportarRequest $request)
     {
-        $request->validate([
-            'archivo' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
-            'tipo'    => ['required', 'in:productos,clientes,proveedores'],
-        ]);
-
         $file = $request->file('archivo');
         $handle = fopen($file->getPathname(), 'r');
         $headers = fgetcsv($handle, 0, ',');

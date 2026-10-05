@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UnidadMedidaRequest;
 use App\Models\Producto;
 use App\Models\UnidadMedida;
 use Illuminate\Http\JsonResponse;
@@ -30,15 +31,9 @@ class UnidadMedidaController extends Controller
         return response()->json($unidades);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(UnidadMedidaRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'nombre'      => ['required', 'string', 'max:100'],
-            'abreviacion' => ['required', 'string', 'max:10'],
-            'estado'      => ['boolean'],
-        ]);
-
-        $validated['estado'] = $request->boolean('estado');
+        $validated = $request->datosParaGuardar();
 
         $unidad = UnidadMedida::create($validated);
 
@@ -48,15 +43,9 @@ class UnidadMedidaController extends Controller
         ], Response::HTTP_CREATED);
     }
 
-    public function update(Request $request, UnidadMedida $unidad_medida): JsonResponse
+    public function update(UnidadMedidaRequest $request, UnidadMedida $unidad_medida): JsonResponse
     {
-        $validated = $request->validate([
-            'nombre'      => ['required', 'string', 'max:100'],
-            'abreviacion' => ['required', 'string', 'max:10'],
-            'estado'      => ['boolean'],
-        ]);
-
-        $validated['estado'] = $request->boolean('estado');
+        $validated = $request->datosParaGuardar();
 
         $unidad_medida->update($validated);
 

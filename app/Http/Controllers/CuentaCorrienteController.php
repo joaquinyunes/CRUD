@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ImputarPagoRequest;
 use App\Models\Cliente;
 use App\Models\MetodoPago;
 use App\Models\Proveedor;
@@ -37,14 +38,9 @@ class CuentaCorrienteController extends Controller
         return view('cuentas.cliente', compact('cliente', 'ventas', 'metodosPago', 'saldo'));
     }
 
-    public function cobrarCliente(Request $request, Cliente $cliente): RedirectResponse
+    public function cobrarCliente(ImputarPagoRequest $request, Cliente $cliente): RedirectResponse
     {
-        $data = $request->validate([
-            'venta_id'       => ['nullable', 'exists:ventas,id'],
-            'metodo_pago_id' => ['required', 'exists:metodos_pago,id'],
-            'monto'          => ['required', 'numeric', 'min:0.01'],
-            'referencia'     => ['nullable', 'string', 'max:255'],
-        ]);
+        $data = $request->validated();
 
         $data['venta_id'] ??= null;
         $data['referencia'] ??= null;
@@ -84,14 +80,9 @@ class CuentaCorrienteController extends Controller
         return view('cuentas.proveedor', compact('proveedor', 'compras', 'metodosPago', 'saldo'));
     }
 
-    public function pagarProveedor(Request $request, Proveedor $proveedor): RedirectResponse
+    public function pagarProveedor(ImputarPagoRequest $request, Proveedor $proveedor): RedirectResponse
     {
-        $data = $request->validate([
-            'compra_id'      => ['nullable', 'exists:compras,id'],
-            'metodo_pago_id' => ['required', 'exists:metodos_pago,id'],
-            'monto'          => ['required', 'numeric', 'min:0.01'],
-            'referencia'     => ['nullable', 'string', 'max:255'],
-        ]);
+        $data = $request->validated();
 
         $data['compra_id'] ??= null;
         $data['referencia'] ??= null;

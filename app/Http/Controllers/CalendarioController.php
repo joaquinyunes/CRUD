@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\EventoRequest;
 use App\Models\Evento;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -40,19 +41,11 @@ class CalendarioController extends Controller
         return response()->json($eventos);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(EventoRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'titulo'      => ['required', 'string', 'max:255'],
-            'descripcion' => ['nullable', 'string'],
-            'color'       => ['nullable', 'string', 'max:7'],
-            'inicio'      => ['required', 'date'],
-            'fin'         => ['nullable', 'date', 'after_or_equal:inicio'],
-            'todo_el_dia' => ['nullable', 'boolean'],
-        ]);
+        $validated = $request->datosParaGuardar();
 
         $validated['user_id'] = auth()->id();
-        $validated['todo_el_dia'] = $request->boolean('todo_el_dia');
 
         Evento::create($validated);
 
@@ -60,18 +53,9 @@ class CalendarioController extends Controller
             ->with('success', 'Evento creado correctamente.');
     }
 
-    public function update(Request $request, Evento $evento): RedirectResponse
+    public function update(EventoRequest $request, Evento $evento): RedirectResponse
     {
-        $validated = $request->validate([
-            'titulo'      => ['required', 'string', 'max:255'],
-            'descripcion' => ['nullable', 'string'],
-            'color'       => ['nullable', 'string', 'max:7'],
-            'inicio'      => ['required', 'date'],
-            'fin'         => ['nullable', 'date', 'after_or_equal:inicio'],
-            'todo_el_dia' => ['nullable', 'boolean'],
-        ]);
-
-        $validated['todo_el_dia'] = $request->boolean('todo_el_dia');
+        $validated = $request->datosParaGuardar();
 
         $evento->update($validated);
 

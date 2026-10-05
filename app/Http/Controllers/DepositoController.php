@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DepositoRequest;
+use App\Http\Requests\TransferenciaStockRequest;
 use App\Models\Deposito;
 use App\Models\Producto;
 use App\Services\StockService;
@@ -31,9 +33,9 @@ class DepositoController extends Controller
         return view('depositos.form');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(DepositoRequest $request): RedirectResponse
     {
-        $data = $this->validar($request);
+        $data = $request->validated();
         $deposito = Deposito::create($data + ['activo' => true]);
         $this->sincronizarPrincipal($deposito);
 
@@ -45,9 +47,9 @@ class DepositoController extends Controller
         return view('depositos.form', compact('deposito'));
     }
 
-    public function update(Request $request, Deposito $deposito): RedirectResponse
+    public function update(DepositoRequest $request, Deposito $deposito): RedirectResponse
     {
-        $deposito->update($this->validar($request));
+        $deposito->update($request->validated());
         $this->sincronizarPrincipal($deposito);
 
         return redirect()->route('depositos.index')->with('success', 'Depósito actualizado.');
@@ -88,14 +90,9 @@ class DepositoController extends Controller
         return view('depositos.transferir', compact('depositos', 'productos'));
     }
 
-    public function transferir(Request $request): RedirectResponse
+    public function transferir(TransferenciaStockRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'producto_id' => ['required', 'exists:productos,id'],
-            'origen_id'   => ['required', 'exists:depositos,id'],
-            'destino_id'  => ['required', 'exists:depositos,id', 'different:origen_id'],
-            'cantidad'    => ['required', 'integer', 'min:1'],
-        ]);
+        $data = $request->validated();
 
         try {
             $this->stock->transferir(
@@ -118,14 +115,5 @@ class DepositoController extends Controller
         } elseif (! Deposito::where('es_principal', true)->exists()) {
             $deposito->update(['es_principal' => true]);
         }
-    }
-
-    private function validar(Request $request): array
-    {
-        return $request->validate([
-            'nombre'       => ['required', 'string', 'max:255'],
-            'direccion'    => ['nullable', 'string', 'max:255'],
-            'es_principal' => ['nullable', 'boolean'],
-        ]);
     }
 }

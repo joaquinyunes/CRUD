@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\StockInsuficienteException;
+use App\Http\Requests\DevolucionRequest;
 use App\Models\Compra;
 use App\Models\Devolucion;
 use App\Models\Producto;
@@ -55,17 +56,9 @@ class DevolucionController extends Controller
         return view('devoluciones.form-venta', compact('venta', 'devueltos'));
     }
 
-    public function storeVenta(Request $request, Venta $venta): RedirectResponse
+    public function storeVenta(DevolucionRequest $request, Venta $venta): RedirectResponse
     {
         abort_if($venta->estado === 'anulada', 404);
-
-        $request->validate([
-            'motivo'                 => ['nullable', 'string', 'max:255'],
-            'reembolso_efectivo'     => ['nullable', 'boolean'],
-            'detalles'               => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
-            'detalles.*.cantidad'    => ['required', 'integer', 'min:0'],
-        ]);
 
         $venta->load('detalles');
         $devueltos = $this->devueltosPorProducto('venta', $venta->id);
@@ -138,16 +131,9 @@ class DevolucionController extends Controller
         return view('devoluciones.form-compra', compact('compra', 'devueltos'));
     }
 
-    public function storeCompra(Request $request, Compra $compra): RedirectResponse
+    public function storeCompra(DevolucionRequest $request, Compra $compra): RedirectResponse
     {
         abort_if($compra->estado === 'anulada', 404);
-
-        $request->validate([
-            'motivo'                 => ['nullable', 'string', 'max:255'],
-            'detalles'               => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
-            'detalles.*.cantidad'    => ['required', 'integer', 'min:0'],
-        ]);
 
         $compra->load('detalles');
         $devueltos = $this->devueltosPorProducto('compra', $compra->id);

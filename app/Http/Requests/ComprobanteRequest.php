@@ -6,12 +6,15 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Lo que comparten una venta y una compra: cabecera con fecha y estado, al
- * menos una línea, y un descuento opcional.
+ * Lo que comparten todos los documentos con líneas: ventas, compras,
+ * presupuestos y órdenes de compra.
  *
- * Las reglas estaban duplicadas palabra por palabra en los dos controllers, que
- * es exactamente cómo se desincronizan: alcanzaba con que alguien permitiera
- * cantidad 0 en compras y no en ventas.
+ * Las reglas de las líneas y del descuento estaban repetidas palabra por
+ * palabra en cuatro controllers, que es exactamente cómo se desincronizan:
+ * alcanzaba con que alguien permitiera cantidad 0 en uno y no en los otros.
+ *
+ * Cada documento declara a quién se le emite, qué estados acepta y si lleva
+ * pagos; el resto lo hereda.
  */
 abstract class ComprobanteRequest extends FormRequest
 {
@@ -22,19 +25,39 @@ abstract class ComprobanteRequest extends FormRequest
     }
 
     /**
-     * Reglas propias del tipo de comprobante (a quién se le vende o compra).
+     * Reglas propias del documento (a quién se le vende, compra o cotiza).
      *
      * @return array<string, mixed>
      */
     abstract protected function reglasDeCabecera(): array;
 
+    /** @return list<string> */
+    protected function estadosPermitidos(): array
+    {
+        return ['pendiente', 'completada', 'cancelada'];
+    }
+
+    protected function estadoRequerido(): bool
+    {
+        return true;
+    }
+
+    /** Un presupuesto o una orden de compra no se cobran: no aceptan pagos. */
+    protected function aceptaPagos(): bool
+    {
+        return true;
+    }
+
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        return array_merge($this->reglasDeCabecera(), [
+        $reglas = array_merge($this->reglasDeCabecera(), [
             'deposito_id' => ['nullable', 'exists:depositos,id'],
             'fecha'       => ['required', 'date'],
-            'estado'      => ['required', Rule::in(['pendiente', 'completada', 'cancelada'])],
+            'estado'      => [
+                $this->estadoRequerido() ? 'required' : 'nullable',
+                Rule::in($this->estadosPermitidos()),
+            ],
 
             'detalles'               => ['required', 'array', 'min:1'],
             'detalles.*.producto_id' => ['required', 'exists:productos,id'],
@@ -42,12 +65,19 @@ abstract class ComprobanteRequest extends FormRequest
             'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
 
             'descuento'      => ['nullable', 'numeric', 'min:0'],
-            'descuento_tipo' => ['nullable', Rule::in(['fijo', 'porcentaje'])],
+            'descuento_tipo' => ['nullable', Rule::in(['fijo', 'monto', 'porcentaje'])],
 
-            'metodos_pago'                  => ['nullable', 'array'],
-            'metodos_pago.*.metodo_pago_id' => ['required_with:metodos_pago', 'exists:metodos_pago,id'],
-            'metodos_pago.*.monto'          => ['required_with:metodos_pago', 'numeric', 'min:0'],
+            'observaciones' => ['nullable', 'string'],
         ]);
+
+        if ($this->aceptaPagos()) {
+            $reglas['metodos_pago'] = ['nullable', 'array'];
+            $reglas['metodos_pago.*.metodo_pago_id'] = ['required_with:metodos_pago', 'exists:metodos_pago,id'];
+            $reglas['metodos_pago.*.monto'] = ['required_with:metodos_pago', 'numeric', 'min:0'];
+            $reglas['metodos_pago.*.referencia'] = ['nullable', 'string', 'max:255'];
+        }
+
+        return $reglas;
     }
 
     /** @return array<string, string> */
@@ -65,6 +95,8 @@ abstract class ComprobanteRequest extends FormRequest
 
     /**
      * Un descuento en porcentaje mayor a 100 dejaría el total en negativo.
+     *
+     * @return array<int, callable>
      */
     public function after(): array
     {

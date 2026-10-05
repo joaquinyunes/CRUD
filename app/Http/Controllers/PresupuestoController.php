@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\PresupuestoRequest;
 use App\Models\Cliente;
 use App\Models\Presupuesto;
 use App\Models\Producto;
@@ -45,10 +46,8 @@ class PresupuestoController extends Controller
         return view('presupuestos.form', compact('clientes', 'productos'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(PresupuestoRequest $request): RedirectResponse
     {
-        $this->validar($request);
-
         DB::transaction(function () use ($request) {
             $detalles = $this->construirDetalles($request->detalles);
             $totales = CalculadorTotales::calcular($detalles->all(), $request->input('descuento_tipo'), (float) $request->input('descuento', 0));
@@ -92,11 +91,9 @@ class PresupuestoController extends Controller
         return view('presupuestos.form', compact('presupuesto', 'clientes', 'productos'));
     }
 
-    public function update(Request $request, Presupuesto $presupuesto): RedirectResponse
+    public function update(PresupuestoRequest $request, Presupuesto $presupuesto): RedirectResponse
     {
         abort_if((bool) $presupuesto->venta_id, 404);
-        $this->validar($request);
-
         DB::transaction(function () use ($request, $presupuesto) {
             $detalles = $this->construirDetalles($request->detalles);
             $totales = CalculadorTotales::calcular($detalles->all(), $request->input('descuento_tipo'), (float) $request->input('descuento', 0));
@@ -175,23 +172,6 @@ class PresupuestoController extends Controller
 
         return redirect()->route('ventas.edit', $venta)
             ->with('success', 'Venta creada desde el presupuesto. Revisá y confirmá para descontar stock.');
-    }
-
-    private function validar(Request $request): void
-    {
-        $request->validate([
-            'cliente_id'             => ['required', 'exists:clientes,id'],
-            'fecha'                  => ['required', 'date'],
-            'validez_dias'           => ['nullable', 'integer', 'min:1', 'max:365'],
-            'estado'                 => ['nullable', 'in:borrador,enviado,aceptado,rechazado'],
-            'detalles'               => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
-            'detalles.*.cantidad'    => ['required', 'integer', 'min:1'],
-            'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
-            'descuento'              => ['nullable', 'numeric', 'min:0'],
-            'descuento_tipo'         => ['nullable', 'in:fijo,porcentaje'],
-            'observaciones'          => ['nullable', 'string'],
-        ]);
     }
 
     private function construirDetalles(array $detalles): Collection

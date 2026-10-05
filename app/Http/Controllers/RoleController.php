@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RolRequest;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class RoleController extends Controller
@@ -30,18 +30,13 @@ class RoleController extends Controller
         return view('roles.edit', compact('role', 'todosLosPermisos', 'permisosAsignados'));
     }
 
-    public function update(Request $request, Role $role): RedirectResponse
+    public function update(RolRequest $request, Role $role): RedirectResponse
     {
         if ($role->nombre === Role::ADMINISTRADOR) {
             return redirect()
                 ->route('roles.index')
                 ->with('error', 'Los permisos del rol Administrador no se pueden modificar.');
         }
-
-        $request->validate([
-            'permisos'   => ['nullable', 'array'],
-            'permisos.*' => ['string', 'exists:permissions,clave'],
-        ]);
 
         $permisosSeleccionados = $request->input('permisos', []);
 

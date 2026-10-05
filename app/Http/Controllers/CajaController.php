@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Caja\AbrirCajaRequest;
+use App\Http\Requests\Caja\CerrarCajaRequest;
+use App\Http\Requests\Caja\MovimientoCajaRequest;
 use App\Models\CajaSesion;
 use App\Services\CajaService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CajaController extends Controller
@@ -25,12 +27,9 @@ class CajaController extends Controller
         return view('caja.index', compact('sesion', 'historial'));
     }
 
-    public function abrir(Request $request): RedirectResponse
+    public function abrir(AbrirCajaRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'monto_inicial' => ['required', 'numeric', 'min:0'],
-            'observaciones' => ['nullable', 'string', 'max:255'],
-        ]);
+        $data = $request->validated();
 
         try {
             $this->caja->abrir(auth()->user(), $data['monto_inicial'], $data['observaciones'] ?? null);
@@ -41,13 +40,9 @@ class CajaController extends Controller
         return redirect()->route('caja.index')->with('success', 'Caja abierta.');
     }
 
-    public function movimiento(Request $request): RedirectResponse
+    public function movimiento(MovimientoCajaRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'tipo'     => ['required', 'in:ingreso,egreso'],
-            'concepto' => ['required', 'string', 'max:255'],
-            'monto'    => ['required', 'numeric', 'min:0.01'],
-        ]);
+        $data = $request->validated();
 
         $sesion = $this->caja->sesionAbierta(auth()->id());
         if (! $sesion) {
@@ -59,12 +54,9 @@ class CajaController extends Controller
         return back()->with('success', 'Movimiento registrado.');
     }
 
-    public function cerrar(Request $request): RedirectResponse
+    public function cerrar(CerrarCajaRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'monto_final_declarado' => ['required', 'numeric', 'min:0'],
-            'observaciones'         => ['nullable', 'string', 'max:255'],
-        ]);
+        $data = $request->validated();
 
         $sesion = $this->caja->sesionAbierta(auth()->id());
         if (! $sesion) {

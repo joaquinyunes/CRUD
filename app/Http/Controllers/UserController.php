@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AsignarRolRequest;
 use App\Http\Requests\UsuarioRequest;
 use App\Models\Role;
 use App\Models\User;
@@ -97,12 +98,8 @@ class UserController extends Controller
             ->with('success', "Usuario \"{$usuario->name}\" actualizado correctamente.");
     }
 
-    public function asignarRol(Request $request, User $usuario): RedirectResponse
+    public function asignarRol(AsignarRolRequest $request, User $usuario): RedirectResponse
     {
-        $request->validate([
-            'role_id' => ['nullable', 'exists:roles,id'],
-        ]);
-
         $roleId = $request->input('role_id') ?: null;
 
         if ($usuario->id === Auth::id() && $roleId === null) {

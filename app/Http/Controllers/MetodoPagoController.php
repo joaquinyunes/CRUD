@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\MetodoPagoRequest;
 use App\Models\MetodoPago;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,19 +31,9 @@ class MetodoPagoController extends Controller
         return response()->json($metodos);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(MetodoPagoRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'nombre'         => ['required', 'string', 'max:100'],
-            'codigo'         => ['required', 'string', 'max:20', 'unique:metodos_pago,codigo'],
-            'activo'         => ['boolean'],
-            'permite_vuelto' => ['boolean'],
-            'orden'          => ['integer'],
-        ]);
-
-        $validated['activo'] = $request->boolean('activo');
-        $validated['permite_vuelto'] = $request->boolean('permite_vuelto');
-        $validated['orden'] = $request->input('orden', 0);
+        $validated = $request->datosParaGuardar();
 
         $metodo = MetodoPago::create($validated);
 
@@ -52,19 +43,9 @@ class MetodoPagoController extends Controller
         ], Response::HTTP_CREATED);
     }
 
-    public function update(Request $request, MetodoPago $metodo_pago): JsonResponse
+    public function update(MetodoPagoRequest $request, MetodoPago $metodo_pago): JsonResponse
     {
-        $validated = $request->validate([
-            'nombre'         => ['required', 'string', 'max:100'],
-            'codigo'         => ['required', 'string', 'max:20', 'unique:metodos_pago,codigo,'.$metodo_pago->id],
-            'activo'         => ['boolean'],
-            'permite_vuelto' => ['boolean'],
-            'orden'          => ['integer'],
-        ]);
-
-        $validated['activo'] = $request->boolean('activo');
-        $validated['permite_vuelto'] = $request->boolean('permite_vuelto');
-        $validated['orden'] = $request->input('orden', 0);
+        $validated = $request->datosParaGuardar();
 
         $metodo_pago->update($validated);
 

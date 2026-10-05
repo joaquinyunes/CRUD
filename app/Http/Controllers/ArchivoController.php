@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ArchivoRequest;
 use App\Models\Archivo;
 use App\Models\User;
 use App\Support\Orden;
@@ -37,14 +38,8 @@ class ArchivoController extends Controller
         return view('archivos.index', compact('archivos'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(ArchivoRequest $request): RedirectResponse
     {
-        $request->validate([
-            'archivo'          => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:10240'],
-            'relacionado_tipo' => ['nullable', 'string', 'max:100'],
-            'relacionado_id'   => ['nullable', 'integer'],
-        ]);
-
         $file = $request->file('archivo');
         $nombreOriginal = $file->getClientOriginalName();
         $nombreGuardado = time().'_'.preg_replace('/[^a-zA-Z0-9._-]/', '_', $nombreOriginal);

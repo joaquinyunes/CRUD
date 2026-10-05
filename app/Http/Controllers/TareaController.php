@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TareaRequest;
 use App\Models\Tarea;
 use App\Models\User;
 use App\Support\Orden;
@@ -74,16 +75,9 @@ class TareaController extends Controller
         return view('tareas.form', compact('usuarios'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(TareaRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'titulo'       => ['required', 'string', 'max:255'],
-            'descripcion'  => ['nullable', 'string'],
-            'prioridad'    => ['required', 'in:baja,media,alta'],
-            'estado'       => ['required', 'in:pendiente,en_progreso,completada'],
-            'fecha_limite' => ['nullable', 'date', 'after_or_equal:today'],
-            'asignada_a'   => ['nullable', 'exists:users,id'],
-        ]);
+        $validated = $request->validated();
 
         $validated['user_id'] = auth()->id();
 
@@ -100,16 +94,9 @@ class TareaController extends Controller
         return view('tareas.form', compact('tarea', 'usuarios'));
     }
 
-    public function update(Request $request, Tarea $tarea): RedirectResponse
+    public function update(TareaRequest $request, Tarea $tarea): RedirectResponse
     {
-        $validated = $request->validate([
-            'titulo'       => ['required', 'string', 'max:255'],
-            'descripcion'  => ['nullable', 'string'],
-            'prioridad'    => ['required', 'in:baja,media,alta'],
-            'estado'       => ['required', 'in:pendiente,en_progreso,completada'],
-            'fecha_limite' => ['nullable', 'date'],
-            'asignada_a'   => ['nullable', 'exists:users,id'],
-        ]);
+        $validated = $request->validated();
 
         $tarea->update($validated);
 

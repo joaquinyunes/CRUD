@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\RestaurarBackupRequest;
 use Illuminate\Support\Facades\File;
 
 class BackupController extends Controller
@@ -70,12 +70,8 @@ class BackupController extends Controller
         ]);
     }
 
-    public function restaurar(Request $request)
+    public function restaurar(RestaurarBackupRequest $request)
     {
-        $request->validate([
-            'backup_file' => ['required', 'file', 'mimes:sql,txt', 'max:51240'],
-        ]);
-
         $file = $request->file('backup_file');
         $db = config('database.connections.mysql.database');
         $host = config('database.connections.mysql.host');

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\OrdenCompraRequest;
+use App\Http\Requests\RecepcionOrdenRequest;
 use App\Models\Compra;
 use App\Models\Deposito;
 use App\Models\OrdenCompra;
@@ -49,10 +51,8 @@ class OrdenCompraController extends Controller
         return view('ordenes_compra.form', compact('proveedores', 'productos', 'depositos'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(OrdenCompraRequest $request): RedirectResponse
     {
-        $this->validar($request);
-
         DB::transaction(function () use ($request) {
             $detalles = $this->construirDetalles($request->detalles);
 
@@ -96,12 +96,10 @@ class OrdenCompraController extends Controller
         return view('ordenes_compra.form', compact('orden', 'proveedores', 'productos', 'depositos'));
     }
 
-    public function update(Request $request, OrdenCompra $ordenCompra): RedirectResponse
+    public function update(OrdenCompraRequest $request, OrdenCompra $ordenCompra): RedirectResponse
     {
         $orden = $ordenCompra;
         abort_if($orden->tieneRecepciones() || $orden->compra_id, 404);
-        $this->validar($request);
-
         DB::transaction(function () use ($request, $orden) {
             $detalles = $this->construirDetalles($request->detalles);
 
@@ -142,15 +140,10 @@ class OrdenCompraController extends Controller
      * Registra una recepción (parcial o total): suma cantidades recibidas
      * y hace la entrada de stock por lo recibido en este acto.
      */
-    public function recibir(Request $request, OrdenCompra $ordenCompra): RedirectResponse
+    public function recibir(RecepcionOrdenRequest $request, OrdenCompra $ordenCompra): RedirectResponse
     {
         $orden = $ordenCompra;
         abort_if(in_array($orden->estado, ['recibida', 'cancelada'], true), 404);
-
-        $request->validate([
-            'recibido'   => ['required', 'array'],
-            'recibido.*' => ['nullable', 'integer', 'min:0'],
-        ]);
 
         $orden->load('detalles');
         $algo = false;
@@ -238,22 +231,6 @@ class OrdenCompraController extends Controller
 
         return redirect()->route('compras.show', $compra)
             ->with('success', 'Compra generada desde la orden. Cargá los pagos en la cuenta corriente del proveedor.');
-    }
-
-    private function validar(Request $request): void
-    {
-        $request->validate([
-            'proveedor_id'           => ['required', 'exists:proveedores,id'],
-            'deposito_id'            => ['nullable', 'exists:depositos,id'],
-            'fecha'                  => ['required', 'date'],
-            'fecha_entrega_estimada' => ['nullable', 'date'],
-            'estado'                 => ['nullable', 'in:borrador,enviada'],
-            'detalles'               => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
-            'detalles.*.cantidad'    => ['required', 'integer', 'min:1'],
-            'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
-            'observaciones'          => ['nullable', 'string'],
-        ]);
     }
 
     private function construirDetalles(array $detalles): Collection
