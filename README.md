@@ -7,6 +7,7 @@
   <img src="https://img.shields.io/badge/PHP-8.3-777BB4?logo=php&logoColor=white" alt="PHP 8.3">
   <img src="https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white" alt="Laravel 13">
   <img src="https://img.shields.io/badge/base%20de%20datos-PostgreSQL%20%7C%20MySQL%20%7C%20SQLite-336791" alt="Bases de datos">
+  <img src="https://img.shields.io/badge/PHPStan-nivel%205-2A6F97" alt="PHPStan nivel 5">
   <img src="https://img.shields.io/badge/licencia-source%20available-E2A13B" alt="Licencia">
 </p>
 
@@ -101,11 +102,14 @@ comprobantes se emiten en **PDF** y los listados se exportan a **Excel** y **CSV
 | Decisión | Por qué | Dónde |
 |---|---|---|
 | **Un solo punto de cálculo de totales** | La fórmula de subtotal, descuento, base imponible e impuesto estaba duplicada en ventas y compras y se desincronizaba. Ahora hay una sola implementación, con tests. | `app/Support/CalculadorTotales.php` |
-| **Numeración de comprobantes centralizada** | Los números consecutivos sin huecos se generan en un único lugar, dentro de la transacción, para que dos ventas simultáneas no tomen el mismo número. | `app/Support/NumeradorDocumentos.php` |
+| **Numeración de comprobantes centralizada** | Un único lugar decide el número. El consecutivo sale de bloquear la fila del contador de la serie, no de buscar el máximo en la tabla: un `SELECT ... FOR UPDATE` que no devuelve filas no bloquea nada, y con la tabla vacía dos ventas simultáneas se llevaban el mismo número. Si la transacción se revierte, el contador vuelve con ella y la serie no deja huecos. | `app/Support/NumeradorDocumentos.php` |
 | **El stock se mueve en servicios, no en controllers** | Toda alta, baja o ajuste pasa por el servicio de stock, que valida disponibilidad y deja el movimiento auditado. Ningún controller toca `productos.stock` a mano. | `app/Services/StockService.php` |
 | **Anular en vez de borrar** | Una venta anulada conserva el comprobante y revierte el stock. Nunca se pierde el historial. | `VentaController@anular` |
 | **SQL independiente del motor** | Los reportes agrupaban con `YEARWEEK()` y `DATE_FORMAT()`, exclusivas de MySQL. El dialecto se resuelve en un solo lugar y el CI corre los tests contra los tres motores. | `app/Support/PeriodoSql.php` |
-| **Permisos por clave, no roles hardcodeados** | El middleware pide `permiso:ventas.crear`. Se pueden crear roles nuevos sin tocar código. | `routes/*.php` |
+| **Permisos por clave, no roles hardcodeados** | El middleware pide `permiso:ventas.crear`. Ni siquiera "poder todo" es un nombre de rol: es el permiso comodín `*`. Un rol nuevo llamado "Dueño" con ese permiso manda igual que "Administrador", y a "Administrador" se le puede sacar una parte sin tocar código. | `app/Http/Middleware/CheckPermission.php` |
+| **La API exige los mismos permisos que la web** | Un token pertenece a un usuario, y ese usuario tiene un rol: el token de un usuario de solo lectura recibe 403 al intentar escribir, igual que el botón que no le aparece en pantalla. | `routes/api.php` |
+| **Nada con historial se borra: se archiva** | Un proveedor con compras o un usuario con ventas no se pueden borrar sin perder los comprobantes. En vez de dejar que reviente la clave foránea, el sistema los archiva o los desactiva y lo explica. | `ProveedorController@destroy`, `UserController@destroy` |
+| **Auditoría en todos los módulos** | Ventas, compras, caja, devoluciones, presupuestos, usuarios, roles y configuración registran quién cambió qué y desde dónde, con el valor anterior y el nuevo. Nunca se guardan hashes de contraseña ni tokens. | `app/Traits/Auditable.php` |
 | **Rutas separadas por módulo** | 30 archivos de rutas en lugar de un `web.php` de 800 líneas. | `routes/` |
 
 ---
@@ -199,6 +203,21 @@ PostgreSQL ya enlazados entre sí.
 
 Para la instalación real de un cliente, poner `DB_SEED_ON_BOOT=false`.
 
+### De la demo a una instalación real
+
+La demo corre en el plan gratuito de Render con todo adentro de un contenedor. Para una instalación
+que va a facturar de verdad, tres cosas cambian:
+
+| Qué | En la demo | En producción |
+|---|---|---|
+| **Datos de demostración** | `DB_SEED_ON_BOOT=true` | `false`. El comando `demo:sembrar` sólo siembra si la base está vacía y, si no puede verificarlo, no toca nada: es preferible arrancar sin datos que pisar los de un cliente. |
+| **Archivos subidos** (adjuntos, PDFs, backups) | disco del contenedor, que se borra en cada deploy | `FILESYSTEM_DISK=s3` con las credenciales de cualquier S3 (AWS, Cloudflare R2, Backblaze B2, MinIO). El driver ya viene instalado. |
+| **Cola y tareas programadas** | dentro del contenedor web (`RUN_WORKERS=true`) | servicio de fondo aparte —el bloque `worker` comentado en [`render.yaml`](render.yaml)— y `RUN_WORKERS=false`, para que reiniciar el web no corte un job a la mitad. |
+
+Lo que corre solo, una vez configurado el programador: los presupuestos vencen al pasar su validez,
+sale un aviso diario de stock crítico, y se purgan los tokens de API vencidos y los jobs fallidos
+viejos. Está todo en [`routes/console.php`](routes/console.php).
+
 > **Sobre Vercel:** no es el lugar para este sistema. Vercel es serverless: no hay proceso
 > persistente, ni sistema de archivos escribible para `storage/`, ni base de datos relacional propia.
 > Las sesiones, los PDFs generados, los archivos adjuntos y las colas dejarían de funcionar. Render
@@ -212,26 +231,55 @@ Para la instalación real de un cliente, poner `DB_SEED_ON_BOOT=false`.
 php artisan test
 ```
 
-La suite cubre las reglas que importan, no getters y setters:
+**114 tests.** Cubren las reglas que importan, no getters y setters:
 
+**Negocio**
 - el stock se descuenta al confirmar una venta y se repone al anularla;
-- no se puede vender más stock del disponible;
-- los totales con descuento e impuesto dan lo que tienen que dar;
-- la numeración de comprobantes no deja huecos;
+- no se puede vender más stock del disponible, ni siquiera cuando el total alcanza pero el depósito no;
+- los totales con descuento e impuesto dan lo que tienen que dar, y un descuento mayor al 100% se rechaza;
+- la numeración es consecutiva, no se repite, no deja huecos cuando una transacción se revierte, y arranca donde estaba si la base venía de una versión anterior;
+- anular una venta no libera su número;
 - la caja cierra con la diferencia correcta;
 - la cuenta corriente imputa cada pago al comprobante correcto;
 - una orden de compra recibida parcialmente queda abierta por el resto;
-- un vendedor no puede ver ni editar las ventas de otro;
 - los reportes por período funcionan en SQLite, MySQL y PostgreSQL.
 
-El CI corre la suite contra los **tres motores de base de datos** y verifica el estilo con Pint.
+**Permisos y seguridad**
+- un vendedor no puede ver ni editar las ventas de otro;
+- un rol inventado con el permiso comodín puede todo, y uno llamado "Administrador" sin permisos no puede nada;
+- cambiar los permisos de un rol se aplica en el acto, no cuando expira la caché;
+- la API devuelve 401 sin token y 403 cuando el token es de alguien que no tiene ese permiso;
+- el login de API se bloquea a los 5 intentos fallidos;
+- un usuario desactivado no entra, y si tenía la sesión abierta lo echa en el próximo request.
+
+**Integridad de datos**
+- borrar un proveedor con compras lo archiva en vez de romper; sin compras, sí lo borra;
+- borrar un usuario con ventas lo desactiva y conserva sus comprobantes;
+- crear, cambiar y anular queda en la auditoría con su autor, el antes y el después;
+- la auditoría nunca guarda el hash de la contraseña;
+- un cambio hecho sin sesión (consola, cola, tarea programada) también queda registrado;
+- el valor por defecto de una configuración no se cachea pisando al de otra llamada.
+
+El CI corre, en cada push: la suite contra los **tres motores de base de datos**, las **migraciones de punta a punta contra una base limpia** en los tres, **PHPStan nivel 5**, el estilo con **Pint**, y `composer audit` + `npm audit` para no arrastrar dependencias con vulnerabilidades conocidas.
+
+```bash
+vendor/bin/phpstan analyse   # análisis estático, nivel 5, sin errores
+vendor/bin/pint --test       # estilo
+composer audit               # dependencias
+```
 
 ---
 
 ## API REST
 
 Autenticación con Laravel Sanctum. Los módulos de negocio exponen los mismos casos de uso que la
-interfaz web, con la misma validación de stock y la misma numeración de comprobantes.
+interfaz web, con la misma validación de stock, la misma numeración de comprobantes y **los mismos
+permisos**: un token pertenece a un usuario, y ese usuario tiene un rol. El token de la cuenta de
+solo lectura de la demo lista productos y recibe `403` al intentar crearlos, exactamente igual que en
+pantalla.
+
+El login está limitado a 5 intentos por minuto y el resto de la API a 60 pedidos por minuto y por
+usuario.
 
 ```bash
 curl -X POST https://tu-dominio/api/ventas \
@@ -252,18 +300,22 @@ Ver [`routes/api.php`](routes/api.php).
 
 ```
 app/
-  Http/Controllers/     30 controllers web + API
+  Console/Commands/     tareas programadas y el sembrado seguro de la demo
+  Http/Controllers/     46 controllers web + API
+  Http/Requests/        validación fuera de los controllers (ventas y compras comparten reglas)
+  Http/Middleware/      CheckPermission (permisos por clave), EnsureUserIsActive
   Models/               31 modelos Eloquent
   Services/             StockService, CajaService, PagoDocumentoService
-  Support/              CalculadorTotales, NumeradorDocumentos, PeriodoSql
+  Support/              CalculadorTotales, NumeradorDocumentos, PeriodoSql, Orden
   Policies/             autorización por dueño del comprobante
-  Traits/Auditable      registro automático de cambios
+  Traits/Auditable      registro automático de cambios, en todos los módulos
 database/
-  migrations/           33 migraciones
+  migrations/           38 migraciones
   seeders/DemoSeeder    datos de demostración realistas
-routes/                 30 archivos, uno por módulo
+routes/                 32 archivos, uno por módulo
 resources/views/        Blade + Alpine, design system propio (public/css/rhythm.css)
-tests/Feature/          reglas de negocio
+tests/                  114 tests: negocio, permisos e integridad de datos
+phpstan.neon            análisis estático nivel 5
 docker/ Dockerfile render.yaml docker-compose.yml
 ```
 
