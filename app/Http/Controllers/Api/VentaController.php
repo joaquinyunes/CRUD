@@ -2,21 +2,26 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ReglaDeNegocioException;
 use App\Exceptions\StockInsuficienteException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\VentaRequest;
 use App\Http\Resources\VentaResource;
-use App\Models\Producto;
 use App\Models\Venta;
 use App\Services\StockDocumentoService;
-use App\Support\CalculadorTotales;
+use App\Services\VentaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class VentaController extends Controller
 {
-    public function __construct(private StockDocumentoService $stockDoc) {}
+    public function __construct(
+        private StockDocumentoService $stockDoc,
+        private VentaService $ventas,
+    ) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -45,59 +50,18 @@ class VentaController extends Controller
         return VentaResource::collection($ventas);
     }
 
-    public function store(Request $request): VentaResource
+    /**
+     * Misma validación, misma numeración y mismas reglas de negocio que la
+     * pantalla de carga: las dos entradas llaman al mismo servicio.
+     */
+    public function store(VentaRequest $request): VentaResource
     {
-        $validated = $request->validate([
-            'cliente_id'             => ['required', 'exists:clientes,id'],
-            'fecha'                  => ['required', 'date'],
-            'estado'                 => ['required', 'in:pendiente,completada,cancelada'],
-            'detalles'               => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
-            'detalles.*.cantidad'    => ['required', 'integer', 'min:1'],
-            'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
-        ]);
-
         try {
-            $venta = DB::transaction(function () use ($validated) {
-                $numero = 'VTA-'.str_pad((string) (Venta::max('id') + 1), 5, '0', STR_PAD_LEFT);
-
-                $costos = Producto::whereIn('id', collect($validated['detalles'])->pluck('producto_id'))
-                    ->pluck('precio_compra', 'id');
-
-                $detalles = collect($validated['detalles'])->map(function ($item) use ($costos) {
-                    return [
-                        'producto_id'    => $item['producto_id'],
-                        'cantidad'       => (int) $item['cantidad'],
-                        'precio'         => round((float) $item['precio'], 2),
-                        'costo_unitario' => round((float) ($costos[$item['producto_id']] ?? 0), 2),
-                        'subtotal'       => round($item['cantidad'] * $item['precio'], 2),
-                    ];
-                });
-
-                $totales = CalculadorTotales::calcular($detalles->all(), null, 0);
-
-                $venta = Venta::create([
-                    'numero'      => $numero,
-                    'cliente_id'  => $validated['cliente_id'],
-                    'fecha'       => $validated['fecha'],
-                    'subtotal'    => $totales['subtotal'],
-                    'impuesto'    => $totales['impuesto'],
-                    'total_final' => $totales['total'],
-                    'total'       => $totales['total'],
-                    'estado'      => $validated['estado'],
-                    'user_id'     => auth()->id(),
-                ]);
-
-                $venta->detalles()->createMany($detalles->all());
-
-                if ($venta->estado === 'completada') {
-                    $this->stockDoc->aplicarVenta($venta);
-                }
-
-                return $venta;
-            });
+            $venta = $this->ventas->crear($request->validated());
+        } catch (ReglaDeNegocioException $e) {
+            throw ValidationException::withMessages([$e->campo => $e->getMessage()]);
         } catch (StockInsuficienteException $e) {
-            abort(422, $e->getMessage());
+            throw ValidationException::withMessages(['detalles' => $e->getMessage()]);
         }
 
         return new VentaResource($venta->load(['detalles.producto', 'cliente', 'user']));

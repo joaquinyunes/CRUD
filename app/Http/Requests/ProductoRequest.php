@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Categoria;
+use App\Models\Producto;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -45,5 +47,40 @@ class ProductoRequest extends FormRequest
             'codigo_barra.unique' => 'Ya hay otro producto con ese código de barras.',
             'nombre.required'     => 'El producto necesita un nombre.',
         ];
+    }
+
+    /**
+     * Los datos listos para guardar, con los valores por defecto resueltos.
+     *
+     * Un alta solo necesita el nombre: el código se genera, la categoría cae en
+     * la primera activa y los importes arrancan en cero. Esto vivía dentro del
+     * controller web, así que la misma alta por API fallaba o guardaba nulos.
+     *
+     * @return array<string, mixed>
+     */
+    public function datosParaGuardar(): array
+    {
+        $datos = $this->validated();
+
+        if (blank($datos['codigo'] ?? null)) {
+            $datos['codigo'] = self::codigoSiguiente();
+        }
+
+        $datos['categoria_id'] ??= Categoria::where('estado', true)->orderBy('id')->value('id');
+        $datos['precio_compra'] ??= 0;
+        $datos['precio_venta'] ??= 0;
+        $datos['stock_minimo'] ??= 0;
+        $datos['estado'] ??= 'activo';
+        $datos['descripcion'] ??= '';
+
+        return $datos;
+    }
+
+    /** El próximo código correlativo de la serie automática (PROD-0001). */
+    public static function codigoSiguiente(): string
+    {
+        $ultimo = Producto::orderByDesc('id')->value('id') ?? 0;
+
+        return 'PROD-'.str_pad((string) ($ultimo + 1), 4, '0', STR_PAD_LEFT);
     }
 }

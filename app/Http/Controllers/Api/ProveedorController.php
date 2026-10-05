@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProveedorRequest;
 use App\Http\Resources\ProveedorResource;
 use App\Models\Proveedor;
 use Illuminate\Http\JsonResponse;
@@ -26,15 +27,9 @@ class ProveedorController extends Controller
         return ProveedorResource::collection($proveedores);
     }
 
-    public function store(Request $request): ProveedorResource
+    public function store(ProveedorRequest $request): ProveedorResource
     {
-        $validated = $request->validate([
-            'nombre'    => ['required', 'string', 'max:255'],
-            'cuit'      => ['nullable', 'string', 'max:20'],
-            'telefono'  => ['nullable', 'string', 'max:50'],
-            'email'     => ['nullable', 'email', 'max:255'],
-            'direccion' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         $proveedor = Proveedor::create($validated);
 
@@ -46,15 +41,9 @@ class ProveedorController extends Controller
         return new ProveedorResource($proveedor);
     }
 
-    public function update(Request $request, Proveedor $proveedor): ProveedorResource
+    public function update(ProveedorRequest $request, Proveedor $proveedor): ProveedorResource
     {
-        $validated = $request->validate([
-            'nombre'    => ['required', 'string', 'max:255'],
-            'cuit'      => ['nullable', 'string', 'max:20'],
-            'telefono'  => ['nullable', 'string', 'max:50'],
-            'email'     => ['nullable', 'email', 'max:255'],
-            'direccion' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         $proveedor->update($validated);
 

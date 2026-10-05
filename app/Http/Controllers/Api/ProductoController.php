@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProductoRequest;
 use App\Http\Resources\ProductoResource;
 use App\Models\Producto;
 use Illuminate\Http\JsonResponse;
@@ -32,21 +33,9 @@ class ProductoController extends Controller
         return ProductoResource::collection($productos);
     }
 
-    public function store(Request $request): ProductoResource
+    public function store(ProductoRequest $request): ProductoResource
     {
-        $validated = $request->validate([
-            'codigo'        => ['required', 'string', 'max:100', 'unique:productos,codigo'],
-            'nombre'        => ['required', 'string', 'max:255'],
-            'descripcion'   => ['nullable', 'string'],
-            'categoria_id'  => ['required', 'exists:categorias,id'],
-            'marca'         => ['nullable', 'string', 'max:100'],
-            'precio_compra' => ['required', 'numeric', 'min:0'],
-            'precio_venta'  => ['required', 'numeric', 'min:0'],
-            'stock_minimo'  => ['required', 'integer', 'min:0'],
-            'estado'        => ['required', 'in:activo,inactivo'],
-        ]);
-
-        $producto = Producto::create($validated);
+        $producto = Producto::create($request->datosParaGuardar());
 
         return new ProductoResource($producto->load('categoria'));
     }
@@ -56,21 +45,9 @@ class ProductoController extends Controller
         return new ProductoResource($producto->load('categoria'));
     }
 
-    public function update(Request $request, Producto $producto): ProductoResource
+    public function update(ProductoRequest $request, Producto $producto): ProductoResource
     {
-        $validated = $request->validate([
-            'codigo'        => ['required', 'string', 'max:100', 'unique:productos,codigo,'.$producto->id],
-            'nombre'        => ['required', 'string', 'max:255'],
-            'descripcion'   => ['nullable', 'string'],
-            'categoria_id'  => ['required', 'exists:categorias,id'],
-            'marca'         => ['nullable', 'string', 'max:100'],
-            'precio_compra' => ['required', 'numeric', 'min:0'],
-            'precio_venta'  => ['required', 'numeric', 'min:0'],
-            'stock_minimo'  => ['required', 'integer', 'min:0'],
-            'estado'        => ['required', 'in:activo,inactivo'],
-        ]);
-
-        $producto->update($validated);
+        $producto->update($request->validated());
 
         return new ProductoResource($producto->load('categoria'));
     }

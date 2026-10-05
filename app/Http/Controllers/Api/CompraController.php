@@ -4,17 +4,21 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\StockInsuficienteException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CompraRequest;
 use App\Models\Compra;
-use App\Models\Producto;
+use App\Services\CompraService;
 use App\Services\StockDocumentoService;
-use App\Support\CalculadorTotales;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CompraController extends Controller
 {
-    public function __construct(private StockDocumentoService $stockDoc) {}
+    public function __construct(
+        private StockDocumentoService $stockDoc,
+        private CompraService $compras,
+    ) {}
 
     public function index(Request $request)
     {
@@ -35,60 +39,22 @@ class CompraController extends Controller
         return response()->json($compras);
     }
 
-    public function store(Request $request): JsonResponse
+    /**
+     * Misma validación, misma numeración y mismas reglas que la pantalla de
+     * carga: las dos entradas llaman al mismo servicio.
+     */
+    public function store(CompraRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'proveedor_id'           => ['required', 'exists:proveedores,id'],
-            'fecha'                  => ['required', 'date'],
-            'estado'                 => ['required', 'in:pendiente,completada,cancelada'],
-            'detalles'               => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
-            'detalles.*.cantidad'    => ['required', 'integer', 'min:1'],
-            'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
-        ]);
-
-        $compra = DB::transaction(function () use ($validated) {
-            $numero = 'COM-'.str_pad((string) (Compra::max('id') + 1), 5, '0', STR_PAD_LEFT);
-
-            $detalles = collect($validated['detalles'])->map(function ($item) {
-                return [
-                    'producto_id' => $item['producto_id'],
-                    'cantidad'    => (int) $item['cantidad'],
-                    'precio'      => round((float) $item['precio'], 2),
-                    'subtotal'    => round($item['cantidad'] * $item['precio'], 2),
-                ];
-            });
-
-            $totales = CalculadorTotales::calcular($detalles->all(), null, 0);
-
-            $compra = Compra::create([
-                'numero'       => $numero,
-                'proveedor_id' => $validated['proveedor_id'],
-                'fecha'        => $validated['fecha'],
-                'subtotal'     => $totales['subtotal'],
-                'impuesto'     => $totales['impuesto'],
-                'total_final'  => $totales['total'],
-                'total'        => $totales['total'],
-                'estado'       => $validated['estado'],
-                'user_id'      => auth()->id(),
-            ]);
-
-            $compra->detalles()->createMany($detalles->all());
-
-            if ($compra->estado === 'completada') {
-                $this->stockDoc->aplicarCompra($compra);
-                foreach ($detalles as $d) {
-                    Producto::whereKey($d['producto_id'])->update(['precio_compra' => $d['precio']]);
-                }
-            }
-
-            return $compra;
-        });
+        try {
+            $compra = $this->compras->crear($request->validated());
+        } catch (StockInsuficienteException $e) {
+            throw ValidationException::withMessages(['detalles' => $e->getMessage()]);
+        }
 
         return response()->json([
             'message' => 'Compra registrada correctamente.',
             'data'    => $compra->load(['detalles.producto', 'proveedor', 'user']),
-        ]);
+        ], 201);
     }
 
     public function show(Compra $compra): JsonResponse

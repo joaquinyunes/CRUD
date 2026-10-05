@@ -88,17 +88,7 @@ class ProductoController extends Controller
 
     public function store(ProductoRequest $request): RedirectResponse
     {
-        $validated = $request->validated();
-
-        $validated['codigo'] = $validated['codigo'] ?? $this->generarCodigo();
-        $validated['categoria_id'] = $validated['categoria_id'] ?? Categoria::where('estado', true)->orderBy('id')->value('id');
-        $validated['precio_compra'] = $validated['precio_compra'] ?? 0;
-        $validated['precio_venta'] = $validated['precio_venta'] ?? 0;
-        $validated['stock_minimo'] = $validated['stock_minimo'] ?? 0;
-        $validated['stock'] = $validated['stock'] ?? 0;
-        $validated['estado'] = $validated['estado'] ?? 'activo';
-        $validated['descripcion'] = $validated['descripcion'] ?? '';
-
+        $validated = $request->datosParaGuardar();
         $validated['imagen'] = $this->manejarImagen($request);
 
         Producto::create($validated);
@@ -194,12 +184,5 @@ class ProductoController extends Controller
         }
 
         return $codigo;
-    }
-
-    private function generarCodigo(): string
-    {
-        $ultimo = Producto::orderBy('id', 'desc')->value('id') ?? 0;
-
-        return 'PROD-'.str_pad((string) ($ultimo + 1), 4, '0', STR_PAD_LEFT);
     }
 }

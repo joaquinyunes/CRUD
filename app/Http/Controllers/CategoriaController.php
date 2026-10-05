@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CategoriaRequest;
 use App\Models\Categoria;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
@@ -42,9 +43,9 @@ class CategoriaController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(CategoriaRequest $request): RedirectResponse
     {
-        Categoria::create($this->validarDatos($request));
+        Categoria::create($request->datosParaGuardar());
 
         return redirect()
             ->route('categorias.index')
@@ -58,9 +59,9 @@ class CategoriaController extends Controller
         ]);
     }
 
-    public function update(Request $request, Categoria $categoria): RedirectResponse
+    public function update(CategoriaRequest $request, Categoria $categoria): RedirectResponse
     {
-        $categoria->update($this->validarDatos($request));
+        $categoria->update($request->datosParaGuardar());
 
         return redirect()
             ->route('categorias.index')
@@ -74,17 +75,5 @@ class CategoriaController extends Controller
         return redirect()
             ->route('categorias.index')
             ->with('success', 'Categoría desactivada correctamente.');
-    }
-
-    private function validarDatos(Request $request): array
-    {
-        $validado = $request->validate([
-            'nombre'      => ['required', 'string', 'max:255'],
-            'descripcion' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        $validado['estado'] = $request->boolean('estado');
-
-        return $validado;
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\CompraCreada;
 use App\Exceptions\StockInsuficienteException;
 use App\Http\Requests\CompraRequest;
 use App\Models\Compra;
@@ -10,19 +9,20 @@ use App\Models\Deposito;
 use App\Models\MetodoPago;
 use App\Models\Producto;
 use App\Models\Proveedor;
-use App\Models\Setting;
+use App\Services\CompraService;
 use App\Services\StockDocumentoService;
-use App\Support\CalculadorTotales;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class CompraController extends Controller
 {
-    public function __construct(private StockDocumentoService $stockDoc) {}
+    public function __construct(
+        private StockDocumentoService $stockDoc,
+        private CompraService $compras,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -65,43 +65,11 @@ class CompraController extends Controller
 
     public function store(CompraRequest $request): RedirectResponse
     {
-
-        $compra = DB::transaction(function () use ($request) {
-            $detalles = $this->construirDetalles($request->detalles);
-
-            $totales = CalculadorTotales::calcular(
-                $detalles->all(),
-                $request->input('descuento_tipo'),
-                (float) $request->input('descuento', 0)
-            );
-
-            $compra = Compra::create([
-                'numero'         => $this->generarNumero(),
-                'proveedor_id'   => $request->proveedor_id,
-                'deposito_id'    => $request->deposito_id ?: Deposito::principalId(),
-                'fecha'          => $request->fecha,
-                'subtotal'       => $totales['subtotal'],
-                'descuento'      => $totales['descuento'],
-                'descuento_tipo' => $request->input('descuento_tipo'),
-                'impuesto'       => $totales['impuesto'],
-                'total_final'    => $totales['total'],
-                'total'          => $totales['total'],
-                'estado'         => $request->estado,
-                'user_id'        => auth()->id(),
-            ]);
-
-            $compra->detalles()->createMany($detalles->all());
-            $this->sincronizarPagos($compra, $request->input('metodos_pago', []), $totales['total']);
-
-            if ($compra->estado === 'completada') {
-                $this->stockDoc->aplicarCompra($compra);
-                $this->actualizarCostos($detalles->all());
-            }
-
-            return $compra;
-        });
-
-        CompraCreada::dispatch($compra);
+        try {
+            $this->compras->crear($request->validated());
+        } catch (StockInsuficienteException $e) {
+            return back()->withErrors(['detalles' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('compras.index')->with('success', 'Compra registrada correctamente.');
     }
@@ -126,39 +94,9 @@ class CompraController extends Controller
     {
         $this->authorize('update', $compra);
         abort_if($compra->estado === 'anulada', 404);
+
         try {
-            DB::transaction(function () use ($request, $compra) {
-                $this->stockDoc->revertirCompra($compra);
-
-                $detalles = $this->construirDetalles($request->detalles);
-                $totales = CalculadorTotales::calcular(
-                    $detalles->all(),
-                    $request->input('descuento_tipo'),
-                    (float) $request->input('descuento', 0)
-                );
-
-                $compra->update([
-                    'proveedor_id'   => $request->proveedor_id,
-                    'deposito_id'    => $request->deposito_id ?: $compra->deposito_id,
-                    'fecha'          => $request->fecha,
-                    'subtotal'       => $totales['subtotal'],
-                    'descuento'      => $totales['descuento'],
-                    'descuento_tipo' => $request->input('descuento_tipo'),
-                    'impuesto'       => $totales['impuesto'],
-                    'total_final'    => $totales['total'],
-                    'total'          => $totales['total'],
-                    'estado'         => $request->estado,
-                ]);
-
-                $compra->detalles()->delete();
-                $compra->detalles()->createMany($detalles->all());
-                $this->sincronizarPagos($compra, $request->input('metodos_pago', []), $totales['total']);
-
-                if ($compra->estado === 'completada') {
-                    $this->stockDoc->aplicarCompra($compra);
-                    $this->actualizarCostos($detalles->all());
-                }
-            });
+            $this->compras->actualizar($compra, $request->validated());
         } catch (StockInsuficienteException $e) {
             return back()->withErrors(['detalles' => $e->getMessage()])->withInput();
         }
@@ -194,69 +132,5 @@ class CompraController extends Controller
         $compra->load(['detalles.producto', 'proveedor', 'user']);
 
         return view('compras.show', compact('compra'));
-    }
-
-    private function construirDetalles(array $detalles): Collection
-    {
-        return collect($detalles)->map(function ($item) {
-            $cantidad = (int) $item['cantidad'];
-            $precio = round((float) $item['precio'], 2);
-
-            return [
-                'producto_id' => $item['producto_id'],
-                'cantidad'    => $cantidad,
-                'precio'      => $precio,
-                'subtotal'    => round($cantidad * $precio, 2),
-            ];
-        });
-    }
-
-    /**
-     * Sincroniza el precio_compra del producto con el último costo real pagado.
-     */
-    private function actualizarCostos(array $detalles): void
-    {
-        foreach ($detalles as $d) {
-            Producto::whereKey($d['producto_id'])->update(['precio_compra' => $d['precio']]);
-        }
-    }
-
-    private function sincronizarPagos(Compra $compra, array $pagos, float $total): void
-    {
-        $compra->pagos()->delete();
-        $pagado = 0.0;
-
-        foreach ($pagos as $pago) {
-            $monto = round((float) ($pago['monto'] ?? 0), 2);
-            if (empty($pago['metodo_pago_id']) || $monto <= 0) {
-                continue;
-            }
-            $compra->pagos()->create([
-                'metodo_pago_id' => $pago['metodo_pago_id'],
-                'monto'          => $monto,
-                'referencia'     => $pago['referencia'] ?? null,
-            ]);
-            $pagado += $monto;
-        }
-
-        $compra->update([
-            'pagado'      => $pagado,
-            'estado_pago' => CalculadorTotales::estadoPago($total, $pagado),
-        ]);
-    }
-
-    private function generarNumero(): string
-    {
-        $prefijo = Setting::obtener('compras_prefijo_numero', 'COM');
-        $digitos = (int) Setting::obtener('compras_cantidad_digitos', '5');
-
-        $ultima = Compra::where('numero', 'like', "{$prefijo}-%")
-            ->orderByRaw('CAST(SUBSTRING(numero, '.(strlen($prefijo) + 2).') AS UNSIGNED) DESC')
-            ->lockForUpdate()
-            ->first();
-
-        $nuevoNumero = $ultima ? ((int) substr($ultima->numero, strlen($prefijo) + 1)) + 1 : 1;
-
-        return $prefijo.'-'.str_pad((string) $nuevoNumero, $digitos, '0', STR_PAD_LEFT);
     }
 }
