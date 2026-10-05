@@ -17,9 +17,17 @@
             <label class="r-label">Buscar</label>
             <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Nombre, CUIT o email…" class="r-input">
         </div>
+        @if(request()->boolean('archivados'))
+            <input type="hidden" name="archivados" value="1">
+        @endif
         <button type="submit" class="r-btn r-btn-accent r-btn-sm">Filtrar</button>
+        @if(request()->boolean('archivados'))
+            <a href="{{ route('proveedores.index') }}" class="r-btn r-btn-ghost r-btn-sm">Ver activos</a>
+        @else
+            <a href="{{ route('proveedores.index', ['archivados' => 1]) }}" class="r-btn r-btn-ghost r-btn-sm">Ver archivados</a>
+        @endif
         @if(request()->has('buscar'))
-            <a href="{{ route('proveedores.index') }}" class="r-btn r-btn-ghost r-btn-sm">Limpiar</a>
+            <a href="{{ route('proveedores.index', request()->only('archivados')) }}" class="r-btn r-btn-ghost r-btn-sm">Limpiar</a>
         @endif
     </form>
 </div>
@@ -50,10 +58,18 @@
                                 @if (auth()->user()->role?->tienePermiso('proveedores.editar'))
                                     <a href="{{ route('proveedores.edit', $proveedor) }}" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px;">Editar</a>
                                 @endif
-                                @if (auth()->user()->role?->tienePermiso('proveedores.eliminar'))
+                                @if ($proveedor->estado === 'archivado')
+                                    @if (auth()->user()->role?->tienePermiso('proveedores.editar'))
+                                        <form method="POST" action="{{ route('proveedores.restaurar', $proveedor) }}" style="display:inline;">
+                                            @csrf
+                                            <button type="submit" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px;">Restaurar</button>
+                                        </form>
+                                    @endif
+                                @elseif (auth()->user()->role?->tienePermiso('proveedores.eliminar'))
+                                    {{-- Si tiene compras se archiva y se conservan los comprobantes. --}}
                                     <form method="POST" action="{{ route('proveedores.destroy', $proveedor) }}" style="display:inline;">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px; color:#dc2626;" onclick="return confirm('¿Eliminar este proveedor?')">Eliminar</button>
+                                        <button type="submit" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px; color:#dc2626;" onclick="return confirm('Si el proveedor tiene compras registradas se archiva en lugar de borrarse, para no perder el historial. ¿Continuar?')">Eliminar</button>
                                     </form>
                                 @endif
                             </div>
@@ -61,7 +77,9 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" style="text-align:center; padding:var(--space-8); color:var(--color-ink-soft);">No se encontraron proveedores.</td>
+                        <td colspan="6" style="text-align:center; padding:var(--space-8); color:var(--color-ink-soft);">
+                            {{ request()->boolean('archivados') ? 'No hay proveedores archivados.' : 'No se encontraron proveedores.' }}
+                        </td>
                     </tr>
                 @endforelse
             </tbody>

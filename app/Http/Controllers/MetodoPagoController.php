@@ -3,15 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\MetodoPago;
-use App\Traits\Auditable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class MetodoPagoController extends Controller
 {
-    use Auditable;
-
     public function index(Request $request): JsonResponse
     {
         $query = MetodoPago::query();
@@ -76,8 +74,26 @@ class MetodoPagoController extends Controller
         ]);
     }
 
+    /**
+     * Un método de pago usado en comprobantes se desactiva, no se borra: los
+     * pagos ya cobrados lo referencian y tienen que seguir diciendo cómo se
+     * cobraron.
+     */
     public function destroy(MetodoPago $metodo_pago): JsonResponse
     {
+        $usos = DB::table('ventas_pago')->where('metodo_pago_id', $metodo_pago->id)->count()
+            + DB::table('compras_pago')->where('metodo_pago_id', $metodo_pago->id)->count();
+
+        if ($usos > 0) {
+            $metodo_pago->update(['activo' => false]);
+
+            return response()->json([
+                'message' => "Método de pago desactivado: se usó en {$usos} ".
+                    ($usos === 1 ? 'pago' : 'pagos').' y no se puede borrar sin perder esa información. '.
+                    'Ya no aparece al cargar comprobantes.',
+            ]);
+        }
+
         $metodo_pago->delete();
 
         return response()->json([

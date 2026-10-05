@@ -32,4 +32,8 @@ Route::middleware(['auth', 'verified'])->prefix('usuarios')->name('usuarios.')->
     Route::delete('/{usuario}', [UserController::class, 'destroy'])
         ->middleware('permiso:usuarios.eliminar')
         ->name('destroy');
+
+    Route::post('/{usuario}/reactivar', [UserController::class, 'reactivar'])
+        ->middleware('permiso:usuarios.editar')
+        ->name('reactivar');
 });

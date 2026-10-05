@@ -27,4 +27,8 @@ Route::middleware(['auth', 'verified'])->prefix('proveedores')->name('proveedore
     Route::delete('/{proveedor}', [ProveedorController::class, 'destroy'])
         ->middleware('permiso:proveedores.eliminar')
         ->name('destroy');
+
+    Route::post('/{proveedor}/restaurar', [ProveedorController::class, 'restaurar'])
+        ->middleware('permiso:proveedores.editar')
+        ->name('restaurar');
 });

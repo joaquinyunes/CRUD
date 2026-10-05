@@ -65,6 +65,9 @@
                             @if($usuario->id === auth()->id())
                                 <span class="r-tag" style="margin-left:6px;">vos</span>
                             @endif
+                            @unless($usuario->activo)
+                                <span class="r-tag r-tag-danger" style="margin-left:6px;">desactivado</span>
+                            @endunless
                         </td>
                         <td style="color:var(--color-ink-soft);">{{ $usuario->email }}</td>
                         <td>
@@ -96,11 +99,17 @@
                                 @if($puedeEditar)
                                     <a href="{{ route('usuarios.edit', $usuario) }}" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px;">Editar</a>
                                 @endif
-                                @if($puedeBorrar && $usuario->id !== auth()->id())
+                                @if(! $usuario->activo && $puedeEditar)
+                                    <form method="POST" action="{{ route('usuarios.reactivar', $usuario) }}" style="display:inline;">
+                                        @csrf
+                                        <button type="submit" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px;">Reactivar</button>
+                                    </form>
+                                @elseif($puedeBorrar && $usuario->id !== auth()->id())
+                                    {{-- Si el usuario ya operó se desactiva: sus comprobantes se conservan. --}}
                                     <form method="POST" action="{{ route('usuarios.destroy', $usuario) }}" style="display:inline;">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="r-btn r-btn-ghost r-btn-sm" style="font-size:0.75rem; padding:4px 12px; color:#dc2626;"
-                                                onclick="return confirm('¿Eliminar al usuario {{ $usuario->name }}?')">Eliminar</button>
+                                                onclick="return confirm('Si {{ $usuario->name }} ya registró ventas o compras se desactiva en lugar de borrarse, para conservar el historial. ¿Continuar?')">Eliminar</button>
                                     </form>
                                 @endif
                             </div>

@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Producto;
 use App\Models\UnidadMedida;
-use App\Traits\Auditable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class UnidadMedidaController extends Controller
 {
-    use Auditable;
-
     public function index(Request $request): JsonResponse
     {
         $query = UnidadMedida::query();
@@ -68,8 +66,23 @@ class UnidadMedidaController extends Controller
         ]);
     }
 
+    /**
+     * Borrarla dejaba los productos sin unidad en silencio (la clave foránea es
+     * nullOnDelete). Si está en uso, se desactiva.
+     */
     public function destroy(UnidadMedida $unidad_medida): JsonResponse
     {
+        $productos = Producto::where('unidad_medida_id', $unidad_medida->id)->count();
+
+        if ($productos > 0) {
+            $unidad_medida->update(['estado' => false]);
+
+            return response()->json([
+                'message' => "Unidad desactivada: la usan {$productos} ".
+                    ($productos === 1 ? 'producto' : 'productos').'. Ya no aparece al cargar productos nuevos.',
+            ]);
+        }
+
         $unidad_medida->delete();
 
         return response()->json([
