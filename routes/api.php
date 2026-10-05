@@ -9,77 +9,48 @@ use App\Http\Controllers\Api\ProveedorController;
 use App\Http\Controllers\Api\VentaController;
 use Illuminate\Support\Facades\Route;
 
-// Auth (público)
-Route::post('/login', [AuthController::class, 'login']);
+/*
+ * La API expone los mismos casos de uso que la interfaz web y, por lo tanto,
+ * exige los mismos permisos: un token pertenece a un usuario, y ese usuario
+ * tiene un rol. Un token de un usuario de solo lectura no puede escribir.
+ */
 
-// Rutas protegidas con token
-Route::middleware('auth:sanctum')->group(function () {
+/**
+ * Declara un recurso de API con el permiso que corresponde a cada verbo.
+ *
+ * Los nombres de ruta llevan el prefijo "api." para no chocar con los de la
+ * interfaz web, que ya ocupan "productos.index" y compañía.
+ */
+$recurso = function (string $uri, string $controller, string $modulo, bool $sinActualizar = false): void {
+    $excepto = $sinActualizar ? ['edit', 'create', 'update'] : ['edit', 'create'];
 
-    // Auth
+    $nombres = [];
+    foreach (['index', 'store', 'show', 'update', 'destroy'] as $accion) {
+        $nombres[$accion] = "api.{$uri}.{$accion}";
+    }
+
+    Route::apiResource($uri, $controller)
+        ->except($excepto)
+        ->names($nombres)
+        ->middlewareFor('index', "permiso:{$modulo}.ver")
+        ->middlewareFor('show', "permiso:{$modulo}.ver")
+        ->middlewareFor('store', "permiso:{$modulo}.crear")
+        ->middlewareFor('update', "permiso:{$modulo}.editar")
+        ->middlewareFor('destroy', "permiso:{$modulo}.eliminar");
+};
+
+// Auth (público). Con límite propio: es la única puerta que no pide token.
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+
+Route::middleware('auth:sanctum')->group(function () use ($recurso) {
+
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
 
-    // Productos
-    Route::apiResource('productos', ProductoController::class)
-        ->except(['edit', 'create'])
-        ->names([
-            'index'   => 'api.productos.index',
-            'store'   => 'api.productos.store',
-            'show'    => 'api.productos.show',
-            'update'  => 'api.productos.update',
-            'destroy' => 'api.productos.destroy',
-        ]);
-
-    // Clientes
-    Route::apiResource('clientes', ClienteController::class)
-        ->except(['edit', 'create'])
-        ->names([
-            'index'   => 'api.clientes.index',
-            'store'   => 'api.clientes.store',
-            'show'    => 'api.clientes.show',
-            'update'  => 'api.clientes.update',
-            'destroy' => 'api.clientes.destroy',
-        ]);
-
-    // Categorías
-    Route::apiResource('categorias', CategoriaController::class)
-        ->except(['edit', 'create'])
-        ->names([
-            'index'   => 'api.categorias.index',
-            'store'   => 'api.categorias.store',
-            'show'    => 'api.categorias.show',
-            'update'  => 'api.categorias.update',
-            'destroy' => 'api.categorias.destroy',
-        ]);
-
-    // Proveedores
-    Route::apiResource('proveedores', ProveedorController::class)
-        ->except(['edit', 'create'])
-        ->names([
-            'index'   => 'api.proveedores.index',
-            'store'   => 'api.proveedores.store',
-            'show'    => 'api.proveedores.show',
-            'update'  => 'api.proveedores.update',
-            'destroy' => 'api.proveedores.destroy',
-        ]);
-
-    // Ventas
-    Route::apiResource('ventas', VentaController::class)
-        ->except(['edit', 'create', 'update'])
-        ->names([
-            'index'   => 'api.ventas.index',
-            'store'   => 'api.ventas.store',
-            'show'    => 'api.ventas.show',
-            'destroy' => 'api.ventas.destroy',
-        ]);
-
-    // Compras
-    Route::apiResource('compras', CompraController::class)
-        ->except(['edit', 'create', 'update'])
-        ->names([
-            'index'   => 'api.compras.index',
-            'store'   => 'api.compras.store',
-            'show'    => 'api.compras.show',
-            'destroy' => 'api.compras.destroy',
-        ]);
+    $recurso('productos', ProductoController::class, 'productos');
+    $recurso('clientes', ClienteController::class, 'clientes');
+    $recurso('categorias', CategoriaController::class, 'categorias');
+    $recurso('proveedores', ProveedorController::class, 'proveedores');
+    $recurso('ventas', VentaController::class, 'ventas', sinActualizar: true);
+    $recurso('compras', CompraController::class, 'compras', sinActualizar: true);
 });

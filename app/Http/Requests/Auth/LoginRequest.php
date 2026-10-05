@@ -50,6 +50,17 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // Un usuario desactivado conserva sus credenciales pero no entra: es la
+        // baja de alguien que dejó la empresa y cuyos comprobantes se conservan.
+        if (! Auth::user()->activo) {
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Esta cuenta está desactivada. Hablá con un administrador.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
