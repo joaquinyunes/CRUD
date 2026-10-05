@@ -10,6 +10,10 @@ class PermissionSeeder extends Seeder
 {
     private array $permisos = [
 
+        // Comodín: quien lo tiene puede todo. Es lo que hace administrador a un
+        // rol, en lugar de comparar su nombre dentro del middleware.
+        Role::TODO,
+
         'usuarios.ver',
         'usuarios.crear',
         'usuarios.editar',

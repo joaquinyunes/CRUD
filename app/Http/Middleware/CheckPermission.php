@@ -8,6 +8,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Deja pasar si el rol del usuario tiene alguno de los permisos pedidos.
+ *
+ * No hay nombres de rol escritos en el código: "poder todo" es el permiso
+ * comodín "*", como cualquier otro. Así se puede crear un segundo rol con
+ * acceso total, o sacarle una parte al administrador, sin tocar una línea.
+ */
 class CheckPermission
 {
     public function handle(Request $request, Closure $next, string ...$permisos): Response
@@ -22,20 +29,18 @@ class CheckPermission
             return redirect()->route('login');
         }
 
-        $rol = $user->role()->with('permissions')->first();
-
-        if (! $rol) {
+        if (! $user->role_id) {
             abort(403, 'Tu cuenta no tiene un rol asignado. Contactá al administrador.');
         }
 
-        if ($rol->nombre === Role::ADMINISTRADOR || $rol->nombre === 'admin') {
+        $claves = Role::clavesDe($user->role_id);
+
+        if (in_array(Role::TODO, $claves, true)) {
             return $next($request);
         }
 
-        $clavesDelRol = $rol->permissions->pluck('clave')->toArray();
-
         foreach ($permisos as $permiso) {
-            if (in_array(trim($permiso), $clavesDelRol, true)) {
+            if (in_array(trim($permiso), $claves, true)) {
                 return $next($request);
             }
         }

@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Cliente;
 use App\Models\Producto;
-use App\Models\Role;
 use App\Models\User;
 use App\Models\Venta;
 use App\Support\PeriodoSql;
@@ -17,7 +16,7 @@ class ReportePeriodoTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['role_id' => Role::create(['nombre' => 'Administrador'])->id]);
+        return User::factory()->create(['role_id' => $this->rolAdministrador()->id]);
     }
 
     public function test_reportes_por_periodo_funcionan_en_cualquier_motor(): void

@@ -8,7 +8,6 @@ use App\Models\OrdenCompra;
 use App\Models\Presupuesto;
 use App\Models\Producto;
 use App\Models\Proveedor;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,7 +18,7 @@ class PantallasFase3Test extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['role_id' => Role::create(['nombre' => 'Administrador'])->id]);
+        return User::factory()->create(['role_id' => $this->rolAdministrador()->id]);
     }
 
     public function test_pantallas_fase3_renderizan(): void

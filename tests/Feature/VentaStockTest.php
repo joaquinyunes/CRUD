@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Cliente;
 use App\Models\MetodoPago;
 use App\Models\Producto;
-use App\Models\Role;
 use App\Models\User;
 use App\Models\Venta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,7 +16,7 @@ class VentaStockTest extends TestCase
 
     private function admin(): User
     {
-        $rol = Role::create(['nombre' => 'Administrador']);
+        $rol = $this->rolAdministrador();
 
         return User::factory()->create(['role_id' => $rol->id]);
     }

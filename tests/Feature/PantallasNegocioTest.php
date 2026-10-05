@@ -6,7 +6,6 @@ use App\Models\Cliente;
 use App\Models\Compra;
 use App\Models\Producto;
 use App\Models\Proveedor;
-use App\Models\Role;
 use App\Models\User;
 use App\Models\Venta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,7 +17,7 @@ class PantallasNegocioTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['role_id' => Role::create(['nombre' => 'Administrador'])->id]);
+        return User::factory()->create(['role_id' => $this->rolAdministrador()->id]);
     }
 
     public function test_pantallas_nuevas_renderizan(): void

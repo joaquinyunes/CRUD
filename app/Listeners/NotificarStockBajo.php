@@ -5,16 +5,18 @@ namespace App\Listeners;
 use App\Events\StockBajo;
 use App\Models\Notificacion;
 use App\Models\User;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
 
-class NotificarStockBajo
+class NotificarStockBajo implements ShouldQueue
 {
+    use InteractsWithQueue;
+
     public function handle(StockBajo $event): void
     {
         $producto = $event->producto;
 
-        $admins = User::whereHas('role', function ($q) {
-            $q->where('nombre', 'Administrador');
-        })->get();
+        $admins = User::administradores()->get();
 
         foreach ($admins as $admin) {
             Notificacion::create([

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -23,7 +22,7 @@ class RutaRaizTest extends TestCase
     public function test_un_usuario_autenticado_entra_al_dashboard(): void
     {
         $user = User::factory()->create([
-            'role_id' => Role::create(['nombre' => 'Administrador'])->id,
+            'role_id' => $this->rolAdministrador()->id,
         ]);
 
         $this->actingAs($user)

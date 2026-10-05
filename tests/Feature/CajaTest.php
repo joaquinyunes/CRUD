@@ -6,7 +6,6 @@ use App\Models\CajaSesion;
 use App\Models\Cliente;
 use App\Models\MetodoPago;
 use App\Models\Producto;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,7 +16,7 @@ class CajaTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['role_id' => Role::create(['nombre' => 'Administrador'])->id]);
+        return User::factory()->create(['role_id' => $this->rolAdministrador()->id]);
     }
 
     public function test_flujo_de_caja_con_venta_en_efectivo_y_arqueo(): void

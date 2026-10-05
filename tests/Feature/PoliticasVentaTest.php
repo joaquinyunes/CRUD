@@ -17,7 +17,7 @@ class PoliticasVentaTest extends TestCase
 
     private function seedRoles(): void
     {
-        Role::create(['nombre' => 'Administrador']);
+        $this->rolAdministrador();
         Role::create(['nombre' => 'Supervisor']);
         Role::create(['nombre' => 'Empleado']);
         Role::create(['nombre' => 'Cliente']);

@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Compra;
 use App\Models\Producto;
 use App\Models\Proveedor;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,7 +15,7 @@ class CompraStockTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['role_id' => Role::create(['nombre' => 'Administrador'])->id]);
+        return User::factory()->create(['role_id' => $this->rolAdministrador()->id]);
     }
 
     private function payload(Producto $producto, array $overrides = []): array

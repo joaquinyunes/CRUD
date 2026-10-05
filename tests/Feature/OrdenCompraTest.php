@@ -6,7 +6,6 @@ use App\Models\Compra;
 use App\Models\OrdenCompra;
 use App\Models\Producto;
 use App\Models\Proveedor;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,7 +16,7 @@ class OrdenCompraTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['role_id' => Role::create(['nombre' => 'Administrador'])->id]);
+        return User::factory()->create(['role_id' => $this->rolAdministrador()->id]);
     }
 
     private function crearOrden(User $admin, Producto $producto): OrdenCompra

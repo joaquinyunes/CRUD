@@ -6,7 +6,6 @@ use App\Models\Cliente;
 use App\Models\Compra;
 use App\Models\Producto;
 use App\Models\Proveedor;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,7 +20,7 @@ class GananciaDashboardTest extends TestCase
 
     public function test_reponer_stock_no_convierte_el_mes_en_perdida(): void
     {
-        $rol = Role::create(['nombre' => 'Administrador']);
+        $rol = $this->rolAdministrador();
         $admin = User::factory()->create(['role_id' => $rol->id]);
 
         $producto = Producto::factory()->create([

@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Cliente;
 use App\Models\MetodoPago;
 use App\Models\Producto;
-use App\Models\Role;
 use App\Models\User;
 use App\Models\Venta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,7 +16,7 @@ class CuentaCorrienteTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['role_id' => Role::create(['nombre' => 'Administrador'])->id]);
+        return User::factory()->create(['role_id' => $this->rolAdministrador()->id]);
     }
 
     private function ventaPayload(Producto $p, Cliente $c, array $o = []): array
