@@ -18,6 +18,7 @@ class OrdenCompraDetalle extends Model
         'subtotal' => 'decimal:2',
     ];
 
+    /** @return BelongsTo<Producto, $this> */
     public function producto(): BelongsTo
     {
         return $this->belongsTo(Producto::class);

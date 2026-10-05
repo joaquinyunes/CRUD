@@ -24,6 +24,7 @@ class Archivo extends Model
         'tamano' => 'integer',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

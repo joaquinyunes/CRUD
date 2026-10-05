@@ -4,10 +4,14 @@ namespace App\Models;
 
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property-read float $saldo_actual
+ */
 class Cliente extends Model
 {
     use Auditable, HasFactory;
@@ -29,6 +33,7 @@ class Cliente extends Model
         'limite_credito' => 'decimal:2',
     ];
 
+    /** @return HasMany<Venta, $this> */
     public function ventas(): HasMany
     {
         return $this->hasMany(Venta::class);
@@ -43,6 +48,18 @@ class Cliente extends Model
             ->whereIn('estado', ['completada', 'pendiente'])
             ->get()
             ->sum(fn (Venta $v) => $v->saldoPendiente());
+    }
+
+    /**
+     * El saldo como atributo, para las vistas de cuenta corriente.
+     *
+     * Antes el controller se lo asignaba al modelo a mano: eso ensuciaba el
+     * registro con una columna que no existe, y un save() posterior habría
+     * intentado escribirla.
+     */
+    protected function saldoActual(): Attribute
+    {
+        return Attribute::get(fn (): float => $this->saldo());
     }
 
     public function creditoDisponible(): float

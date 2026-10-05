@@ -23,11 +23,13 @@ class CajaMovimiento extends Model
         'monto' => 'decimal:2',
     ];
 
+    /** @return BelongsTo<CajaSesion, $this> */
     public function sesion(): BelongsTo
     {
         return $this->belongsTo(CajaSesion::class, 'caja_sesion_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

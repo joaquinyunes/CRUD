@@ -24,11 +24,13 @@ class DevolucionDetalle extends Model
         'subtotal' => 'decimal:2',
     ];
 
+    /** @return BelongsTo<Devolucion, $this> */
     public function devolucion(): BelongsTo
     {
         return $this->belongsTo(Devolucion::class);
     }
 
+    /** @return BelongsTo<Producto, $this> */
     public function producto(): BelongsTo
     {
         return $this->belongsTo(Producto::class);

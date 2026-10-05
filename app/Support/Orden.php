@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 class Orden
 {
     /**
-     * @param  array<string, string|\Closure>  $columnas  alias => columna SQL o closure(query, dir)
+     * @param  array<string, string|\Closure|\Illuminate\Database\Eloquent\Builder<*>>  $columnas  alias => columna SQL, subconsulta o closure(query, dir)
      * @param  string  $porDefecto  alias usado cuando no vino ?orden o vino uno invalido
      * @param  string  $dirPorDefecto  direccion inicial de ese alias
      */

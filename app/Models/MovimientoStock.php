@@ -22,16 +22,19 @@ class MovimientoStock extends Model
         'referencia_id',
     ];
 
+    /** @return BelongsTo<Producto, $this> */
     public function producto(): BelongsTo
     {
         return $this->belongsTo(Producto::class);
     }
 
+    /** @return BelongsTo<Deposito, $this> */
     public function deposito(): BelongsTo
     {
         return $this->belongsTo(Deposito::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

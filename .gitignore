@@ -26,6 +26,12 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
+# La base SQLite que se crea sola cuando DB_DATABASE=testing y el motor es
+# sqlite: aparece como un archivo "testing" en la raíz del proyecto.
+/testing
+/database/*.sqlite
+/database/*.sqlite-journal
+
 # Artefactos locales de MySQL/servidor que no pertenecen al repo
 my.ini
 mysql_error.txt

@@ -24,11 +24,13 @@ class Tarea extends Model
         'fecha_limite' => 'date',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function asignada(): BelongsTo
     {
         return $this->belongsTo(User::class, 'asignada_a');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creadaPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

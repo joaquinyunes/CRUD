@@ -8,6 +8,7 @@ use App\Models\Producto;
 use App\Models\Proveedor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Str;
 
 class ImportController extends Controller
 {
@@ -51,7 +52,7 @@ class ImportController extends Controller
                         break;
                 }
                 $importados++;
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $errores++;
                 $errorMessages[] = "Fila {$rowNumber}: {$e->getMessage()}";
             }
@@ -77,7 +78,7 @@ class ImportController extends Controller
         }
 
         Producto::updateOrCreate(
-            ['codigo' => $data['codigo'] ?? uniq_id()],
+            ['codigo' => $this->codigoDeProducto($data, $nombre)],
             [
                 'nombre'        => $nombre,
                 'descripcion'   => $data['descripcion'] ?? null,
@@ -90,6 +91,26 @@ class ImportController extends Controller
                 'estado'        => 'activo',
             ]
         );
+    }
+
+    /**
+     * El código con el que se identifica el producto al importar.
+     *
+     * Si el archivo no trae uno, se deriva del nombre en lugar de inventar un
+     * valor al azar: así reimportar la misma planilla actualiza los productos en
+     * vez de duplicarlos, que es lo que updateOrCreate promete.
+     *
+     * @param  array<string,mixed>  $data
+     */
+    private function codigoDeProducto(array $data, string $nombre): string
+    {
+        $codigo = trim((string) ($data['codigo'] ?? ''));
+
+        if ($codigo !== '') {
+            return $codigo;
+        }
+
+        return 'IMP-'.strtoupper(substr(md5(Str::lower(trim($nombre))), 0, 10));
     }
 
     private function importarCliente(array $data): void

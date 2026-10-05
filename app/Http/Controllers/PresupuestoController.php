@@ -83,7 +83,7 @@ class PresupuestoController extends Controller
 
     public function edit(Presupuesto $presupuesto): View
     {
-        abort_if($presupuesto->venta_id, 404, 'El presupuesto ya fue convertido en venta.');
+        abort_if((bool) $presupuesto->venta_id, 404, 'El presupuesto ya fue convertido en venta.');
         $presupuesto->load('detalles.producto');
 
         $clientes = Cliente::where('estado', 'activo')->orderBy('nombre')->get();
@@ -94,7 +94,7 @@ class PresupuestoController extends Controller
 
     public function update(Request $request, Presupuesto $presupuesto): RedirectResponse
     {
-        abort_if($presupuesto->venta_id, 404);
+        abort_if((bool) $presupuesto->venta_id, 404);
         $this->validar($request);
 
         DB::transaction(function () use ($request, $presupuesto) {
@@ -123,7 +123,7 @@ class PresupuestoController extends Controller
 
     public function destroy(Presupuesto $presupuesto): RedirectResponse
     {
-        abort_if($presupuesto->venta_id, 404);
+        abort_if((bool) $presupuesto->venta_id, 404);
         $presupuesto->delete();
 
         return redirect()->route('presupuestos.index')->with('success', 'Presupuesto eliminado.');

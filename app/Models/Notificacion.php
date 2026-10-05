@@ -27,6 +27,7 @@ class Notificacion extends Model
         'leida' => 'boolean',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

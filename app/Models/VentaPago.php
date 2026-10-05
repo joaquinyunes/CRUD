@@ -23,11 +23,13 @@ class VentaPago extends Model
         'monto' => 'decimal:2',
     ];
 
+    /** @return BelongsTo<Venta, $this> */
     public function venta(): BelongsTo
     {
         return $this->belongsTo(Venta::class);
     }
 
+    /** @return BelongsTo<MetodoPago, $this> */
     public function metodoPago(): BelongsTo
     {
         return $this->belongsTo(MetodoPago::class);

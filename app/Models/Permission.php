@@ -13,6 +13,7 @@ class Permission extends Model
         'clave',
     ];
 
+    /** @return BelongsToMany<Role, $this> */
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_has_permissions');
@@ -20,12 +21,12 @@ class Permission extends Model
 
     public function modulo(): string
     {
-        return explode('.', $this->clave)[0] ?? $this->clave;
+        return explode('.', $this->clave)[0];
     }
 
     public function accion(): string
     {
-        return explode('.', $this->clave)[1] ?? '';
+        return explode('.', $this->clave, 2)[1] ?? '';
     }
 
     public static function agrupadosPorModulo($permisos)

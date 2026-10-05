@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources;
 
+use App\Models\VentaDetalle;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin VentaDetalle
+ */
 class VentaDetalleResource extends JsonResource
 {
     public function toArray(Request $request): array

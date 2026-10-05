@@ -37,8 +37,7 @@ class DemoSeeder extends Seeder
         }
 
         $unidades = UnidadMedida::where('estado', true)->get();
-        $uni = fn (string $abr) => $unidades->firstWhere('abreviacion', $abr)?->id
-            ?? $unidades->first()->id;
+        $uni = fn (string $abr) => ($unidades->firstWhere('abreviacion', $abr) ?? $unidades->first())->id;
 
         // ---------- Categorías ----------
         $cats = [
@@ -92,7 +91,7 @@ class DemoSeeder extends Seeder
 
         $productos = [];
         foreach ($productosData as [$nombre, $cat, $marca, $compra, $venta, $stock, $min, $abr, $estado]) {
-            $codigo = 'PROD-'.str_pad((count($productos) + 1), 4, '0', STR_PAD_LEFT);
+            $codigo = 'PROD-'.str_pad((string) (count($productos) + 1), 4, '0', STR_PAD_LEFT);
             $productos[] = Producto::create([
                 'codigo'           => $codigo,
                 'nombre'           => $nombre,
@@ -187,7 +186,7 @@ class DemoSeeder extends Seeder
             $totalFinal = round($subtotal - $descuento + $impuesto, 2);
 
             $venta = Venta::create([
-                'numero'         => 'VTA-'.str_pad($i + 1, 5, '0', STR_PAD_LEFT),
+                'numero'         => 'VTA-'.str_pad((string) ($i + 1), 5, '0', STR_PAD_LEFT),
                 'cliente_id'     => $cliente->id,
                 'fecha'          => $fecha,
                 'subtotal'       => $subtotal,
@@ -247,7 +246,7 @@ class DemoSeeder extends Seeder
             $totalFinal = round($subtotal + $impuesto, 2);
 
             $compra = Compra::create([
-                'numero'         => 'COM-'.str_pad($i + 1, 5, '0', STR_PAD_LEFT),
+                'numero'         => 'COM-'.str_pad((string) ($i + 1), 5, '0', STR_PAD_LEFT),
                 'proveedor_id'   => $proveedor->id,
                 'fecha'          => $fecha,
                 'subtotal'       => $subtotal,
@@ -287,7 +286,7 @@ class DemoSeeder extends Seeder
         $this->cajaDelDia($admin);
         $this->cuentaCorriente();
 
-        $this->command?->info('DemoSeeder: datos de demostración creados.');
+        $this->command->info('DemoSeeder: datos de demostración creados.');
     }
 
     /**

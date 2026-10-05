@@ -42,7 +42,7 @@ class OrdenCompraController extends Controller
 
     public function create(): View
     {
-        $proveedores = Proveedor::orderBy('nombre')->get();
+        $proveedores = Proveedor::activos()->orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
         $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
 
@@ -87,7 +87,9 @@ class OrdenCompraController extends Controller
         abort_if($orden->tieneRecepciones() || $orden->compra_id, 404, 'La orden ya tiene recepciones o factura.');
         $orden->load('detalles.producto');
 
-        $proveedores = Proveedor::orderBy('nombre')->get();
+        // El proveedor de la orden sigue en la lista aunque lo hayan archivado.
+        $proveedores = Proveedor::activos()->orWhere('id', $orden->proveedor_id)
+            ->orderBy('nombre')->get();
         $productos = Producto::where('estado', 'activo')->orderBy('nombre')->get();
         $depositos = Deposito::activos()->orderByDesc('es_principal')->orderBy('nombre')->get();
 

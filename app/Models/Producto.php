@@ -70,16 +70,19 @@ class Producto extends Model
             ->where('estado', 'activo');
     }
 
+    /** @return BelongsTo<Categoria, $this> */
     public function categoria(): BelongsTo
     {
         return $this->belongsTo(Categoria::class);
     }
 
+    /** @return BelongsTo<UnidadMedida, $this> */
     public function unidadMedida(): BelongsTo
     {
         return $this->belongsTo(UnidadMedida::class);
     }
 
+    /** @return BelongsToMany<Deposito, $this> */
     public function depositos(): BelongsToMany
     {
         return $this->belongsToMany(Deposito::class, 'stock_deposito')

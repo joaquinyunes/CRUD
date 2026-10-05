@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Evento;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -85,7 +86,8 @@ class CalendarioController extends Controller
         return back()->with('success', 'Evento eliminado correctamente.');
     }
 
-    public function mover(Request $request, Evento $evento): RedirectResponse
+    /** Lo llama el calendario por AJAX al arrastrar un evento: responde JSON. */
+    public function mover(Request $request, Evento $evento): JsonResponse
     {
         $evento->update([
             'inicio' => $request->start,

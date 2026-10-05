@@ -19,12 +19,7 @@ class CuentaCorrienteController extends Controller
         $clientes = Cliente::where('estado', 'activo')
             ->when($request->filled('buscar'), fn ($q) => $q->buscar($request->buscar))
             ->orderBy('nombre')->get()
-            ->map(function (Cliente $c) {
-                $c->saldo_actual = $c->saldo();
-
-                return $c;
-            })
-            ->when($request->input('con_saldo'), fn ($col) => $col->filter(fn ($c) => $c->saldo_actual > 0)->values());
+            ->when($request->input('con_saldo'), fn ($col) => $col->filter(fn (Cliente $c) => $c->saldo_actual > 0)->values());
 
         return view('cuentas.clientes', compact('clientes'));
     }
@@ -71,12 +66,7 @@ class CuentaCorrienteController extends Controller
     public function proveedores(Request $request): View
     {
         $proveedores = Proveedor::when($request->filled('buscar'), fn ($q) => $q->buscar($request->buscar))
-            ->orderBy('nombre')->get()
-            ->map(function (Proveedor $p) {
-                $p->saldo_actual = $p->saldo();
-
-                return $p;
-            });
+            ->orderBy('nombre')->get();
 
         return view('cuentas.proveedores', compact('proveedores'));
     }

@@ -11,8 +11,6 @@ class Categoria extends Model
 {
     use Auditable, HasFactory;
 
-    public $timestamps = false;
-
     protected $fillable = [
         'nombre',
         'descripcion',

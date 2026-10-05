@@ -70,6 +70,30 @@ jobs:
           DB_PASSWORD: secret
         run: php artisan test
 
+      # Que la suite pase no alcanza: las migraciones tienen que correr de punta
+      # a punta en los tres motores, que es lo que hace un deploy real.
+      - name: Verificar migraciones contra una base limpia
+        env:
+          DB_CONNECTION: ${{ matrix.db }}
+          DB_HOST: 127.0.0.1
+          DB_DATABASE: testing
+          DB_USERNAME: ${{ matrix.db == 'mysql' && 'root' || 'postgres' }}
+          DB_PASSWORD: secret
+        run: php artisan migrate:fresh --seed --force
+
+  estatico:
+    name: Análisis estático (PHPStan nivel 5)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: gd, zip, bcmath, intl
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: vendor/bin/phpstan analyse --no-progress
+
   estilo:
     name: Estilo de código (Pint)
     runs-on: ubuntu-latest
@@ -81,3 +105,16 @@ jobs:
           coverage: none
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: vendor/bin/pint --test
+
+  seguridad:
+    name: Dependencias con vulnerabilidades conocidas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer audit
+      - run: npm audit --audit-level=high

@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Venta;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin Venta
+ */
 class VentaResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -14,7 +18,7 @@ class VentaResource extends JsonResource
             'numero'     => $this->numero,
             'cliente_id' => $this->cliente_id,
             'cliente'    => $this->whenLoaded('cliente'),
-            'fecha'      => $this->fecha?->format('Y-m-d'),
+            'fecha'      => $this->fecha->format('Y-m-d'),
             'total'      => $this->total,
             'estado'     => $this->estado,
             'user_id'    => $this->user_id,
