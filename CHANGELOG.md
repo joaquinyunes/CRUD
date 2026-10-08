@@ -49,6 +49,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - El color de un evento del calendario acepta solo un hexadecimal.
 
 ### Agregado
+- **`php artisan sistema:instalar`, y el contenedor lo corre al arrancar sin demo.** Con
+  `DB_SEED_ON_BOOT=false` no se creaba ningún permiso, rol ni usuario —el `DatabaseSeeder` trae
+  cuentas de demostración con contraseñas públicas, así que correrlo no era opción—, y la
+  instalación real quedaba sin forma de iniciar sesión. Ahora crea el catálogo de permisos, el rol
+  Administrador (que recibe los permisos nuevos en cada deploy) y la primera cuenta desde
+  `ADMIN_EMAIL` / `ADMIN_PASSWORD` (mínimo 12 caracteres). Es idempotente: no repite la cuenta, no
+  cambia una contraseña existente ni toca los permisos de los demás roles.
 - `php artisan backup:crear` y su versión programada.
 - Test que entra a todas las pantallas de lectura con los datos de la demo y exige que ninguna
   devuelva un error, y tests de altas/bajas de cada módulo, cuentas corrientes, notificaciones,

@@ -25,6 +25,16 @@ if [ "$DB_SEED_ON_BOOT" = "true" ] || [ "$DB_SEED_ALWAYS" = "true" ]; then
     php artisan db:seed --force
 fi
 
+# Instalación real: sin demo no hay permisos, rol ni cuenta alguna, y nadie
+# podría entrar. Esto deja el catálogo de permisos al día (y se los da al rol
+# Administrador, así un permiso nuevo llega solo) y crea la primera cuenta con
+# ADMIN_EMAIL / ADMIN_PASSWORD si todavía no existe. Nunca toca una contraseña
+# ni los permisos de los demás roles.
+if [ "$DB_SEED_ON_BOOT" != "true" ] && [ "$DB_SEED_ALWAYS" != "true" ]; then
+    echo "==> Preparando la instalación (permisos, rol Administrador, primera cuenta)"
+    php artisan sistema:instalar --no-interaction
+fi
+
 # DemoSeeder sí borra y regenera las tablas de negocio. El comando decide solo:
 # siembra únicamente si la base está vacía, y ante cualquier duda no toca nada.
 # DB_SEED_ALWAYS=true reinicia la demo pública en cada arranque.

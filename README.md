@@ -212,7 +212,11 @@ PostgreSQL ya enlazados entre sí.
 4. Deploy. El primer arranque corre las migraciones y, con `DB_SEED_ON_BOOT=true`, carga los datos de
    demostración.
 
-Para la instalación real de un cliente, poner `DB_SEED_ON_BOOT=false`.
+Para la instalación real de un cliente, poner `DB_SEED_ON_BOOT=false` y cargar `ADMIN_EMAIL` y
+`ADMIN_PASSWORD` (12 caracteres o más): al arrancar, `php artisan sistema:instalar` deja al día los
+permisos, crea el rol Administrador y, **si todavía no existe**, la primera cuenta. No crea las
+cuentas de la demo (`admin@admin.com` / `password`) ni vuelve a tocar una contraseña. Fuera de
+Docker se corre a mano: `php artisan sistema:instalar --email=... ` y pide la contraseña.
 
 ### De la demo a una instalación real
 
@@ -242,7 +246,7 @@ viejos. Está todo en [`routes/console.php`](routes/console.php).
 php artisan test
 ```
 
-**207 tests.** Cubren las reglas que importan, no getters y setters:
+**219 tests.** Cubren las reglas que importan, no getters y setters:
 
 **Negocio**
 - el stock se descuenta al confirmar una venta y se repone al anularla;

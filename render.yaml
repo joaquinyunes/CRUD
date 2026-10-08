@@ -86,6 +86,16 @@ services:
       - key: DB_SEED_ALWAYS
         value: "false"
 
+      # --- Primera cuenta (instalación real, DB_SEED_ON_BOOT=false) ---
+      # Se crea una sola vez, si no existe. La contraseña: 12 caracteres o más.
+      # En la demo no se usan: ahí las cuentas las crea el sembrado.
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_NAME
+        value: Administrador
+
       - key: LOG_CHANNEL
         value: stderr
       - key: MAIL_MAILER
