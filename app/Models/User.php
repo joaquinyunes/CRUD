@@ -4,19 +4,26 @@ namespace App\Models;
 
 use App\Traits\Auditable;
 use Database\Factories\UserFactory;
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
-class User extends Authenticatable implements MustVerifyEmail
+class User extends ModeloMongo implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract, MustVerifyEmail
 {
     use Auditable;
+    use Authenticatable, Authorizable, CanResetPassword, MustVerifyEmailTrait;
 
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
@@ -98,18 +105,18 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function dejariaSinAdministrador(?int $nuevoRoleId = null): bool
     {
-        $idsAdmin = Role::whereHas('permissions', fn ($q) => $q->where('clave', Role::TODO))->pluck('id');
+        $idsAdmin = Role::idsAdministradores();
 
-        if (! $idsAdmin->contains($this->role_id)) {
+        if (! in_array($this->role_id, $idsAdmin, true)) {
             return false;                       // no era admin: nada que proteger
         }
 
-        if ($nuevoRoleId !== null && $idsAdmin->contains($nuevoRoleId)) {
+        if ($nuevoRoleId !== null && in_array($nuevoRoleId, $idsAdmin, true)) {
             return false;                       // sigue siendo admin
         }
 
         return static::whereIn('role_id', $idsAdmin)
-            ->where('id', '!=', $this->id)
+            ->where('_id', '!=', $this->id)
             ->where('activo', true)
             ->doesntExist();
     }
@@ -133,9 +140,6 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function scopeAdministradores($query)
     {
-        return $query->activos()->whereHas(
-            'role.permissions',
-            fn ($q) => $q->where('clave', Role::TODO)
-        );
+        return $query->activos()->whereIn('role_id', Role::idsAdministradores());
     }
 }

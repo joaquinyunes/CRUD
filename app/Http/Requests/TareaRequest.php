@@ -27,7 +27,7 @@ class TareaRequest extends FormRequest
             'fecha_limite' => $esAlta
                 ? ['nullable', 'date', 'after_or_equal:today']
                 : ['nullable', 'date'],
-            'asignada_a' => ['nullable', 'exists:users,id'],
+            'asignada_a' => ['nullable', 'exists:mongodb.users,id'],
         ];
     }
 

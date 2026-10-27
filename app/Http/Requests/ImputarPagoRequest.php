@@ -21,9 +21,9 @@ class ImputarPagoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'venta_id'       => ['nullable', 'exists:ventas,id'],
+            'venta_id'       => ['nullable', 'exists:mongodb.ventas,id'],
             'compra_id'      => ['nullable', 'exists:compras,id'],
-            'metodo_pago_id' => ['required', 'exists:metodos_pago,id'],
+            'metodo_pago_id' => ['required', 'exists:mongodb.metodos_pago,id'],
             'monto'          => ['required', 'numeric', 'min:0.01'],
             'referencia'     => ['nullable', 'string', 'max:255'],
         ];

@@ -70,10 +70,12 @@ class ProductoController extends Controller
                     ->orWhere('nombre', 'like', "%{$q}%")
                     ->orWhere('marca', 'like', "%{$q}%");
             })
-            ->orderByRaw('CASE WHEN codigo = ? OR codigo_barra = ? THEN 0 ELSE 1 END', [$q, $q])
             ->orderBy('nombre')
-            ->limit(10)
-            ->get(['id', 'codigo', 'codigo_barra', 'nombre', 'precio_venta', 'precio_compra', 'stock']);
+            ->get(['id', 'codigo', 'codigo_barra', 'nombre', 'precio_venta', 'precio_compra', 'stock'])
+            // Primero la coincidencia exacta de código; Mongo no ordena por una condición.
+            ->sortBy(fn ($p) => in_array($q, [$p->codigo, $p->codigo_barra], true) ? 0 : 1)
+            ->take(10)
+            ->values();
 
         return response()->json($productos);
     }

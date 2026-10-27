@@ -8,7 +8,7 @@ class CompraRequest extends ComprobanteRequest
     protected function reglasDeCabecera(): array
     {
         return [
-            'proveedor_id' => ['required', 'exists:proveedores,id'],
+            'proveedor_id' => ['required', 'exists:mongodb.proveedores,id'],
         ];
     }
 

@@ -22,7 +22,7 @@ class DevolucionRequest extends FormRequest
             'motivo'                 => ['nullable', 'string', 'max:255'],
             'reembolso_efectivo'     => ['nullable', 'boolean'],
             'detalles'               => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
+            'detalles.*.producto_id' => ['required', 'exists:mongodb.productos,id'],
             'detalles.*.cantidad'    => ['required', 'integer', 'min:0'],
         ];
     }

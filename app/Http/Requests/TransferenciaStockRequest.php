@@ -15,9 +15,9 @@ class TransferenciaStockRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'producto_id' => ['required', 'exists:productos,id'],
-            'origen_id'   => ['required', 'exists:depositos,id'],
-            'destino_id'  => ['required', 'exists:depositos,id', 'different:origen_id'],
+            'producto_id' => ['required', 'exists:mongodb.productos,id'],
+            'origen_id'   => ['required', 'exists:mongodb.depositos,id'],
+            'destino_id'  => ['required', 'exists:mongodb.depositos,id', 'different:origen_id'],
             'cantidad'    => ['required', 'integer', 'min:1'],
         ];
     }

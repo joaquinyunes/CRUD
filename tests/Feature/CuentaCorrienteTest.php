@@ -38,7 +38,7 @@ class CuentaCorrienteTest extends TestCase
             ->post(route('ventas.store'), $this->ventaPayload($producto, $cliente))
             ->assertSessionHasErrors('cliente_id');
 
-        $this->assertDatabaseCount('ventas', 0);
+        $this->assertDatabaseCount('ventas', 0, 'mongodb');
     }
 
     public function test_venta_a_credito_genera_saldo_y_cobro_fifo_lo_reduce(): void

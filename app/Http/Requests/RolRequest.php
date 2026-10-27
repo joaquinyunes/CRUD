@@ -16,7 +16,7 @@ class RolRequest extends FormRequest
     {
         return [
             'permisos'   => ['nullable', 'array'],
-            'permisos.*' => ['string', 'exists:permissions,clave'],
+            'permisos.*' => ['string', 'exists:mongodb.permissions,clave'],
         ];
     }
 

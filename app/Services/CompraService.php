@@ -9,6 +9,7 @@ use App\Models\Deposito;
 use App\Models\Producto;
 use App\Models\Setting;
 use App\Support\CalculadorTotales;
+use App\Support\Mongo\Transaccion;
 use App\Support\NumeradorDocumentos;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +42,7 @@ class CompraService
             (float) ($datos['descuento'] ?? 0)
         );
 
-        $compra = DB::transaction(function () use ($datos, $detalles, $totales, $pagos, $autorId) {
+        $compra = Transaccion::en(fn () => DB::transaction(function () use ($datos, $detalles, $totales, $pagos, $autorId) {
             $compra = Compra::create([
                 'numero'         => $this->proximoNumero(),
                 'proveedor_id'   => $datos['proveedor_id'],
@@ -66,7 +67,7 @@ class CompraService
             }
 
             return $compra;
-        });
+        }));
 
         CompraCreada::dispatch($compra);
 
@@ -84,7 +85,7 @@ class CompraService
      */
     public function actualizar(Compra $compra, array $datos): Compra
     {
-        DB::transaction(function () use ($compra, $datos) {
+        Transaccion::en(fn () => DB::transaction(function () use ($compra, $datos) {
             $this->stockDoc->revertirCompra($compra);
 
             $detalles = $this->construirDetalles($datos['detalles']);
@@ -115,7 +116,7 @@ class CompraService
                 $this->stockDoc->aplicarCompra($compra);
                 $this->actualizarCostos($detalles->all());
             }
-        });
+        }));
 
         return $compra;
     }

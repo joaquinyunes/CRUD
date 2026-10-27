@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\ModeloMongo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
@@ -41,11 +42,28 @@ class Orden
         if ($destino instanceof \Closure) {
             // Casos con join o varios criterios.
             $destino($query, $dir);
+        } elseif ($destino instanceof Builder && $destino->getModel() instanceof ModeloMongo) {
+            // shortcut: no se puede ordenar por el campo de un documento de otra colección
+            // (en SQL era una subconsulta correlacionada). Se ordena por la clave foránea; el
+            // orden por nombre de la relación se resuelve con $lookup en la fase 5.
+            $query->orderBy(self::claveForanea($destino), $dir);
         } elseif ($destino !== null) {
             // string, subconsulta (Builder) o expresion cruda.
             $query->orderBy($destino, $dir);
         }
 
         return $query;
+    }
+
+    /** La columna de la tabla principal en `whereColumn('otra.id', 'principal.clave_foranea')`. */
+    private static function claveForanea(Builder $subconsulta): string
+    {
+        foreach ($subconsulta->getQuery()->wheres as $where) {
+            if (($where['type'] ?? null) === 'Column') {
+                return substr((string) strrchr('.'.$where['second'], '.'), 1);
+            }
+        }
+
+        return '_id';
     }
 }

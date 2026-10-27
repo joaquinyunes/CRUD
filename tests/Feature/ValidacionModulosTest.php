@@ -149,7 +149,7 @@ class ValidacionModulosTest extends TestCase
             'codigo' => 'efectivo',
         ])->assertSessionHasErrors('codigo');
 
-        $this->assertDatabaseCount('metodos_pago', 1);
+        $this->assertDatabaseCount('metodos_pago', 1, 'mongodb');
     }
 
     public function test_un_rol_no_acepta_permisos_inventados(): void

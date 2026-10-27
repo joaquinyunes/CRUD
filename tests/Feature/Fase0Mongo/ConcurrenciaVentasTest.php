@@ -45,6 +45,7 @@ class ConcurrenciaVentasTest extends TestCase
             'DB_CONNECTION'    => 'sqlite',
             'DB_DATABASE'      => $this->sqlite,
             'DB_URL'           => '',
+            'DB_FOREIGN_KEYS'  => 'false',
             'MONGODB_DATABASE' => config('database.connections.mongodb.database'),
             'MONGODB_URI'      => config('database.connections.mongodb.dsn'),
             'QUEUE_CONNECTION' => 'sync',

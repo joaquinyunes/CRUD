@@ -1,8 +1,8 @@
 <?php
 
+use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Las políticas de ventas y compras comparaban el nombre del rol ("Administrador",
@@ -19,27 +19,21 @@ return new class extends Migration
 
     public function up(): void
     {
-        $ids = [];
-        foreach (self::CLAVES as $clave) {
-            DB::table('permissions')->insertOrIgnore(['clave' => $clave]);
-            $ids[] = DB::table('permissions')->where('clave', $clave)->value('id');
-        }
+        // Roles y permisos viven en MongoDB: se usan los modelos, no tablas SQL.
+        $ids = collect(self::CLAVES)
+            ->map(fn (string $clave) => Permission::firstOrCreate(['clave' => $clave])->id)
+            ->all();
 
-        foreach (DB::table('roles')->whereIn('nombre', ['Supervisor'])->pluck('id') as $roleId) {
-            foreach ($ids as $permissionId) {
-                DB::table('role_has_permissions')->insertOrIgnore([
-                    'role_id'       => $roleId,
-                    'permission_id' => $permissionId,
-                ]);
-            }
+        foreach (Role::whereIn('nombre', ['Supervisor'])->get() as $rol) {
+            $rol->permissions()->syncWithoutDetaching($ids);
 
             // El middleware cachea las claves de cada rol: que el cambio se vea ya.
-            Role::olvidarClaves((int) $roleId);
+            Role::olvidarClaves($rol->id);
         }
     }
 
     public function down(): void
     {
-        DB::table('permissions')->whereIn('clave', self::CLAVES)->delete();
+        Permission::whereIn('clave', self::CLAVES)->delete();
     }
 };

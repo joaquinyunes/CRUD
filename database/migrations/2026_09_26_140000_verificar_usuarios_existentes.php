@@ -1,7 +1,7 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
 
 /**
  * El modelo de usuario pasa a implementar MustVerifyEmail, así que el middleware
@@ -15,7 +15,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::table('users')->whereNull('email_verified_at')->update([
+        User::whereNull('email_verified_at')->update([
             'email_verified_at' => now(),
         ]);
     }

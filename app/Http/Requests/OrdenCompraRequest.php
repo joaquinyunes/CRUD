@@ -8,7 +8,7 @@ class OrdenCompraRequest extends ComprobanteRequest
     protected function reglasDeCabecera(): array
     {
         return [
-            'proveedor_id'           => ['required', 'exists:proveedores,id'],
+            'proveedor_id'           => ['required', 'exists:mongodb.proveedores,id'],
             'fecha_entrega_estimada' => ['nullable', 'date', 'after_or_equal:fecha'],
         ];
     }

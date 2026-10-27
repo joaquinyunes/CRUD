@@ -21,7 +21,7 @@ class AsignarRolRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role_id' => ['nullable', 'exists:roles,id'],
+            'role_id' => ['nullable', 'exists:mongodb.roles,id'],
         ];
     }
 

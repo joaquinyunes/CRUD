@@ -60,7 +60,7 @@ class BajasTest extends TestCase
         $this->assertDatabaseHas('proveedores', [
             'id'     => $proveedor->id,
             'estado' => 'archivado',
-        ]);
+        ], 'mongodb');
         $this->assertDatabaseCount('compras', 1);
     }
 
@@ -71,7 +71,7 @@ class BajasTest extends TestCase
 
         $this->actingAs($this->admin())->delete(route('proveedores.destroy', $proveedor));
 
-        $this->assertDatabaseMissing('proveedores', ['id' => $proveedor->id]);
+        $this->assertDatabaseMissing('proveedores', ['id' => $proveedor->id], 'mongodb');
     }
 
     public function test_un_proveedor_archivado_no_aparece_en_el_listado_pero_se_puede_restaurar(): void
@@ -85,7 +85,7 @@ class BajasTest extends TestCase
 
         $this->actingAs($admin)->post(route('proveedores.restaurar', $proveedor));
 
-        $this->assertDatabaseHas('proveedores', ['id' => $proveedor->id, 'estado' => 'activo']);
+        $this->assertDatabaseHas('proveedores', ['id' => $proveedor->id, 'estado' => 'activo'], 'mongodb');
     }
 
     public function test_un_usuario_con_ventas_se_desactiva_en_vez_de_romper(): void
@@ -107,8 +107,8 @@ class BajasTest extends TestCase
             ->delete(route('usuarios.destroy', $vendedor))
             ->assertRedirect(route('usuarios.index'));
 
-        $this->assertDatabaseHas('users', ['id' => $vendedor->id, 'activo' => false]);
-        $this->assertDatabaseCount('ventas', 1);
+        $this->assertDatabaseHas('users', ['id' => $vendedor->id, 'activo' => false], 'mongodb');
+        $this->assertDatabaseCount('ventas', 1, 'mongodb');
     }
 
     public function test_un_usuario_desactivado_no_puede_entrar(): void
@@ -155,7 +155,7 @@ class BajasTest extends TestCase
 
         $this->actingAs($admin)->post(route('usuarios.reactivar', $usuario));
 
-        $this->assertDatabaseHas('users', ['id' => $usuario->id, 'activo' => true]);
+        $this->assertDatabaseHas('users', ['id' => $usuario->id, 'activo' => true], 'mongodb');
     }
 
     public function test_un_usuario_sin_historial_si_se_borra(): void
@@ -167,6 +167,6 @@ class BajasTest extends TestCase
 
         $this->actingAs($this->admin())->delete(route('usuarios.destroy', $usuario));
 
-        $this->assertDatabaseMissing('users', ['id' => $usuario->id]);
+        $this->assertDatabaseMissing('users', ['id' => $usuario->id], 'mongodb');
     }
 }

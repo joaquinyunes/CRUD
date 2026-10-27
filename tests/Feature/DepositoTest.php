@@ -93,6 +93,6 @@ class DepositoTest extends TestCase
         ])->assertSessionHasErrors('detalles');
 
         $this->assertSame(10, $producto->fresh()->stock);
-        $this->assertDatabaseCount('ventas', 0);
+        $this->assertDatabaseCount('ventas', 0, 'mongodb');
     }
 }

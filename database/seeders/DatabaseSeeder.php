@@ -62,7 +62,9 @@ class DatabaseSeeder extends Seeder
         );
 
         // Compatibilidad: el rol minusculo "vendedor" de versiones previas queda sin uso.
-        Role::where('nombre', 'vendedor')->whereDoesntHave('users')->delete();
+        Role::where('nombre', 'vendedor')->get()
+            ->filter(fn (Role $rol) => ! User::where('role_id', $rol->id)->exists())
+            ->each->delete();
 
         // 5. Cuentas de demo (idempotentes: no pisan la contrasena si ya existen).
         $this->crearUsuario('Admin', 'admin@admin.com', 'password', $admin->id);

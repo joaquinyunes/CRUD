@@ -42,6 +42,37 @@ class Consulta extends Builder
         return $resultado instanceof Decimal128 ? (string) $resultado : $resultado;
     }
 
+    /**
+     * Compara dos campos del mismo documento (`stock <= stock_minimo`) con $expr.
+     *
+     * Con nombres de otra tabla (`users.id`, `ventas.user_id`) no hay comparación posible:
+     * el código de los listados arma `Modelo::select('nombre')->whereColumn(...)` solo para
+     * decirle a Orden por qué clave ordenar, así que se registra sin ejecutarla.
+     */
+    public function whereColumn($first, $operator = null, $second = null, $boolean = 'and')
+    {
+        if ($second === null) {
+            [$second, $operator] = [$operator, '='];
+        }
+
+        if (str_contains((string) $first, '.') || str_contains((string) $second, '.')) {
+            $this->wheres[] = ['type' => 'Column', 'first' => $first, 'operator' => $operator, 'second' => $second, 'boolean' => $boolean];
+
+            return $this;
+        }
+
+        $mongo = ['=' => '$eq', '!=' => '$ne', '<>' => '$ne', '<' => '$lt', '<=' => '$lte', '>' => '$gt', '>=' => '$gte'][$operator]
+            ?? throw new \InvalidArgumentException("Operador no soportado en whereColumn: {$operator}");
+
+        return $this->whereRaw(['$expr' => [$mongo => ['$'.$first, '$'.$second]]], [], $boolean);
+    }
+
+    /** Eloquent la usa al cargar relaciones con ids enteros; en Mongo es un whereIn común. */
+    public function whereIntegerInRaw($column, $values, $boolean = 'and', $not = false)
+    {
+        return $this->whereIn($column, $values, $boolean, $not);
+    }
+
     public static function esClave(string $columna): bool
     {
         return $columna === 'id' || $columna === '_id' || str_ends_with($columna, '_id');

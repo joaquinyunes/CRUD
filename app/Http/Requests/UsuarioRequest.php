@@ -22,8 +22,8 @@ class UsuarioRequest extends FormRequest
 
         return [
             'name'    => ['required', 'string', 'max:255'],
-            'email'   => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($usuario?->id)],
-            'role_id' => ['nullable', 'exists:roles,id'],
+            'email'   => ['required', 'email', 'max:255', Rule::unique('mongodb.users', 'email')->ignore($usuario?->id)],
+            'role_id' => ['nullable', 'exists:mongodb.roles,id'],
             // En una edición, dejar la contraseña vacía significa "no cambiarla".
             'password' => [$esAlta ? 'required' : 'nullable', 'confirmed', Password::min(8)],
             'activo'   => ['nullable', 'boolean'],

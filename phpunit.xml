@@ -26,6 +26,8 @@
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
+        <!-- Mientras quede SQL, sus claves foráneas apuntan a filas que ya viven en MongoDB. -->
+        <env name="DB_FOREIGN_KEYS" value="false"/>
         <env name="MONGODB_URI" value="mongodb://127.0.0.1:27017/?replicaSet=rs0"/>
         <env name="MONGODB_DATABASE" value="crud_erp_test"/>
         <env name="MAIL_MAILER" value="array"/>

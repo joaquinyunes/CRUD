@@ -3,12 +3,11 @@
 namespace App\Models;
 
 use App\Traits\Auditable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
 
-class Role extends Model
+class Role extends ModeloMongo
 {
     use Auditable;
 
@@ -47,7 +46,8 @@ class Role extends Model
     /** @return BelongsToMany<Permission, $this> */
     public function permissions(): BelongsToMany
     {
-        return $this->belongsToMany(Permission::class, 'role_has_permissions');
+        // Sin tabla intermedia: el rol guarda `permission_ids` y el permiso `role_ids`.
+        return $this->belongsToMany(Permission::class, null, 'role_ids', 'permission_ids');
     }
 
     public function tienePermiso(string $clave): bool
@@ -55,6 +55,18 @@ class Role extends Model
         $claves = self::clavesDe($this->id);
 
         return in_array(self::TODO, $claves, true) || in_array($clave, $claves, true);
+    }
+
+    /**
+     * Los roles que pueden todo (los que tienen el permiso comodín).
+     *
+     * @return list<int>
+     */
+    public static function idsAdministradores(): array
+    {
+        $comodin = Permission::where('clave', self::TODO)->value('_id');
+
+        return $comodin === null ? [] : self::where('permission_ids', $comodin)->get()->modelKeys();
     }
 
     public function sincronizarPermisos(array $permissionIds): void

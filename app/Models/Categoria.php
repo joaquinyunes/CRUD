@@ -5,9 +5,8 @@ namespace App\Models;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 
-class Categoria extends Model
+class Categoria extends ModeloMongo
 {
     use Auditable, HasFactory;
 

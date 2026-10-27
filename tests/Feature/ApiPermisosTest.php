@@ -81,7 +81,7 @@ class ApiPermisosTest extends TestCase
             'estado'        => 'activo',
         ])->assertStatus(403);
 
-        $this->assertDatabaseMissing('productos', ['nombre' => 'Colado']);
+        $this->assertDatabaseMissing('productos', ['nombre' => 'Colado'], 'mongodb');
     }
 
     public function test_solo_lectura_no_puede_borrar_productos(): void
@@ -108,7 +108,7 @@ class ApiPermisosTest extends TestCase
             'detalles'   => [['producto_id' => $producto->id, 'cantidad' => 1, 'precio' => 180]],
         ])->assertStatus(403);
 
-        $this->assertDatabaseCount('ventas', 0);
+        $this->assertDatabaseCount('ventas', 0, 'mongodb');
     }
 
     public function test_el_administrador_si_puede_escribir_por_api(): void
@@ -132,7 +132,7 @@ class ApiPermisosTest extends TestCase
             'estado'        => 'activo',
         ])->assertCreated();
 
-        $this->assertDatabaseHas('productos', ['nombre' => 'Pinza']);
+        $this->assertDatabaseHas('productos', ['nombre' => 'Pinza'], 'mongodb');
     }
 
     public function test_el_login_de_api_esta_limitado_por_intentos(): void

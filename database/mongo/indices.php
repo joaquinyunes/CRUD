@@ -70,5 +70,38 @@ return [
         [['caja_sesion_id' => 1, 'tipo' => 1], ['name' => 'sesion_tipo']],
     ],
 
+    // ---- Fase 2: catálogo, personas y seguridad ----
+
+    'users' => [
+        [['email' => 1], ['unique' => true, 'name' => 'email_unico']],
+        [['role_id' => 1], ['name' => 'role_id']],
+    ],
+
+    'roles' => [
+        [['nombre' => 1], ['name' => 'nombre']],
+    ],
+
+    'permissions' => [
+        [['clave' => 1], ['unique' => true, 'name' => 'clave_unica']],
+    ],
+
+    'personal_access_tokens' => [
+        [['token' => 1], ['unique' => true, 'name' => 'token_unico']],
+        [['tokenable_type' => 1, 'tokenable_id' => 1], ['name' => 'tokenable']],
+    ],
+
+    'categorias' => [
+        [['nombre' => 1], ['name' => 'nombre']],
+    ],
+
+    'unidades_medida' => [
+        [['nombre' => 1], ['name' => 'nombre']],
+    ],
+
+    'proveedores' => [
+        [['nombre' => 1], ['name' => 'nombre']],
+        [['cuit' => 1], ['name' => 'cuit']],
+    ],
+
     // `contadores` usa `_id` ("id:ventas", "num:ventas:VTA"): único por construcción.
 ];

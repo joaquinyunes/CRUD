@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\PersonalAccessToken;
 use App\Services\StockService;
 use App\Support\Mongo\VerificadorDePresencia;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Los tokens de API viven en MongoDB junto con los usuarios.
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
         // Un token de API no debería poder martillar el sistema. El límite va
         // por usuario cuando hay token, y por IP en las rutas públicas.
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(60)

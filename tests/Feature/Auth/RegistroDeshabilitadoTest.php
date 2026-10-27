@@ -30,7 +30,7 @@ class RegistroDeshabilitadoTest extends TestCase
         ])->assertNotFound();
 
         $this->assertGuest();
-        $this->assertDatabaseMissing('users', ['email' => 'intruso@example.com']);
+        $this->assertDatabaseMissing('users', ['email' => 'intruso@example.com'], 'mongodb');
     }
 
     public function test_el_login_sigue_disponible(): void

@@ -24,16 +24,16 @@ class ProductoRequest extends FormRequest
         $vivos = fn ($q) => $q->where('estado', '!=', 'eliminado');
 
         return [
-            'codigo'           => ['nullable', 'string', 'max:100', Rule::unique('productos', 'codigo')->ignore($ignorar)->where($vivos)],
-            'codigo_barra'     => ['nullable', 'string', 'max:100', Rule::unique('productos', 'codigo_barra')->ignore($ignorar)->where($vivos)],
+            'codigo'           => ['nullable', 'string', 'max:100', Rule::unique('mongodb.productos', 'codigo')->ignore($ignorar)->where($vivos)],
+            'codigo_barra'     => ['nullable', 'string', 'max:100', Rule::unique('mongodb.productos', 'codigo_barra')->ignore($ignorar)->where($vivos)],
             'nombre'           => ['required', 'string', 'max:255'],
             'descripcion'      => ['nullable', 'string'],
-            'categoria_id'     => ['nullable', 'exists:categorias,id'],
+            'categoria_id'     => ['nullable', 'exists:mongodb.categorias,id'],
             'marca'            => ['nullable', 'string', 'max:100'],
             'precio_compra'    => ['nullable', 'numeric', 'min:0'],
             'precio_venta'     => ['nullable', 'numeric', 'min:0'],
             'stock_minimo'     => ['nullable', 'integer', 'min:0'],
-            'unidad_medida_id' => ['nullable', 'exists:unidades_medida,id'],
+            'unidad_medida_id' => ['nullable', 'exists:mongodb.unidades_medida,id'],
             'estado'           => ['nullable', Rule::in(['activo', 'inactivo'])],
             'imagen'           => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];

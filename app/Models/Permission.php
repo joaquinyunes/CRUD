@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Permission extends Model
+class Permission extends ModeloMongo
 {
     public $timestamps = false;
 
@@ -16,7 +15,7 @@ class Permission extends Model
     /** @return BelongsToMany<Role, $this> */
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class, 'role_has_permissions');
+        return $this->belongsToMany(Role::class, null, 'permission_ids', 'role_ids');
     }
 
     public function modulo(): string

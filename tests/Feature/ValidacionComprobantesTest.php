@@ -42,7 +42,7 @@ class ValidacionComprobantesTest extends TestCase
             ->post(route('ventas.store'), $this->venta(['detalles' => []]))
             ->assertSessionHasErrors('detalles');
 
-        $this->assertDatabaseCount('ventas', 0);
+        $this->assertDatabaseCount('ventas', 0, 'mongodb');
     }
 
     public function test_no_se_vende_cantidad_cero(): void
@@ -74,7 +74,7 @@ class ValidacionComprobantesTest extends TestCase
             ]))
             ->assertSessionHasErrors('descuento');
 
-        $this->assertDatabaseCount('ventas', 0);
+        $this->assertDatabaseCount('ventas', 0, 'mongodb');
     }
 
     public function test_las_compras_aplican_las_mismas_reglas_que_las_ventas(): void
@@ -105,6 +105,6 @@ class ValidacionComprobantesTest extends TestCase
             ->post(route('ventas.store'), $this->venta())
             ->assertSessionHasNoErrors();
 
-        $this->assertDatabaseCount('ventas', 1);
+        $this->assertDatabaseCount('ventas', 1, 'mongodb');
     }
 }

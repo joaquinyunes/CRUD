@@ -18,7 +18,7 @@ class CategoriaRequest extends FormRequest
     {
         return [
             'nombre' => ['required', 'string', 'max:255',
-                Rule::unique('categorias', 'nombre')->ignore($this->route('categoria')?->id)],
+                Rule::unique('mongodb.categorias', 'nombre')->ignore($this->route('categoria')?->id)],
             'descripcion' => ['nullable', 'string', 'max:255'],
             'estado'      => ['nullable', 'boolean'],
         ];

@@ -18,7 +18,7 @@ class MetodoPagoRequest extends FormRequest
         return [
             'nombre' => ['required', 'string', 'max:100'],
             'codigo' => ['required', 'string', 'max:20',
-                Rule::unique('metodos_pago', 'codigo')->ignore($this->route('metodo_pago')?->id)],
+                Rule::unique('mongodb.metodos_pago', 'codigo')->ignore($this->route('metodo_pago')?->id)],
             'activo'         => ['nullable', 'boolean'],
             'permite_vuelto' => ['nullable', 'boolean'],
             'orden'          => ['nullable', 'integer', 'min:0'],

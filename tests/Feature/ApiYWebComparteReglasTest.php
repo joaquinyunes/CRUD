@@ -89,7 +89,7 @@ class ApiYWebComparteReglasTest extends TestCase
             Producto::factory()->create(['stock' => 10])
         ))->assertStatus(422)->assertJsonValidationErrors('cliente_id');
 
-        $this->assertDatabaseCount('ventas', 0);
+        $this->assertDatabaseCount('ventas', 0, 'mongodb');
     }
 
     public function test_la_api_no_vende_sobre_un_cliente_archivado(): void

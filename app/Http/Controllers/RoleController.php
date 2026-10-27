@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RolRequest;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -12,7 +13,13 @@ class RoleController extends Controller
 {
     public function index(): View
     {
-        $roles = Role::withCount(['permissions', 'users'])->get();
+        $roles = Role::all();
+        $usuariosPorRol = User::all(['role_id'])->countBy('role_id');
+
+        foreach ($roles as $rol) {
+            $rol->permissions_count = count($rol->permission_ids ?? []);
+            $rol->users_count = $usuariosPorRol[$rol->id] ?? 0;
+        }
 
         return view('roles.index', compact('roles'));
     }
