@@ -44,7 +44,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: pdo_sqlite, pdo_mysql, pdo_pgsql, gd, zip, bcmath, intl
+          extensions: pdo_sqlite, pdo_mysql, pdo_pgsql, mongodb, gd, zip, bcmath, intl
           coverage: none
 
       - name: Cachear dependencias de Composer
@@ -81,6 +81,58 @@ jobs:
           DB_PASSWORD: secret
         run: php artisan migrate:fresh --seed --force
 
+  mongodb:
+    name: Tests (MongoDB replica set)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Las ventas usan transacciones, que MongoDB solo da sobre un replica set
+      # (aunque sea de un solo nodo). Un service container no permite pasarle
+      # --replSet, por eso se levanta a mano.
+      - name: Levantar MongoDB con replica set
+        run: |
+          docker run -d --name mongo -p 27017:27017 mongo:7 --replSet rs0 --bind_ip_all
+          for i in $(seq 1 30); do
+            docker exec mongo mongosh --quiet --eval 'db.runCommand({ping:1}).ok' && break
+            sleep 2
+          done
+          docker exec mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]})'
+          for i in $(seq 1 30); do
+            docker exec mongo mongosh --quiet --eval 'db.hello().isWritablePrimary' | grep -q true && break
+            sleep 2
+          done
+
+      - name: Preparar PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_sqlite, mongodb, gd, zip, bcmath, intl
+          coverage: none
+
+      - name: Cachear dependencias de Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Instalar dependencias
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Preparar entorno
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # Mientras se porta el sistema por fases (PLAN-CRUD-MONGODB.md) corre lo que ya
+      # vive en MongoDB. Cuando termine la fase 7 pasa a ser `php artisan test` entero.
+      - name: Correr tests de MongoDB
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+          MONGODB_DATABASE: crud_erp_test
+        run: php artisan test tests/Feature/Fase0Mongo tests/Feature/Fase1Mongo tests/Feature/VentaStockTest.php tests/Feature/CajaTest.php
+
   estatico:
     name: Análisis estático (PHPStan nivel 5)
     runs-on: ubuntu-latest
@@ -89,7 +141,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: gd, zip, bcmath, intl
+          extensions: mongodb, gd, zip, bcmath, intl
           coverage: none
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: vendor/bin/phpstan analyse --no-progress
@@ -102,6 +154,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          extensions: mongodb
           coverage: none
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: vendor/bin/pint --test
@@ -114,6 +167,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          extensions: mongodb
           coverage: none
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: composer audit
