@@ -99,6 +99,14 @@ return [
             'sslmode'        => env('DB_SSLMODE', 'prefer'),
         ],
 
+        // Fase 0: los modelos del núcleo (ventas, stock, caja) viven acá; el resto
+        // sigue en la conexión por defecto hasta que se porte (ver PLAN-CRUD-MONGODB.md).
+        'mongodb' => [
+            'driver'   => 'mongodb',
+            'dsn'      => env('MONGODB_URI', 'mongodb://127.0.0.1:27017/?replicaSet=rs0'),
+            'database' => env('MONGODB_DATABASE', 'crud_erp'),
+        ],
+
         'sqlsrv' => [
             'driver'         => 'sqlsrv',
             'url'            => env('DB_URL'),

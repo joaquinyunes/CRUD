@@ -8,7 +8,7 @@ class VentaRequest extends ComprobanteRequest
     protected function reglasDeCabecera(): array
     {
         return [
-            'cliente_id' => ['required', 'exists:clientes,id'],
+            'cliente_id' => ['required', 'exists:mongodb.clientes,id'],
         ];
     }
 

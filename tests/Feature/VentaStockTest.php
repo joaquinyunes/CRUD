@@ -8,11 +8,12 @@ use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\LimpiaMongo;
 use Tests\TestCase;
 
 class VentaStockTest extends TestCase
 {
-    use RefreshDatabase;
+    use LimpiaMongo, RefreshDatabase;
 
     private function admin(): User
     {
@@ -44,7 +45,7 @@ class VentaStockTest extends TestCase
         $this->assertSame(7, $producto->fresh()->stock);
         $this->assertDatabaseHas('movimientos_stock', [
             'producto_id' => $producto->id, 'tipo' => 'salida', 'cantidad' => 3,
-        ]);
+        ], 'mongodb');
     }
 
     public function test_venta_pendiente_no_toca_stock(): void
@@ -66,7 +67,7 @@ class VentaStockTest extends TestCase
             ->assertSessionHasErrors('detalles');
 
         $this->assertSame(2, $producto->fresh()->stock);
-        $this->assertDatabaseCount('ventas', 0);
+        $this->assertDatabaseCount('ventas', 0, 'mongodb');
     }
 
     public function test_anular_venta_devuelve_stock(): void

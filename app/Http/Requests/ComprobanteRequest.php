@@ -52,7 +52,7 @@ abstract class ComprobanteRequest extends FormRequest
     public function rules(): array
     {
         $reglas = array_merge($this->reglasDeCabecera(), [
-            'deposito_id' => ['nullable', 'exists:depositos,id'],
+            'deposito_id' => ['nullable', 'exists:mongodb.depositos,id'],
             'fecha'       => ['required', 'date'],
             'estado'      => [
                 $this->estadoRequerido() ? 'required' : 'nullable',
@@ -60,7 +60,7 @@ abstract class ComprobanteRequest extends FormRequest
             ],
 
             'detalles'               => ['required', 'array', 'min:1'],
-            'detalles.*.producto_id' => ['required', 'exists:productos,id'],
+            'detalles.*.producto_id' => ['required', 'exists:mongodb.productos,id'],
             'detalles.*.cantidad'    => ['required', 'integer', 'min:1'],
             'detalles.*.precio'      => ['required', 'numeric', 'min:0'],
 
@@ -72,7 +72,7 @@ abstract class ComprobanteRequest extends FormRequest
 
         if ($this->aceptaPagos()) {
             $reglas['metodos_pago'] = ['nullable', 'array'];
-            $reglas['metodos_pago.*.metodo_pago_id'] = ['required_with:metodos_pago', 'exists:metodos_pago,id'];
+            $reglas['metodos_pago.*.metodo_pago_id'] = ['required_with:metodos_pago', 'exists:mongodb.metodos_pago,id'];
             $reglas['metodos_pago.*.monto'] = ['required_with:metodos_pago', 'numeric', 'min:0'];
             $reglas['metodos_pago.*.referencia'] = ['nullable', 'string', 'max:255'];
         }

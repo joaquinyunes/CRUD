@@ -2,14 +2,12 @@
 
 namespace App\Models;
 
+use App\Support\Mongo\StockDeposito;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Support\Facades\Schema;
 
-class Producto extends Model
+class Producto extends ModeloMongo
 {
     use Auditable, HasFactory;
 
@@ -40,17 +38,11 @@ class Producto extends Model
     {
         // Al alta, el stock inicial vive en el depósito principal.
         static::created(function (Producto $producto) {
-            if (! Schema::hasTable('depositos')) {
-                return;
-            }
             $depositoId = Deposito::principalId();
             if (! $depositoId) {
                 return;
             }
-            \Illuminate\Support\Facades\DB::table('stock_deposito')->updateOrInsert(
-                ['producto_id' => $producto->id, 'deposito_id' => $depositoId],
-                ['cantidad' => (int) $producto->stock],
-            );
+            StockDeposito::fijar($producto->id, $depositoId, (int) $producto->stock);
         });
     }
 
@@ -66,7 +58,7 @@ class Producto extends Model
 
     public function scopeStockCritico($query)
     {
-        return $query->where('stock', '<=', \DB::raw('stock_minimo'))
+        return $query->whereRaw(['$expr' => ['$lte' => ['$stock', '$stock_minimo']]])
             ->where('estado', 'activo');
     }
 
@@ -82,19 +74,9 @@ class Producto extends Model
         return $this->belongsTo(UnidadMedida::class);
     }
 
-    /** @return BelongsToMany<Deposito, $this> */
-    public function depositos(): BelongsToMany
-    {
-        return $this->belongsToMany(Deposito::class, 'stock_deposito')
-            ->withPivot('cantidad');
-    }
-
     public function stockEn(int $depositoId): int
     {
-        return (int) \Illuminate\Support\Facades\DB::table('stock_deposito')
-            ->where('producto_id', $this->id)
-            ->where('deposito_id', $depositoId)
-            ->value('cantidad');
+        return StockDeposito::cantidad($this->id, $depositoId);
     }
 
     public function getImagenUrlAttribute(): string

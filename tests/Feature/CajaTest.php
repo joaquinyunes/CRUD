@@ -8,11 +8,12 @@ use App\Models\MetodoPago;
 use App\Models\Producto;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\LimpiaMongo;
 use Tests\TestCase;
 
 class CajaTest extends TestCase
 {
-    use RefreshDatabase;
+    use LimpiaMongo, RefreshDatabase;
 
     private function admin(): User
     {
@@ -66,6 +67,6 @@ class CajaTest extends TestCase
         $this->actingAs($admin)->post(route('caja.abrir'), ['monto_inicial' => 0])
             ->assertSessionHasErrors('monto_inicial');
 
-        $this->assertDatabaseCount('caja_sesiones', 1);
+        $this->assertDatabaseCount('caja_sesiones', 1, 'mongodb');
     }
 }

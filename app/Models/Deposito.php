@@ -3,9 +3,8 @@
 namespace App\Models;
 
 use App\Traits\Auditable;
-use Illuminate\Database\Eloquent\Model;
 
-class Deposito extends Model
+class Deposito extends ModeloMongo
 {
     use Auditable;
 
@@ -25,7 +24,7 @@ class Deposito extends Model
 
     public static function principalId(): int
     {
-        return (int) (static::where('es_principal', true)->value('id')
-            ?? static::orderBy('id')->value('id'));
+        return (int) (static::where('es_principal', true)->value('_id')
+            ?? static::orderBy('_id')->value('_id'));
     }
 }

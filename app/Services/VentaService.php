@@ -13,9 +13,9 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Models\Venta;
 use App\Support\CalculadorTotales;
+use App\Support\Mongo\Transaccion;
 use App\Support\NumeradorDocumentos;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Emitir una venta: el único lugar donde se crea una.
@@ -59,7 +59,7 @@ class VentaService
         $this->verificarDescuento($totales, $autorId);
         $this->verificarCredito($cliente, $totales['total'], $pagos);
 
-        $venta = DB::transaction(function () use ($datos, $detalles, $totales, $pagos, $autorId) {
+        $venta = Transaccion::en(function () use ($datos, $detalles, $totales, $pagos, $autorId) {
             $venta = Venta::create([
                 'numero'         => $this->proximoNumero(),
                 'cliente_id'     => $datos['cliente_id'],
@@ -117,7 +117,7 @@ class VentaService
         $pagos = $datos['metodos_pago'] ?? [];
         $efectivoAnterior = $this->efectivoRegistradoEn($venta);
 
-        DB::transaction(function () use ($venta, $datos, $pagos) {
+        Transaccion::en(function () use ($venta, $datos, $pagos) {
             $this->stockDoc->revertirVenta($venta);
 
             $detalles = $this->construirDetalles($datos['detalles']);
@@ -166,8 +166,9 @@ class VentaService
      */
     public function construirDetalles(array $detalles): Collection
     {
-        $costos = Producto::whereIn('id', collect($detalles)->pluck('producto_id'))
-            ->pluck('precio_compra', 'id');
+        $costos = Producto::whereIn('id', collect($detalles)->pluck('producto_id')->all())
+            ->get()
+            ->mapWithKeys(fn (Producto $producto) => [$producto->id => $producto->precio_compra]);
 
         return collect($detalles)->map(function (array $item) use ($costos): array {
             $cantidad = (int) $item['cantidad'];
@@ -228,7 +229,7 @@ class VentaService
     /** @param  array<int,array<string,mixed>>  $pagos */
     public function efectivoDe(array $pagos): float
     {
-        $efectivoIds = MetodoPago::where('codigo', 'efectivo')->pluck('id')->all();
+        $efectivoIds = MetodoPago::where('codigo', 'efectivo')->get()->modelKeys();
 
         return (float) collect($pagos)
             ->filter(fn ($pago) => in_array((int) ($pago['metodo_pago_id'] ?? 0), $efectivoIds, true))
@@ -238,7 +239,7 @@ class VentaService
     /** El efectivo que la venta ya tiene imputado, para ajustar la caja al editarla. */
     public function efectivoRegistradoEn(Venta $venta): float
     {
-        $efectivoIds = MetodoPago::where('codigo', 'efectivo')->pluck('id')->all();
+        $efectivoIds = MetodoPago::where('codigo', 'efectivo')->get()->modelKeys();
 
         return (float) $venta->pagos()->whereIn('metodo_pago_id', $efectivoIds)->sum('monto');
     }

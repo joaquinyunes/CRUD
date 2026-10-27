@@ -8,8 +8,16 @@ use App\Models\Deposito;
 use App\Models\MovimientoStock;
 use App\Models\Producto;
 use App\Models\Setting;
-use Illuminate\Support\Facades\DB;
+use App\Support\Mongo\StockDeposito;
+use App\Support\Mongo\Transaccion;
 
+/**
+ * Libro de movimientos + saldo por depósito.
+ *
+ * En SQL el saldo se leía con lockForUpdate. En MongoDB no hay bloqueo de fila:
+ * la salida es un único findOneAndUpdate atómico ($inc solo si alcanza el
+ * stock), así que dos ventas simultáneas no pueden dejar el saldo negativo.
+ */
 class StockService
 {
     public function registrarSalida(Producto $producto, int $cantidad, string $referenciaTipo, ?int $referenciaId, ?int $depositoId = null): void
@@ -17,17 +25,19 @@ class StockService
         $this->validarCantidad($cantidad);
         $depositoId ??= Deposito::principalId();
 
-        DB::transaction(function () use ($producto, $cantidad, $referenciaTipo, $referenciaId, $depositoId) {
-            $disponible = $this->stockBloqueado($producto->id, $depositoId);
+        Transaccion::en(function () use ($producto, $cantidad, $referenciaTipo, $referenciaId, $depositoId) {
+            $minimo = $this->permiteNegativo() ? null : 0;
 
-            if (! $this->permiteNegativo() && $disponible < $cantidad) {
+            if (StockDeposito::sumar($producto->id, $depositoId, -$cantidad, $minimo) === null) {
+                $disponible = StockDeposito::cantidad($producto->id, $depositoId);
+
                 throw new StockInsuficienteException(
                     "Stock insuficiente para «{$producto->nombre}» en el depósito. Disponible: {$disponible}, solicitado: {$cantidad}."
                 );
             }
 
             $this->movimiento($producto->id, $depositoId, 'salida', $cantidad, $referenciaTipo, $referenciaId);
-            $this->ajustar($producto, $depositoId, -$cantidad);
+            $this->ajustarTotal($producto, -$cantidad);
         });
 
         if ($producto->stock <= $producto->stock_minimo) {
@@ -40,10 +50,10 @@ class StockService
         $this->validarCantidad($cantidad);
         $depositoId ??= Deposito::principalId();
 
-        DB::transaction(function () use ($producto, $cantidad, $referenciaTipo, $referenciaId, $depositoId) {
-            $this->stockBloqueado($producto->id, $depositoId);
+        Transaccion::en(function () use ($producto, $cantidad, $referenciaTipo, $referenciaId, $depositoId) {
+            StockDeposito::sumar($producto->id, $depositoId, $cantidad);
             $this->movimiento($producto->id, $depositoId, 'entrada', $cantidad, $referenciaTipo, $referenciaId);
-            $this->ajustar($producto, $depositoId, $cantidad);
+            $this->ajustarTotal($producto, $cantidad);
         });
     }
 
@@ -52,10 +62,10 @@ class StockService
         $this->validarCantidad($cantidad);
         $depositoId ??= Deposito::principalId();
 
-        DB::transaction(function () use ($producto, $cantidad, $referenciaTipo, $referenciaId, $depositoId) {
-            $this->stockBloqueado($producto->id, $depositoId);
+        Transaccion::en(function () use ($producto, $cantidad, $referenciaTipo, $referenciaId, $depositoId) {
+            StockDeposito::sumar($producto->id, $depositoId, $cantidad);
             $this->movimiento($producto->id, $depositoId, 'devolucion', $cantidad, $referenciaTipo, $referenciaId);
-            $this->ajustar($producto, $depositoId, $cantidad);
+            $this->ajustarTotal($producto, $cantidad);
         });
     }
 
@@ -63,12 +73,12 @@ class StockService
     {
         $depositoId ??= Deposito::principalId();
 
-        DB::transaction(function () use ($producto, $cantidadNueva, $motivo, $depositoId) {
-            $actual = $this->stockBloqueado($producto->id, $depositoId);
+        Transaccion::en(function () use ($producto, $cantidadNueva, $motivo, $depositoId) {
+            $actual = StockDeposito::reemplazar($producto->id, $depositoId, $cantidadNueva);
             $diferencia = $cantidadNueva - $actual;
 
             $this->movimiento($producto->id, $depositoId, 'ajuste', abs($diferencia), $motivo, null);
-            $this->ajustar($producto, $depositoId, $diferencia);
+            $this->ajustarTotal($producto, $diferencia);
         });
     }
 
@@ -83,65 +93,31 @@ class StockService
             throw new \InvalidArgumentException('El origen y el destino deben ser distintos.');
         }
 
-        DB::transaction(function () use ($producto, $cantidad, $origenId, $destinoId) {
-            $disponible = $this->stockBloqueado($producto->id, $origenId);
-            if ($disponible < $cantidad) {
+        Transaccion::en(function () use ($producto, $cantidad, $origenId, $destinoId) {
+            if (StockDeposito::sumar($producto->id, $origenId, -$cantidad, 0) === null) {
+                $disponible = StockDeposito::cantidad($producto->id, $origenId);
+
                 throw new StockInsuficienteException(
                     "Stock insuficiente en el depósito de origen para «{$producto->nombre}». Disponible: {$disponible}."
                 );
             }
-            $this->stockBloqueado($producto->id, $destinoId);
+            StockDeposito::sumar($producto->id, $destinoId, $cantidad);
 
             $this->movimiento($producto->id, $origenId, 'transferencia_salida', $cantidad, 'transferencia', $destinoId);
             $this->movimiento($producto->id, $destinoId, 'transferencia_entrada', $cantidad, 'transferencia', $origenId);
-
-            $this->setDeposito($producto->id, $origenId, $disponible - $cantidad);
-            $this->setDeposito($producto->id, $destinoId, $this->stockBloqueado($producto->id, $destinoId) + $cantidad);
             // El total del producto no cambia en una transferencia.
         });
     }
 
     // ---- internos ----
 
-    private function stockBloqueado(int $productoId, int $depositoId): int
+    /** Mantiene productos.stock como total denormalizado (lo usan reportes y alertas). */
+    private function ajustarTotal(Producto $producto, int $delta): void
     {
-        $fila = DB::table('stock_deposito')
-            ->where('producto_id', $productoId)
-            ->where('deposito_id', $depositoId)
-            ->lockForUpdate()
-            ->first();
-
-        if (! $fila) {
-            DB::table('stock_deposito')->insert([
-                'producto_id' => $productoId,
-                'deposito_id' => $depositoId,
-                'cantidad'    => 0,
-            ]);
-
-            return 0;
-        }
-
-        return (int) $fila->cantidad;
-    }
-
-    private function setDeposito(int $productoId, int $depositoId, int $cantidad): void
-    {
-        DB::table('stock_deposito')
-            ->where('producto_id', $productoId)
-            ->where('deposito_id', $depositoId)
-            ->update(['cantidad' => $cantidad]);
-    }
-
-    private function ajustar(Producto $producto, int $depositoId, int $delta): void
-    {
-        DB::table('stock_deposito')
-            ->where('producto_id', $producto->id)
-            ->where('deposito_id', $depositoId)
-            ->increment('cantidad', $delta);
-
-        // Mantiene productos.stock como total denormalizado (lo usan reportes y alertas).
         Producto::whereKey($producto->id)->increment('stock', $delta);
-        $producto->stock = (int) $producto->stock + $delta;
+
+        // Se lee de la base y no se suma en memoria: si la transacción se reintenta, no se duplica.
+        $producto->stock = (int) Producto::whereKey($producto->id)->value('stock');
     }
 
     private function movimiento(int $productoId, int $depositoId, string $tipo, int $cantidad, string $referenciaTipo, ?int $referenciaId): void
