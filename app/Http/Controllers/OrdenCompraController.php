@@ -12,12 +12,12 @@ use App\Models\Proveedor;
 use App\Models\Setting;
 use App\Services\StockService;
 use App\Support\CalculadorTotales;
+use App\Support\Mongo\Transaccion;
 use App\Support\NumeradorDocumentos;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class OrdenCompraController extends Controller
@@ -57,7 +57,7 @@ class OrdenCompraController extends Controller
 
     public function store(OrdenCompraRequest $request): RedirectResponse
     {
-        DB::transaction(function () use ($request) {
+        Transaccion::en(function () use ($request) {
             $detalles = $this->construirDetalles($request->detalles);
 
             $orden = OrdenCompra::create([
@@ -127,7 +127,7 @@ class OrdenCompraController extends Controller
     {
         $orden = $ordenCompra;
         abort_if($orden->tieneRecepciones() || $orden->compra_id, 404);
-        DB::transaction(function () use ($request, $orden) {
+        Transaccion::en(function () use ($request, $orden) {
             $detalles = $this->construirDetalles($request->detalles);
 
             $orden->update([
@@ -175,7 +175,7 @@ class OrdenCompraController extends Controller
         $orden->load('detalles');
         $algo = false;
 
-        DB::transaction(function () use ($request, $orden, &$algo) {
+        Transaccion::en(function () use ($request, $orden, &$algo) {
             foreach ($orden->detalles as $det) {
                 $cant = (int) ($request->input("recibido.{$det->id}", 0));
                 if ($cant <= 0) {
@@ -219,7 +219,7 @@ class OrdenCompraController extends Controller
             return back()->withErrors(['general' => 'Registrá al menos una recepción antes de facturar.']);
         }
 
-        $compra = DB::transaction(function () use ($orden) {
+        $compra = Transaccion::en(function () use ($orden) {
             $lineas = $orden->detalles
                 ->filter(fn ($d) => $d->cantidad_recibida > 0)
                 ->map(fn ($d) => [

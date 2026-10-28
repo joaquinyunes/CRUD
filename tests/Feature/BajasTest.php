@@ -61,7 +61,7 @@ class BajasTest extends TestCase
             'id'     => $proveedor->id,
             'estado' => 'archivado',
         ], 'mongodb');
-        $this->assertDatabaseCount('compras', 1);
+        $this->assertDatabaseCount('compras', 1, 'mongodb');
     }
 
     public function test_un_proveedor_sin_compras_si_se_borra(): void

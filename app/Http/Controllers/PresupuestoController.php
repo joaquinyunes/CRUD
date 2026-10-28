@@ -9,12 +9,12 @@ use App\Models\Producto;
 use App\Models\Setting;
 use App\Models\Venta;
 use App\Support\CalculadorTotales;
+use App\Support\Mongo\Transaccion;
 use App\Support\NumeradorDocumentos;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class PresupuestoController extends Controller
@@ -52,7 +52,7 @@ class PresupuestoController extends Controller
 
     public function store(PresupuestoRequest $request): RedirectResponse
     {
-        DB::transaction(function () use ($request) {
+        Transaccion::en(function () use ($request) {
             $detalles = $this->construirDetalles($request->detalles);
             $totales = CalculadorTotales::calcular($detalles->all(), $request->input('descuento_tipo'), (float) $request->input('descuento', 0));
 
@@ -122,7 +122,7 @@ class PresupuestoController extends Controller
     public function update(PresupuestoRequest $request, Presupuesto $presupuesto): RedirectResponse
     {
         abort_if((bool) $presupuesto->venta_id, 404);
-        DB::transaction(function () use ($request, $presupuesto) {
+        Transaccion::en(function () use ($request, $presupuesto) {
             $detalles = $this->construirDetalles($request->detalles);
             $totales = CalculadorTotales::calcular($detalles->all(), $request->input('descuento_tipo'), (float) $request->input('descuento', 0));
 
@@ -166,7 +166,7 @@ class PresupuestoController extends Controller
 
         $presupuesto->load('detalles');
 
-        $venta = DB::transaction(function () use ($presupuesto) {
+        $venta = Transaccion::en(function () use ($presupuesto) {
             $costos = Producto::whereIn('id', $presupuesto->detalles->pluck('producto_id'))->pluck('precio_compra', 'id');
 
             $venta = Venta::create([

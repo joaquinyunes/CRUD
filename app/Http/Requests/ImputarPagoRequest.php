@@ -22,7 +22,7 @@ class ImputarPagoRequest extends FormRequest
     {
         return [
             'venta_id'       => ['nullable', 'exists:mongodb.ventas,id'],
-            'compra_id'      => ['nullable', 'exists:compras,id'],
+            'compra_id'      => ['nullable', 'exists:mongodb.compras,id'],
             'metodo_pago_id' => ['required', 'exists:mongodb.metodos_pago,id'],
             'monto'          => ['required', 'numeric', 'min:0.01'],
             'referencia'     => ['nullable', 'string', 'max:255'],

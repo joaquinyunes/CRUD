@@ -10,10 +10,10 @@ use App\Models\MetodoPago;
 use App\Models\Proveedor;
 use App\Services\CompraService;
 use App\Services\StockDocumentoService;
+use App\Support\Mongo\Transaccion;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class CompraController extends Controller
@@ -110,7 +110,7 @@ class CompraController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $compra) {
+            Transaccion::en(function () use ($request, $compra) {
                 $this->stockDoc->revertirCompra($compra);
                 $compra->update([
                     'estado'           => 'anulada',

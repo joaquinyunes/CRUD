@@ -10,10 +10,10 @@ use App\Http\Resources\VentaResource;
 use App\Models\Venta;
 use App\Services\StockDocumentoService;
 use App\Services\VentaService;
+use App\Support\Mongo\Transaccion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class VentaController extends Controller
@@ -76,7 +76,7 @@ class VentaController extends Controller
 
     public function destroy(Venta $venta): JsonResponse
     {
-        DB::transaction(function () use ($venta) {
+        Transaccion::en(function () use ($venta) {
             $this->stockDoc->revertirVenta($venta);
             $venta->update(['estado' => 'anulada', 'motivo_anulacion' => 'Anulada vía API']);
         });

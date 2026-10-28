@@ -8,9 +8,9 @@ use App\Http\Requests\CompraRequest;
 use App\Models\Compra;
 use App\Services\CompraService;
 use App\Services\StockDocumentoService;
+use App\Support\Mongo\Transaccion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CompraController extends Controller
@@ -67,7 +67,7 @@ class CompraController extends Controller
     public function destroy(Compra $compra): JsonResponse
     {
         try {
-            DB::transaction(function () use ($compra) {
+            Transaccion::en(function () use ($compra) {
                 $this->stockDoc->revertirCompra($compra);
                 $compra->update(['estado' => 'anulada', 'motivo_anulacion' => 'Anulada vía API']);
             });

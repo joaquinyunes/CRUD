@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class OrdenCompraDetalle extends Model
+class OrdenCompraDetalle extends ModeloMongo
 {
     public $timestamps = false;
 

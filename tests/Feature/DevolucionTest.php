@@ -62,6 +62,6 @@ class DevolucionTest extends TestCase
         ])->assertSessionHasErrors('detalles');
 
         $this->assertSame(10, $producto->fresh()->stock);
-        $this->assertDatabaseCount('devoluciones', 0);
+        $this->assertDatabaseCount('devoluciones', 0, 'mongodb');
     }
 }

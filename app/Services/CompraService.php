@@ -12,7 +12,6 @@ use App\Support\CalculadorTotales;
 use App\Support\Mongo\Transaccion;
 use App\Support\NumeradorDocumentos;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Registrar una compra: el único lugar donde se crea una.
@@ -42,7 +41,7 @@ class CompraService
             (float) ($datos['descuento'] ?? 0)
         );
 
-        $compra = Transaccion::en(fn () => DB::transaction(function () use ($datos, $detalles, $totales, $pagos, $autorId) {
+        $compra = Transaccion::en(function () use ($datos, $detalles, $totales, $pagos, $autorId) {
             $compra = Compra::create([
                 'numero'         => $this->proximoNumero(),
                 'proveedor_id'   => $datos['proveedor_id'],
@@ -67,7 +66,7 @@ class CompraService
             }
 
             return $compra;
-        }));
+        });
 
         CompraCreada::dispatch($compra);
 
@@ -85,7 +84,7 @@ class CompraService
      */
     public function actualizar(Compra $compra, array $datos): Compra
     {
-        Transaccion::en(fn () => DB::transaction(function () use ($compra, $datos) {
+        Transaccion::en(function () use ($compra, $datos) {
             $this->stockDoc->revertirCompra($compra);
 
             $detalles = $this->construirDetalles($datos['detalles']);
@@ -116,7 +115,7 @@ class CompraService
                 $this->stockDoc->aplicarCompra($compra);
                 $this->actualizarCostos($detalles->all());
             }
-        }));
+        });
 
         return $compra;
     }

@@ -12,10 +12,10 @@ use App\Models\User;
 use App\Models\Venta;
 use App\Services\StockDocumentoService;
 use App\Services\VentaService;
+use App\Support\Mongo\Transaccion;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class VentaController extends Controller
@@ -124,7 +124,7 @@ class VentaController extends Controller
             return redirect()->route('ventas.index')->with('success', 'La venta ya estaba anulada.');
         }
 
-        DB::transaction(function () use ($request, $venta) {
+        Transaccion::en(function () use ($request, $venta) {
             $this->stockDoc->revertirVenta($venta);
             $venta->update([
                 'estado'           => 'anulada',

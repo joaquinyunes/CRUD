@@ -103,5 +103,62 @@ return [
         [['cuit' => 1], ['name' => 'cuit']],
     ],
 
+    // ---- Fase 3: devoluciones ----
+
+    'devoluciones' => [
+        [['numero' => 1], ['unique' => true, 'name' => 'numero_unico']],
+        [['tipo' => 1, 'fecha' => 1], ['name' => 'tipo_fecha']],
+        [['venta_id' => 1], ['name'           => 'venta_id']],
+        [['compra_id' => 1], ['name'          => 'compra_id']],
+    ],
+
+    'devoluciones_detalle' => [
+        [['devolucion_id' => 1], ['name' => 'devolucion_id']],
+        [['producto_id' => 1], ['name' => 'producto_id']],
+    ],
+
+    // ---- Fase 4: compras, órdenes de compra y presupuestos ----
+
+    'compras' => [
+        [['numero' => 1], ['unique' => true, 'name' => 'numero_unico']],
+        [['estado' => 1, 'fecha' => 1], ['name' => 'estado_fecha']],
+        [['fecha' => 1], ['name'                => 'fecha']],
+        [['proveedor_id' => 1], ['name'         => 'proveedor_id']],
+        [['user_id' => 1], ['name'              => 'user_id']],
+        [['deposito_id' => 1], ['name'          => 'deposito_id']],
+    ],
+
+    'compras_detalle' => [
+        [['compra_id' => 1], ['name' => 'compra_id']],
+        [['producto_id' => 1], ['name' => 'producto_id']],
+    ],
+
+    'compras_pago' => [
+        [['compra_id' => 1], ['name' => 'compra_id']],
+        [['metodo_pago_id' => 1], ['name' => 'metodo_pago_id']],
+    ],
+
+    'ordenes_compra' => [
+        [['numero' => 1], ['unique' => true, 'name' => 'numero_unico']],
+        [['proveedor_id' => 1], ['name' => 'proveedor_id']],
+        [['estado' => 1], ['name'       => 'estado']],
+    ],
+
+    'ordenes_compra_detalle' => [
+        [['orden_compra_id' => 1], ['name' => 'orden_compra_id']],
+        [['producto_id' => 1], ['name' => 'producto_id']],
+    ],
+
+    'presupuestos' => [
+        [['numero' => 1], ['unique' => true, 'name' => 'numero_unico']],
+        [['cliente_id' => 1], ['name'           => 'cliente_id']],
+        [['estado' => 1, 'fecha' => 1], ['name' => 'estado_fecha']],
+    ],
+
+    'presupuestos_detalle' => [
+        [['presupuesto_id' => 1], ['name' => 'presupuesto_id']],
+        [['producto_id' => 1], ['name' => 'producto_id']],
+    ],
+
     // `contadores` usa `_id` ("id:ventas", "num:ventas:VTA"): único por construcción.
 ];
