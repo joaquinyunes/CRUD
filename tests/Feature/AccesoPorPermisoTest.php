@@ -12,7 +12,7 @@ use App\Models\Proveedor;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Venta;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -23,8 +23,6 @@ use Tests\TestCase;
  */
 class AccesoPorPermisoTest extends TestCase
 {
-    use RefreshDatabase;
-
     /** Un usuario con exactamente esos permisos, ni uno más. */
     private function usuarioCon(string ...$claves): User
     {
@@ -230,7 +228,8 @@ class AccesoPorPermisoTest extends TestCase
         $usuario = User::factory()->create(['role_id' => $supervisor->id]);
         $this->assertFalse($supervisor->tienePermiso('ventas.gestionar_todas'));
 
-        (require database_path('migrations/2026_10_06_100000_permiso_gestionar_todas.php'))->up();
+        // Actualizar una instalación es correr de nuevo el sembrado de permisos (sistema:instalar).
+        $this->seed(PermissionSeeder::class);
 
         $this->assertTrue($supervisor->fresh()->tienePermiso('ventas.gestionar_todas'));
         $this->assertTrue($supervisor->fresh()->tienePermiso('compras.gestionar_todas'));

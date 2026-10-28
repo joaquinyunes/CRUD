@@ -26,11 +26,11 @@ class DatabaseSeeder extends Seeder
 
         // 2. Administrador: todo.
         $admin = Role::firstOrCreate(['nombre' => 'admin']);
-        $admin->permissions()->sync($claves->values()->all());
+        $admin->sincronizarPermisos($claves->values()->all());
 
         // 3. Solo Lectura: cualquier permiso de consulta o exportacion, nada que escriba.
         $soloLectura = Role::firstOrCreate(['nombre' => Role::SOLO_LECTURA]);
-        $soloLectura->permissions()->sync(
+        $soloLectura->sincronizarPermisos(
             $claves->filter(fn ($id, $clave) => str_ends_with($clave, '.ver') || str_ends_with($clave, '.exportar'))
                 ->values()
                 ->all()
@@ -38,7 +38,7 @@ class DatabaseSeeder extends Seeder
 
         // 4. Vendedor: el rol operativo. Ve todo lo suyo y lo puede modificar.
         $vendedor = Role::firstOrCreate(['nombre' => Role::VENDEDOR]);
-        $vendedor->permissions()->sync(
+        $vendedor->sincronizarPermisos(
             $claves->only([
                 'dashboard.ver',
                 'productos.ver', 'productos.crear', 'productos.editar', 'productos.exportar',

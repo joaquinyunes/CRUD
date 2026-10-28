@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route as RutaLaravel;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
@@ -19,8 +18,6 @@ use Tests\TestCase;
  */
 class HumoTodasLasPantallasTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_ninguna_pantalla_de_lectura_devuelve_error_con_datos_reales(): void
     {
         $this->seed(DatabaseSeeder::class);

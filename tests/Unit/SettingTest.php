@@ -3,13 +3,10 @@
 namespace Tests\Unit;
 
 use App\Models\Setting;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class SettingTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_devuelve_el_valor_guardado(): void
     {
         Setting::establecer('ventas_prefijo_numero', 'FAC');

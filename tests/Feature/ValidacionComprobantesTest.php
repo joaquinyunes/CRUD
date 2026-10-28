@@ -7,7 +7,6 @@ use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -16,8 +15,6 @@ use Tests\TestCase;
  */
 class ValidacionComprobantesTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function admin(): User
     {
         $this->seed(PermissionSeeder::class);

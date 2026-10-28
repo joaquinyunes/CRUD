@@ -5,7 +5,6 @@ namespace Tests\Feature\Fase2Mongo;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -15,8 +14,6 @@ use Tests\TestCase;
  */
 class SeguridadEnMongoTest extends TestCase
 {
-    use RefreshDatabase;
-
     // ---- Sanctum con los tokens en MongoDB ----
 
     public function test_el_token_de_api_se_guarda_en_mongo_y_sirve_para_entrar_y_salir(): void

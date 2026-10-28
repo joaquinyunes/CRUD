@@ -11,7 +11,6 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\BackupService;
 use App\Services\VentaService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use MongoDB\BSON\Decimal128;
@@ -23,8 +22,6 @@ use Tests\TestCase;
  */
 class PlataformaEnMongoTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function ventaConPlata(): int
     {
         $producto = Producto::factory()->create(['stock' => 10, 'precio_compra' => 33.33]);

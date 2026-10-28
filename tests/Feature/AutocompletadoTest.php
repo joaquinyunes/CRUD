@@ -9,7 +9,6 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Venta;
 use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -21,8 +20,6 @@ use Tests\TestCase;
  */
 class AutocompletadoTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function admin(): User
     {
         $this->seed(PermissionSeeder::class);

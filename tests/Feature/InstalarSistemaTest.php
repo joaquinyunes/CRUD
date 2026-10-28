@@ -5,13 +5,10 @@ namespace Tests\Feature;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class InstalarSistemaTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_una_base_vacia_queda_con_permisos_rol_y_administrador(): void
     {
         $this->artisan('sistema:instalar', ['--email' => 'dueno@empresa.com', '--password' => 'una-clave-larga-123'])

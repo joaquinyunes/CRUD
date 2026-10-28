@@ -9,7 +9,6 @@ use App\Models\Producto;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -19,8 +18,6 @@ use Tests\TestCase;
  */
 class ApiPermisosTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function seedRoles(): void
     {
         $this->rolAdministrador();

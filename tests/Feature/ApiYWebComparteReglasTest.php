@@ -11,7 +11,6 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Models\Venta;
 use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -24,8 +23,6 @@ use Tests\TestCase;
  */
 class ApiYWebComparteReglasTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function admin(): User
     {
         $this->seed(PermissionSeeder::class);

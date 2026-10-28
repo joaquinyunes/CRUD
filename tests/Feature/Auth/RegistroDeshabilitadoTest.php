@@ -3,7 +3,6 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -13,8 +12,6 @@ use Tests\TestCase;
  */
 class RegistroDeshabilitadoTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_la_pantalla_de_registro_no_existe(): void
     {
         $this->get('/register')->assertNotFound();

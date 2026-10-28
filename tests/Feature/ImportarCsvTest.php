@@ -8,7 +8,6 @@ use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\User;
 use App\Support\LectorCsv;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
@@ -18,8 +17,6 @@ use Tests\TestCase;
  */
 class ImportarCsvTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function importar(string $tipo, string $contenido)
     {
         $admin = User::factory()->create(['role_id' => $this->rolAdministrador()->id]);

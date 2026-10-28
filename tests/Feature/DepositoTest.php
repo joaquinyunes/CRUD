@@ -8,13 +8,10 @@ use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
 use App\Services\StockService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class DepositoTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function admin(): User
     {
         return User::factory()->create(['role_id' => $this->rolAdministrador()->id]);

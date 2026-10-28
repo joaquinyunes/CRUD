@@ -3,13 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class RutaRaizTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_un_invitado_que_entra_a_la_raiz_termina_en_el_login(): void
     {
         $this->get('/')

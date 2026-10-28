@@ -10,7 +10,6 @@ use App\Models\Presupuesto;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
@@ -19,8 +18,6 @@ use Tests\TestCase;
  */
 class ComandosYEventosTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_presupuestos_vencer_marca_solo_los_que_pasaron_su_validez(): void
     {
         $cliente = Cliente::factory()->create();

@@ -14,7 +14,6 @@ use App\Models\Tarea;
 use App\Models\UnidadMedida;
 use App\Models\User;
 use App\Models\Venta;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -24,8 +23,6 @@ use Tests\TestCase;
  */
 class AltasBajasYCuentasTest extends TestCase
 {
-    use RefreshDatabase;
-
     private User $admin;
 
     protected function setUp(): void

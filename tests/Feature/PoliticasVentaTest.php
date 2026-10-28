@@ -8,13 +8,10 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Venta;
 use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class PoliticasVentaTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function seedRoles(): void
     {
         $this->rolAdministrador();

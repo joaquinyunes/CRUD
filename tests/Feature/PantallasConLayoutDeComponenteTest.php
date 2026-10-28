@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -19,8 +18,6 @@ use Tests\TestCase;
  */
 class PantallasConLayoutDeComponenteTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function admin(): User
     {
         $this->seed(PermissionSeeder::class);

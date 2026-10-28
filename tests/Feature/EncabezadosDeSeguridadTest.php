@@ -2,13 +2,10 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class EncabezadosDeSeguridadTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_las_respuestas_llevan_los_encabezados_de_seguridad(): void
     {
         $respuesta = $this->get('/login');

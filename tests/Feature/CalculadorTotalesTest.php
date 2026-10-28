@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Setting;
 use App\Support\CalculadorTotales;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -13,8 +12,6 @@ use Tests\TestCase;
  */
 class CalculadorTotalesTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function sinImpuesto(): void
     {
         Setting::establecer('sistema_impuesto_habilitado', '0');

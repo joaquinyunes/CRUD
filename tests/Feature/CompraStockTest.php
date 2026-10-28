@@ -6,13 +6,10 @@ use App\Models\Compra;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class CompraStockTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function admin(): User
     {
         return User::factory()->create(['role_id' => $this->rolAdministrador()->id]);

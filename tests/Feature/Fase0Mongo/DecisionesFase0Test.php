@@ -10,12 +10,10 @@ use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
 use App\Services\VentaService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use MongoDB\BSON\Decimal128;
-use Tests\Concerns\LimpiaMongo;
 use Tests\TestCase;
 
 /**
@@ -23,8 +21,6 @@ use Tests\TestCase;
  */
 class DecisionesFase0Test extends TestCase
 {
-    use LimpiaMongo, RefreshDatabase;
-
     private function ventaDe(Producto $producto, int $cantidad = 1): Venta
     {
         return app(VentaService::class)->crear([

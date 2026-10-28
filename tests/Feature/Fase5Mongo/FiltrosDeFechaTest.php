@@ -6,7 +6,6 @@ use App\Models\Cliente;
 use App\Models\MovimientoStock;
 use App\Models\User;
 use App\Models\Venta;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -15,8 +14,6 @@ use Tests\TestCase;
  */
 class FiltrosDeFechaTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function venta(string $numero, string $fecha): Venta
     {
         return Venta::create(['numero' => $numero, 'cliente_id' => 1, 'fecha' => $fecha, 'total' => 1, 'estado' => 'completada']);

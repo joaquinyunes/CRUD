@@ -167,7 +167,7 @@ class PermissionSeeder extends Seeder
 
         $admin = Role::where('nombre', Role::ADMINISTRADOR)->first();
         if ($admin) {
-            $admin->permissions()->sync(
+            $admin->sincronizarPermisos(
                 Permission::pluck('id')->toArray()
             );
         }
@@ -178,7 +178,7 @@ class PermissionSeeder extends Seeder
                 continue;
             }
             $ids = Permission::whereIn('clave', $claves)->pluck('id')->toArray();
-            $rol->permissions()->sync($ids);
+            $rol->sincronizarPermisos($ids);
         }
     }
 }

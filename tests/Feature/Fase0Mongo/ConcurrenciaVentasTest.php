@@ -5,61 +5,26 @@ namespace Tests\Feature\Fase0Mongo;
 use App\Models\Cliente;
 use App\Models\Deposito;
 use App\Models\Producto;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Tests\Concerns\LimpiaMongo;
 use Tests\TestCase;
 
 /**
  * La compuerta de la fase 0: ventas que llegan al mismo tiempo desde procesos
  * distintos (como en producción) no repiten número ni dejan stock negativo.
- *
- * Los hijos necesitan su propia base SQL (usuarios, configuración y auditoría
- * todavía no están en Mongo): un archivo SQLite temporal, migrado una vez.
  */
 class ConcurrenciaVentasTest extends TestCase
 {
-    use LimpiaMongo, RefreshDatabase;
-
-    private string $sqlite;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->sqlite = tempnam(sys_get_temp_dir(), 'conc');
-        $this->ejecutar([PHP_BINARY, 'artisan', 'migrate', '--force', '--no-interaction']);
-    }
-
-    protected function tearDown(): void
-    {
-        @unlink($this->sqlite);
-        parent::tearDown();
-    }
-
     /** @return array<string,string> */
     private function entorno(): array
     {
         return array_merge(getenv(), [
             'APP_ENV'          => 'testing',
-            'DB_CONNECTION'    => 'sqlite',
-            'DB_DATABASE'      => $this->sqlite,
-            'DB_URL'           => '',
-            'DB_FOREIGN_KEYS'  => 'false',
             'MONGODB_DATABASE' => config('database.connections.mongodb.database'),
             'MONGODB_URI'      => config('database.connections.mongodb.dsn'),
             'QUEUE_CONNECTION' => 'sync',
             'CACHE_STORE'      => 'array',
             'SESSION_DRIVER'   => 'array',
         ]);
-    }
-
-    /** @param  list<string>  $comando */
-    private function ejecutar(array $comando): void
-    {
-        $proceso = proc_open($comando, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, base_path(), $this->entorno());
-        $salida = stream_get_contents($pipes[1]).stream_get_contents($pipes[2]);
-        $this->assertSame(0, proc_close($proceso), $salida);
     }
 
     /**

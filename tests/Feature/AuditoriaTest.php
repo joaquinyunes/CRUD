@@ -9,7 +9,6 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Venta;
 use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -18,8 +17,6 @@ use Tests\TestCase;
  */
 class AuditoriaTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function seedRoles(): void
     {
         $this->rolAdministrador();

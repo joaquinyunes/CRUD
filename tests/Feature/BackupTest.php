@@ -10,7 +10,6 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Venta;
 use App\Services\BackupService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -18,8 +17,6 @@ use Tests\TestCase;
 
 class BackupTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function admin(): User
     {
         return User::factory()->create(['role_id' => $this->rolAdministrador()->id]);

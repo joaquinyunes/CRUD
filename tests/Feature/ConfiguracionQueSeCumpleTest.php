@@ -10,7 +10,6 @@ use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Venta;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -22,8 +21,6 @@ use Tests\TestCase;
  */
 class ConfiguracionQueSeCumpleTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function usuarioCon(string ...$claves): User
     {
         $rol = Role::create(['nombre' => 'Rol '.uniqid()]);

@@ -10,7 +10,6 @@ use App\Models\Venta;
 use App\Support\Mongo\Transaccion;
 use App\Support\NumeradorDocumentos;
 use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -20,8 +19,6 @@ use Tests\TestCase;
  */
 class NumeracionComprobantesTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function seedRoles(): void
     {
         $this->rolAdministrador();

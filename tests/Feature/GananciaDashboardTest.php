@@ -7,7 +7,6 @@ use App\Models\Compra;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -16,8 +15,6 @@ use Tests\TestCase;
  */
 class GananciaDashboardTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_reponer_stock_no_convierte_el_mes_en_perdida(): void
     {
         $rol = $this->rolAdministrador();

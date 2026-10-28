@@ -9,7 +9,6 @@ use App\Models\Producto;
 use App\Models\Venta;
 use App\Services\StockService;
 use App\Support\Mongo\StockDeposito;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -17,8 +16,6 @@ use Tests\TestCase;
  */
 class StockPorDepositoYBusquedaTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_los_totales_y_el_stock_por_deposito_siguen_a_las_transferencias(): void
     {
         $principal = Deposito::principalId();

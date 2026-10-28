@@ -8,80 +8,6 @@ on:
 
 jobs:
   tests:
-    name: Tests (${{ matrix.db }})
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        db: [sqlite, mysql, pgsql]
-
-    services:
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_ROOT_PASSWORD: secret
-          MYSQL_DATABASE: testing
-        ports: ['3306:3306']
-        options: >-
-          --health-cmd="mysqladmin ping -psecret"
-          --health-interval=10s --health-timeout=5s --health-retries=10
-
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_PASSWORD: secret
-          POSTGRES_DB: testing
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd=pg_isready
-          --health-interval=10s --health-timeout=5s --health-retries=10
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Preparar PHP 8.3
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: pdo_sqlite, pdo_mysql, pdo_pgsql, mongodb, gd, zip, bcmath, intl
-          coverage: none
-
-      - name: Cachear dependencias de Composer
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
-
-      - name: Instalar dependencias
-        run: composer install --no-interaction --prefer-dist --no-progress
-
-      - name: Preparar entorno
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-
-      - name: Correr tests
-        env:
-          DB_CONNECTION: ${{ matrix.db }}
-          DB_HOST: 127.0.0.1
-          DB_DATABASE: testing
-          DB_USERNAME: ${{ matrix.db == 'mysql' && 'root' || 'postgres' }}
-          DB_PASSWORD: secret
-        run: php artisan test
-
-      # Que la suite pase no alcanza: las migraciones tienen que correr de punta
-      # a punta en los tres motores, que es lo que hace un deploy real.
-      - name: Verificar migraciones contra una base limpia
-        env:
-          DB_CONNECTION: ${{ matrix.db }}
-          DB_HOST: 127.0.0.1
-          DB_DATABASE: testing
-          DB_USERNAME: ${{ matrix.db == 'mysql' && 'root' || 'postgres' }}
-          DB_PASSWORD: secret
-        run: php artisan migrate:fresh --seed --force
-
-  mongodb:
     name: Tests (MongoDB replica set)
     runs-on: ubuntu-latest
 
@@ -108,7 +34,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: pdo_sqlite, mongodb, gd, zip, bcmath, intl
+          extensions: mongodb, gd, zip, bcmath, intl
           coverage: none
 
       - name: Cachear dependencias de Composer
@@ -125,13 +51,11 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
-      # Mientras se porta el sistema por fases (PLAN-CRUD-MONGODB.md) corre lo que ya
-      # vive en MongoDB. Cuando termine la fase 7 pasa a ser `php artisan test` entero.
-      - name: Correr tests de MongoDB
+      - name: Correr tests
         env:
           MONGODB_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
           MONGODB_DATABASE: crud_erp_test
-        run: php artisan test tests/Feature/Fase0Mongo tests/Feature/Fase1Mongo tests/Feature/Fase2Mongo tests/Feature/Fase3Mongo tests/Feature/Fase4Mongo tests/Feature/Fase5Mongo tests/Feature/Fase6Mongo tests/Feature/VentaStockTest.php tests/Feature/CajaTest.php
+        run: php artisan test
 
   estatico:
     name: Análisis estático (PHPStan nivel 5)

@@ -7,14 +7,10 @@ use App\Models\MetodoPago;
 use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\Concerns\LimpiaMongo;
 use Tests\TestCase;
 
 class VentaStockTest extends TestCase
 {
-    use LimpiaMongo, RefreshDatabase;
-
     private function admin(): User
     {
         $rol = $this->rolAdministrador();

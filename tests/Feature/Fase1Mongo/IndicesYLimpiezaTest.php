@@ -14,9 +14,7 @@ use App\Models\Venta;
 use App\Models\VentaDetalle;
 use App\Models\VentaPago;
 use App\Support\Mongo\Indices;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Tests\Concerns\LimpiaMongo;
 use Tests\TestCase;
 
 /**
@@ -25,8 +23,6 @@ use Tests\TestCase;
  */
 class IndicesYLimpiezaTest extends TestCase
 {
-    use LimpiaMongo, RefreshDatabase;
-
     /** @return list<class-string<ModeloMongo>> */
     private function modelosPortados(): array
     {

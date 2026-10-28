@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Services\DobleFactorService;
 use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
@@ -17,8 +16,6 @@ use Tests\TestCase;
  */
 class DobleFactorTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function usuario(): User
     {
         $this->seed(PermissionSeeder::class);

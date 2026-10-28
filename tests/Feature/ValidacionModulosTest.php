@@ -9,7 +9,6 @@ use App\Models\Proveedor;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -22,8 +21,6 @@ use Tests\TestCase;
  */
 class ValidacionModulosTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function admin(): User
     {
         $this->seed(PermissionSeeder::class);

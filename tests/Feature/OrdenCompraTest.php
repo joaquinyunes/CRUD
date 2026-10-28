@@ -7,13 +7,10 @@ use App\Models\OrdenCompra;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class OrdenCompraTest extends TestCase
 {
-    use RefreshDatabase;
-
     private function admin(): User
     {
         return User::factory()->create(['role_id' => $this->rolAdministrador()->id]);

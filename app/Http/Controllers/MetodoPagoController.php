@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\MetodoPagoRequest;
+use App\Models\CompraPago;
 use App\Models\MetodoPago;
 use App\Models\VentaPago;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 
 class MetodoPagoController extends Controller
 {
@@ -64,7 +64,7 @@ class MetodoPagoController extends Controller
     public function destroy(MetodoPago $metodo_pago): JsonResponse
     {
         $usos = VentaPago::where('metodo_pago_id', $metodo_pago->id)->count()
-            + DB::table('compras_pago')->where('metodo_pago_id', $metodo_pago->id)->count();
+            + CompraPago::where('metodo_pago_id', $metodo_pago->id)->count();
 
         if ($usos > 0) {
             $metodo_pago->update(['activo' => false]);
