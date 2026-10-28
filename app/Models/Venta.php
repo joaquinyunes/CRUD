@@ -103,10 +103,13 @@ class Venta extends ModeloMongo
             return $query;
         }
 
-        return $query->whereHas('cliente', function ($q) use ($buscar) {
-            $q->where('nombre', 'like', "%{$buscar}%")
-                ->orWhere('apellido', 'like', "%{$buscar}%");
-        })->orWhere('numero', 'like', "%{$buscar}%");
+        // whereHas no existe entre colecciones: se buscan primero los clientes.
+        $clienteIds = Cliente::where(fn ($q) => $q->where('nombre', 'like', "%{$buscar}%")
+            ->orWhere('apellido', 'like', "%{$buscar}%"))
+            ->get()->modelKeys();
+
+        return $query->where(fn ($q) => $q->whereIn('cliente_id', $clienteIds)
+            ->orWhere('numero', 'like', "%{$buscar}%"));
     }
 
     public function scopeParaFecha($query, ?string $desde, ?string $hasta)

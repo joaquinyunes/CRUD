@@ -148,6 +148,6 @@ class ConfiguracionQueSeCumpleTest extends TestCase
         }
 
         $this->assertSame(['DEV-00001', 'DEV-00002'], Devolucion::orderBy('id')->pluck('numero')->all());
-        $this->assertSame(2, (int) DB::table('contadores')->where('serie', 'devoluciones:DEV')->value('ultimo'));
+        $this->assertSame(2, (int) DB::connection('mongodb')->getCollection('contadores')->findOne(['_id' => 'num:devoluciones:DEV'])['ultimo']);
     }
 }

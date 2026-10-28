@@ -103,9 +103,11 @@ class Compra extends Model
             return $query;
         }
 
-        return $query->whereHas('proveedor', function ($q) use ($buscar) {
-            $q->where('nombre', 'like', "%{$buscar}%");
-        })->orWhere('numero', 'like', "%{$buscar}%");
+        // El proveedor vive en MongoDB: no hay whereHas entre bases, se buscan primero sus ids.
+        $proveedorIds = Proveedor::where('nombre', 'like', "%{$buscar}%")->get()->modelKeys();
+
+        return $query->where(fn ($q) => $q->whereIn('proveedor_id', $proveedorIds)
+            ->orWhere('numero', 'like', "%{$buscar}%"));
     }
 
     public function scopeParaFecha($query, ?string $desde, ?string $hasta)

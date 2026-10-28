@@ -42,6 +42,38 @@ class StockDeposito
         return (int) ($fila['cantidad'] ?? 0);
     }
 
+    /**
+     * Unidades de cada depósito, sumando todos los productos.
+     *
+     * @return array<int,int> deposito_id => unidades
+     */
+    public static function totalesPorDeposito(): array
+    {
+        $totales = [];
+
+        foreach (self::coleccion()->aggregate([['$group' => ['_id' => '$deposito_id', 'unidades' => ['$sum' => '$cantidad']]]]) as $fila) {
+            $totales[(int) $fila['_id']] = (int) $fila['unidades'];
+        }
+
+        return $totales;
+    }
+
+    /**
+     * El saldo de cada producto en un depósito.
+     *
+     * @return array<int,int> producto_id => cantidad
+     */
+    public static function cantidadesDe(int $depositoId): array
+    {
+        $cantidades = [];
+
+        foreach (self::coleccion()->find(['deposito_id' => $depositoId]) as $fila) {
+            $cantidades[(int) $fila['producto_id']] = (int) $fila['cantidad'];
+        }
+
+        return $cantidades;
+    }
+
     public static function fijar(int $productoId, int $depositoId, int $cantidad): void
     {
         self::coleccion()->updateOne(

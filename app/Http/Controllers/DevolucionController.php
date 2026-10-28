@@ -6,15 +6,16 @@ use App\Exceptions\StockInsuficienteException;
 use App\Http\Requests\DevolucionRequest;
 use App\Models\Compra;
 use App\Models\Devolucion;
+use App\Models\DevolucionDetalle;
 use App\Models\Producto;
 use App\Models\Venta;
 use App\Services\CajaService;
 use App\Services\StockService;
+use App\Support\Mongo\Transaccion;
 use App\Support\NumeradorDocumentos;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DevolucionController extends Controller
@@ -90,7 +91,7 @@ class DevolucionController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($venta, $request, $lineas) {
+            Transaccion::en(function () use ($venta, $request, $lineas) {
                 $devolucion = Devolucion::create([
                     'numero'   => $this->generarNumero(),
                     'tipo'     => 'venta',
@@ -165,7 +166,7 @@ class DevolucionController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($compra, $request, $lineas) {
+            Transaccion::en(function () use ($compra, $request, $lineas) {
                 $devolucion = Devolucion::create([
                     'numero'    => $this->generarNumero(),
                     'tipo'      => 'compra',
@@ -199,15 +200,17 @@ class DevolucionController extends Controller
     {
         $col = $tipo === 'venta' ? 'venta_id' : 'compra_id';
 
-        return DB::table('devoluciones_detalle')
-            ->join('devoluciones', 'devoluciones.id', '=', 'devoluciones_detalle.devolucion_id')
-            ->where('devoluciones.tipo', $tipo)
-            ->where("devoluciones.{$col}", $docId)
-            ->where('devoluciones.estado', 'registrada')
-            ->groupBy('devoluciones_detalle.producto_id')
-            ->selectRaw('devoluciones_detalle.producto_id, SUM(devoluciones_detalle.cantidad) as devuelto')
-            ->pluck('devuelto', 'producto_id')
-            ->map(fn ($v) => (int) $v)->toArray();
+        $devoluciones = Devolucion::where('tipo', $tipo)
+            ->where($col, $docId)
+            ->where('estado', 'registrada')
+            ->get()
+            ->modelKeys();
+
+        return DevolucionDetalle::whereIn('devolucion_id', $devoluciones)
+            ->get()
+            ->groupBy('producto_id')
+            ->map(fn ($lineas) => (int) $lineas->sum('cantidad'))
+            ->all();
     }
 
     private function generarNumero(): string

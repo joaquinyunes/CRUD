@@ -7,9 +7,9 @@ use App\Http\Requests\TransferenciaStockRequest;
 use App\Models\Deposito;
 use App\Models\Producto;
 use App\Services\StockService;
+use App\Support\Mongo\StockDeposito;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DepositoController extends Controller
@@ -20,10 +20,7 @@ class DepositoController extends Controller
     {
         $depositos = Deposito::orderByDesc('es_principal')->orderBy('nombre')->get();
 
-        $totales = DB::table('stock_deposito')
-            ->select('deposito_id', DB::raw('SUM(cantidad) as unidades'))
-            ->groupBy('deposito_id')
-            ->pluck('unidades', 'deposito_id');
+        $totales = collect(StockDeposito::totalesPorDeposito());
 
         return view('depositos.index', compact('depositos', 'totales'));
     }
@@ -75,9 +72,7 @@ class DepositoController extends Controller
             ->orderBy('nombre')
             ->paginate(30)->withQueryString();
 
-        $cantidades = DB::table('stock_deposito')
-            ->where('deposito_id', $deposito->id)
-            ->pluck('cantidad', 'producto_id');
+        $cantidades = collect(StockDeposito::cantidadesDe($deposito->id));
 
         return view('depositos.stock', compact('deposito', 'productos', 'cantidades'));
     }

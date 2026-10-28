@@ -6,6 +6,7 @@ use App\Models\Compra;
 use App\Models\MetodoPago;
 use App\Models\Venta;
 use App\Support\CalculadorTotales;
+use App\Support\Mongo\Transaccion;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -45,7 +46,7 @@ class PagoDocumentoService
 
         $metodo = MetodoPago::findOrFail($metodoPagoId);
 
-        DB::transaction(function () use ($doc, $tipo, $metodo, $monto, $referencia) {
+        Transaccion::en(fn () => DB::transaction(function () use ($doc, $tipo, $metodo, $monto, $referencia) {
             $doc->pagos()->create([
                 'metodo_pago_id' => $metodo->id,
                 'monto'          => $monto,
@@ -65,6 +66,6 @@ class PagoDocumentoService
                     $this->caja->registrarMovimiento('egreso', "Pago compra {$doc->numero}", $monto, 'compra', $doc->id);
                 }
             }
-        });
+        }));
     }
 }

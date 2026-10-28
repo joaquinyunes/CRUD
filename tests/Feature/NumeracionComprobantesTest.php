@@ -7,10 +7,10 @@ use App\Models\Producto;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Venta;
+use App\Support\Mongo\Transaccion;
 use App\Support\NumeradorDocumentos;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -43,7 +43,7 @@ class NumeracionComprobantesTest extends TestCase
         $numeros = [];
 
         for ($i = 0; $i < 3; $i++) {
-            $numeros[] = DB::transaction(fn () => NumeradorDocumentos::proximo('ventas', 'VTA'));
+            $numeros[] = Transaccion::en(fn () => NumeradorDocumentos::proximo('ventas', 'VTA'));
         }
 
         $this->assertSame(['VTA-00001', 'VTA-00002', 'VTA-00003'], $numeros);
@@ -51,8 +51,8 @@ class NumeracionComprobantesTest extends TestCase
 
     public function test_cada_serie_lleva_su_propia_cuenta(): void
     {
-        $venta = DB::transaction(fn () => NumeradorDocumentos::proximo('ventas', 'VTA'));
-        $compra = DB::transaction(fn () => NumeradorDocumentos::proximo('compras', 'COM'));
+        $venta = Transaccion::en(fn () => NumeradorDocumentos::proximo('ventas', 'VTA'));
+        $compra = Transaccion::en(fn () => NumeradorDocumentos::proximo('compras', 'COM'));
 
         $this->assertSame('VTA-00001', $venta);
         $this->assertSame('COM-00001', $compra);
@@ -60,10 +60,10 @@ class NumeracionComprobantesTest extends TestCase
 
     public function test_una_transaccion_revertida_no_deja_hueco(): void
     {
-        $primero = DB::transaction(fn () => NumeradorDocumentos::proximo('ventas', 'VTA'));
+        $primero = Transaccion::en(fn () => NumeradorDocumentos::proximo('ventas', 'VTA'));
 
         try {
-            DB::transaction(function () {
+            Transaccion::en(function () {
                 NumeradorDocumentos::proximo('ventas', 'VTA');
                 throw new RuntimeException('algo falló después de tomar el número');
             });
@@ -71,7 +71,7 @@ class NumeracionComprobantesTest extends TestCase
             // esperado
         }
 
-        $siguiente = DB::transaction(fn () => NumeradorDocumentos::proximo('ventas', 'VTA'));
+        $siguiente = Transaccion::en(fn () => NumeradorDocumentos::proximo('ventas', 'VTA'));
 
         $this->assertSame('VTA-00001', $primero);
         $this->assertSame('VTA-00002', $siguiente, 'El número reservado por una transacción revertida se reutiliza.');
@@ -96,7 +96,7 @@ class NumeracionComprobantesTest extends TestCase
 
         $this->assertSame(
             'VTA-00043',
-            DB::transaction(fn () => NumeradorDocumentos::proximo('ventas', 'VTA'))
+            Transaccion::en(fn () => NumeradorDocumentos::proximo('ventas', 'VTA'))
         );
     }
 
@@ -104,7 +104,7 @@ class NumeracionComprobantesTest extends TestCase
     {
         $this->assertSame(
             'FAC-0000001',
-            DB::transaction(fn () => NumeradorDocumentos::proximo('ventas', 'FAC', 7))
+            Transaccion::en(fn () => NumeradorDocumentos::proximo('ventas', 'FAC', 7))
         );
     }
 
