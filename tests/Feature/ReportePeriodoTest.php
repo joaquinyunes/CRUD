@@ -6,7 +6,6 @@ use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
-use App\Support\PeriodoSql;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,7 +18,7 @@ class ReportePeriodoTest extends TestCase
         return User::factory()->create(['role_id' => $this->rolAdministrador()->id]);
     }
 
-    public function test_reportes_por_periodo_funcionan_en_cualquier_motor(): void
+    public function test_reportes_por_periodo_se_muestran(): void
     {
         $admin = $this->admin();
         $producto = Producto::factory()->create(['stock' => 100]);
@@ -53,23 +52,5 @@ class ReportePeriodoTest extends TestCase
         Producto::factory()->create(['stock' => 10]);
 
         $this->actingAs($admin)->get(route('dashboard'))->assertOk();
-    }
-
-    public function test_expresiones_de_periodo_son_validas_en_el_motor_actual(): void
-    {
-        $expresiones = [
-            PeriodoSql::dia('fecha'),
-            PeriodoSql::semana('fecha'),
-            PeriodoSql::mes('fecha'),
-        ];
-
-        foreach ($expresiones as $expresion) {
-            $resultado = Venta::query()
-                ->selectRaw($expresion.' as periodo')
-                ->limit(1)
-                ->get();
-
-            $this->assertNotNull($resultado, "La expresión $expresion no es válida en este motor");
-        }
     }
 }

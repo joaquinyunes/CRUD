@@ -131,7 +131,7 @@ jobs:
         env:
           MONGODB_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
           MONGODB_DATABASE: crud_erp_test
-        run: php artisan test tests/Feature/Fase0Mongo tests/Feature/Fase1Mongo tests/Feature/Fase2Mongo tests/Feature/Fase3Mongo tests/Feature/Fase4Mongo tests/Feature/VentaStockTest.php tests/Feature/CajaTest.php
+        run: php artisan test tests/Feature/Fase0Mongo tests/Feature/Fase1Mongo tests/Feature/Fase2Mongo tests/Feature/Fase3Mongo tests/Feature/Fase4Mongo tests/Feature/Fase5Mongo tests/Feature/VentaStockTest.php tests/Feature/CajaTest.php
 
   estatico:
     name: Análisis estático (PHPStan nivel 5)

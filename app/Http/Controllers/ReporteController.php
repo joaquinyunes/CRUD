@@ -5,16 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Cliente;
 use App\Models\Compra;
 use App\Models\Producto;
-use App\Models\Proveedor;
 use App\Models\Venta;
-use App\Support\PeriodoSql;
+use App\Services\ReportesService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ReporteController extends Controller
 {
+    public function __construct(private ReportesService $reportes) {}
+
     public function index(): View
     {
         $hoy = Carbon::now();
@@ -45,9 +45,7 @@ class ReporteController extends Controller
 
         $totalClientes = Cliente::where('estado', 'activo')->count();
 
-        $totalProveedores = Proveedor::whereHas('compras', function ($q) {
-            $q->where('estado', 'completada');
-        })->count();
+        $totalProveedores = $this->reportes->proveedoresConCompras();
 
         return view('reportes.index', compact(
             'ventasHoy',
@@ -64,43 +62,7 @@ class ReporteController extends Controller
     public function ventasPorPeriodo(Request $request): View
     {
         $periodo = $request->get('periodo', 'diario');
-        $hoy = Carbon::now();
-
-        if ($periodo === 'diario') {
-            $datos = Venta::select(
-                DB::raw(PeriodoSql::dia().' as periodo'),
-                DB::raw('COUNT(*) as cantidad'),
-                DB::raw('SUM(total) as total')
-            )
-                ->where('estado', 'completada')
-                ->where('fecha', '>=', $hoy->copy()->subDays(30))
-                ->groupBy(DB::raw(PeriodoSql::dia()))
-                ->orderBy('periodo', 'desc')
-                ->get();
-        } elseif ($periodo === 'semanal') {
-            $datos = Venta::select(
-                DB::raw(PeriodoSql::semana().' as semana'),
-                DB::raw('MIN(fecha) as periodo'),
-                DB::raw('COUNT(*) as cantidad'),
-                DB::raw('SUM(total) as total')
-            )
-                ->where('estado', 'completada')
-                ->where('fecha', '>=', $hoy->copy()->subWeeks(12))
-                ->groupBy(DB::raw(PeriodoSql::semana()))
-                ->orderBy('semana', 'desc')
-                ->get();
-        } else {
-            $datos = Venta::select(
-                DB::raw(PeriodoSql::mes().' as periodo'),
-                DB::raw('COUNT(*) as cantidad'),
-                DB::raw('SUM(total) as total')
-            )
-                ->where('estado', 'completada')
-                ->where('fecha', '>=', $hoy->copy()->subMonths(12))
-                ->groupBy(DB::raw(PeriodoSql::mes()))
-                ->orderBy('periodo', 'desc')
-                ->get();
-        }
+        $datos = $this->reportes->porPeriodo('ventas', $periodo, Carbon::now());
 
         return view('reportes.ventas-periodo', compact('datos', 'periodo'));
     }
@@ -111,21 +73,7 @@ class ReporteController extends Controller
         $fechaDesde = $request->get('fecha_desde', now()->startOfYear()->toDateString());
         $fechaHasta = $request->get('fecha_hasta', now()->toDateString());
 
-        $datos = DB::table('ventas_detalle')
-            ->join('productos', 'ventas_detalle.producto_id', '=', 'productos.id')
-            ->join('ventas', 'ventas_detalle.venta_id', '=', 'ventas.id')
-            ->where('ventas.estado', 'completada')
-            ->whereBetween('ventas.fecha', [$fechaDesde, $fechaHasta])
-            ->select(
-                'productos.nombre',
-                'productos.codigo',
-                DB::raw('SUM(ventas_detalle.cantidad) as total_vendido'),
-                DB::raw('SUM(ventas_detalle.subtotal) as total_facturado')
-            )
-            ->groupBy('productos.id', 'productos.nombre', 'productos.codigo')
-            ->orderBy('total_vendido', 'desc')
-            ->limit($limit)
-            ->get();
+        $datos = $this->reportes->productosMasVendidos($fechaDesde, $fechaHasta, (int) $limit);
 
         return view('reportes.productos-vendidos', compact('datos', 'limit', 'fechaDesde', 'fechaHasta'));
     }
@@ -136,20 +84,7 @@ class ReporteController extends Controller
         $fechaDesde = $request->get('fecha_desde', now()->startOfYear()->toDateString());
         $fechaHasta = $request->get('fecha_hasta', now()->toDateString());
 
-        $datos = Venta::select(
-            'clientes.nombre',
-            'clientes.apellido',
-            'clientes.email',
-            DB::raw('COUNT(*) as total_compras'),
-            DB::raw('SUM(ventas.total) as total_gastado')
-        )
-            ->join('clientes', 'ventas.cliente_id', '=', 'clientes.id')
-            ->where('ventas.estado', 'completada')
-            ->whereBetween('ventas.fecha', [$fechaDesde, $fechaHasta])
-            ->groupBy('clientes.id', 'clientes.nombre', 'clientes.apellido', 'clientes.email')
-            ->orderBy('total_gastado', 'desc')
-            ->limit($limit)
-            ->get();
+        $datos = $this->reportes->mejoresClientes($fechaDesde, $fechaHasta, (int) $limit);
 
         return view('reportes.mejores-clientes', compact('datos', 'limit', 'fechaDesde', 'fechaHasta'));
     }
@@ -177,27 +112,7 @@ class ReporteController extends Controller
         $fechaDesde = $request->get('fecha_desde', now()->startOfMonth()->toDateString());
         $fechaHasta = $request->get('fecha_hasta', now()->toDateString());
 
-        $productos = DB::table('ventas_detalle')
-            ->join('ventas', 'ventas_detalle.venta_id', '=', 'ventas.id')
-            ->join('productos', 'ventas_detalle.producto_id', '=', 'productos.id')
-            ->leftJoin('categorias', 'productos.categoria_id', '=', 'categorias.id')
-            ->where('ventas.estado', 'completada')
-            ->whereBetween('ventas.fecha', [$fechaDesde, $fechaHasta])
-            ->select(
-                'productos.codigo',
-                'productos.nombre',
-                'categorias.nombre as categoria',
-                'productos.precio_compra',
-                'productos.precio_venta',
-                DB::raw('SUM(ventas_detalle.cantidad) as unidades_vendidas'),
-                DB::raw('SUM(ventas_detalle.subtotal) as total_facturado'),
-                DB::raw('SUM(ventas_detalle.cantidad * productos.precio_compra) as costo_total'),
-                DB::raw('SUM(ventas_detalle.subtotal) - SUM(ventas_detalle.cantidad * productos.precio_compra) as ganancia_total'),
-                DB::raw('CASE WHEN SUM(ventas_detalle.subtotal) > 0 THEN ((SUM(ventas_detalle.subtotal) - SUM(ventas_detalle.cantidad * productos.precio_compra)) / SUM(ventas_detalle.subtotal)) * 100 ELSE 0 END as margen_porcentaje')
-            )
-            ->groupBy('productos.id', 'productos.codigo', 'productos.nombre', 'productos.precio_compra', 'productos.precio_venta', 'categorias.nombre')
-            ->orderBy('ganancia_total', 'desc')
-            ->get();
+        $productos = $this->reportes->rentabilidadPorProducto($fechaDesde, $fechaHasta);
 
         $totales = [
             'facturado' => $productos->sum('total_facturado'),
@@ -222,44 +137,7 @@ class ReporteController extends Controller
     public function comprasPeriodo(Request $request): View
     {
         $periodo = $request->get('periodo', 'diario');
-        $hoy = Carbon::now();
-        $compras = Compra::with('proveedor');
-
-        if ($periodo === 'diario') {
-            $datos = $compras->select(
-                DB::raw(PeriodoSql::dia().' as periodo'),
-                DB::raw('COUNT(*) as cantidad'),
-                DB::raw('SUM(total) as total')
-            )
-                ->where('estado', 'completada')
-                ->where('fecha', '>=', $hoy->copy()->subDays(30))
-                ->groupBy(DB::raw(PeriodoSql::dia()))
-                ->orderBy('periodo', 'desc')
-                ->get();
-        } elseif ($periodo === 'semanal') {
-            $datos = $compras->select(
-                DB::raw(PeriodoSql::semana().' as semana'),
-                DB::raw('MIN(fecha) as periodo'),
-                DB::raw('COUNT(*) as cantidad'),
-                DB::raw('SUM(total) as total')
-            )
-                ->where('estado', 'completada')
-                ->where('fecha', '>=', $hoy->copy()->subWeeks(12))
-                ->groupBy(DB::raw(PeriodoSql::semana()))
-                ->orderBy('semana', 'desc')
-                ->get();
-        } else {
-            $datos = $compras->select(
-                DB::raw(PeriodoSql::mes().' as periodo'),
-                DB::raw('COUNT(*) as cantidad'),
-                DB::raw('SUM(total) as total')
-            )
-                ->where('estado', 'completada')
-                ->where('fecha', '>=', $hoy->copy()->subMonths(12))
-                ->groupBy(DB::raw(PeriodoSql::mes()))
-                ->orderBy('periodo', 'desc')
-                ->get();
-        }
+        $datos = $this->reportes->porPeriodo('compras', $periodo, Carbon::now());
 
         return view('reportes.compras-periodo', compact('datos', 'periodo'));
     }
@@ -268,20 +146,7 @@ class ReporteController extends Controller
     {
         $limit = $request->get('limit', 10);
 
-        $datos = DB::table('compras')
-            ->join('proveedores', 'compras.proveedor_id', '=', 'proveedores.id')
-            ->where('compras.estado', 'completada')
-            ->select(
-                'proveedores.nombre',
-                'proveedores.email',
-                'proveedores.telefono',
-                DB::raw('COUNT(*) as total_compras'),
-                DB::raw('SUM(compras.total) as total_gastado')
-            )
-            ->groupBy('proveedores.id', 'proveedores.nombre', 'proveedores.email', 'proveedores.telefono')
-            ->orderBy('total_gastado', 'desc')
-            ->limit($limit)
-            ->get();
+        $datos = $this->reportes->proveedoresRanking((int) $limit);
 
         return view('reportes.proveedores-ranking', compact('datos', 'limit'));
     }

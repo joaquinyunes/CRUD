@@ -2,7 +2,9 @@
 
 namespace App\Support\Mongo;
 
+use Illuminate\Support\Carbon;
 use MongoDB\BSON\Decimal128;
+use MongoDB\BSON\UTCDateTime;
 use MongoDB\Laravel\Query\Builder;
 
 /**
@@ -16,13 +18,23 @@ class Consulta extends Builder
     protected function compileWheres(): array
     {
         foreach ($this->wheres ?? [] as $i => $where) {
-            if (! is_string($where['column'] ?? null) || ! self::esClave($where['column'])) {
+            if (! is_string($where['column'] ?? null)) {
                 continue;
             }
 
+            // whereDate/whereMonth/whereYear ya los entiende el paquete: no se tocan.
+            $propia = in_array(strtolower((string) ($where['type'] ?? '')), ['date', 'day', 'month', 'year', 'time'], true);
+
+            $normalizar = match (true) {
+                $propia                         => null,
+                self::esClave($where['column']) => self::entero(...),
+                self::esFecha($where['column']) => self::fecha(...),
+                default                         => null,
+            };
+
             foreach (['value', 'values'] as $campo) {
-                if (isset($where[$campo])) {
-                    $this->wheres[$i][$campo] = self::entero($where[$campo]);
+                if ($normalizar && isset($where[$campo])) {
+                    $this->wheres[$i][$campo] = $normalizar($where[$campo]);
                 }
             }
         }
@@ -71,6 +83,29 @@ class Consulta extends Builder
     public function whereIntegerInRaw($column, $values, $boolean = 'and', $not = false)
     {
         return $this->whereIn($column, $values, $boolean, $not);
+    }
+
+    /** Columnas que guardan fechas: `fecha`, `created_at`, `cerrada_en`... */
+    public static function esFecha(string $columna): bool
+    {
+        return $columna === 'fecha' || str_ends_with($columna, '_at') || str_ends_with($columna, '_en');
+    }
+
+    /**
+     * "2026-10-27" o "2026-10-27 23:59:59" pasa a fecha de Mongo; los filtros de los
+     * listados mandan texto y Mongo no compara un texto con una fecha.
+     */
+    public static function fecha(mixed $valor): mixed
+    {
+        if (is_array($valor)) {
+            return array_map(self::fecha(...), $valor);
+        }
+
+        if (is_string($valor) && preg_match('/^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$/', $valor)) {
+            return new UTCDateTime(Carbon::parse($valor));
+        }
+
+        return $valor;
     }
 
     public static function esClave(string $columna): bool
