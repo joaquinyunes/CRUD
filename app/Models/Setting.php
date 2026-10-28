@@ -3,8 +3,18 @@
 namespace App\Models;
 
 use App\Traits\Auditable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $clave
+ * @property mixed $valor
+ * @property mixed $grupo
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Setting extends ModeloMongo
 {
     use Auditable;

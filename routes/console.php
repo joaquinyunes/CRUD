@@ -19,6 +19,5 @@ Schedule::command('stock:avisar-critico')->dailyAt('08:00')->withoutOverlapping(
 // Una copia por noche de toda la base, quedándose con las últimas dos semanas.
 Schedule::command('backup:crear --conservar=14')->dailyAt('03:00')->withoutOverlapping();
 
-// Higiene: tokens de API vencidos y jobs fallidos viejos no se acumulan.
+// Higiene: los tokens de API vencidos no se acumulan.
 Schedule::command('sanctum:prune-expired --hours=24')->daily();
-Schedule::command('queue:prune-failed --hours=168')->daily();

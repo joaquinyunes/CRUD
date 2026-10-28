@@ -20,7 +20,7 @@ class VerificadorDePresencia extends DatabasePresenceVerifier
             $value = Consulta::entero($value);
         }
 
-        if ($excludeId !== null && $excludeId !== 'NULL') {
+        if ($excludeId !== null && ctype_digit((string) $excludeId)) {
             $excludeId = Consulta::entero($excludeId);
         }
 

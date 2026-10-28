@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Models\Proveedor;
+use App\Support\Mongo\Conexion;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use MongoDB\BSON\UTCDateTime;
 use MongoDB\Collection as ColeccionMongo;
 
@@ -17,7 +17,7 @@ use MongoDB\Collection as ColeccionMongo;
  * Los importes se suman en la base como Decimal128 (D6), sin float de por medio;
  * recién al devolver la fila se pasan a número con dos decimales.
  *
- * Cada método devuelve filas con los mismos campos que antes (`$fila->total`,
+ * Cada método devuelve filas (stdClass) con los mismos campos que antes (`$fila->total`,
  * `$fila->nombre`...), así que las vistas no cambian.
  */
 class ReportesService
@@ -27,7 +27,7 @@ class ReportesService
     /**
      * @param  'ventas'|'compras'  $coleccion
      * @param  'diario'|'semanal'|'mensual'  $periodo
-     * @return Collection<int,object>
+     * @return Collection<int,mixed>
      */
     public function porPeriodo(string $coleccion, string $periodo, Carbon $hoy): Collection
     {
@@ -54,7 +54,7 @@ class ReportesService
             ['$sort' => ['_id' => -1]],
         ]);
 
-        return collect($filas)->map(fn ($f) => $periodo === 'semanal'
+        return collect($filas)->map(fn ($f): \stdClass => $periodo === 'semanal'
             ? (object) [
                 'semana'   => $f['_id'],
                 'periodo'  => $this->aFecha($f['primera'])->toDateString(),
@@ -71,7 +71,7 @@ class ReportesService
     /**
      * Ventas completadas por día entre dos fechas (gráfico del dashboard).
      *
-     * @return Collection<int,object{fecha:string,total:float}>
+     * @return Collection<int,mixed>
      */
     public function ventasDiarias(string $desde, string $hasta): Collection
     {
@@ -84,12 +84,12 @@ class ReportesService
             ['$sort' => ['_id' => 1]],
         ]);
 
-        return collect($filas)->map(fn ($f) => (object) ['fecha' => $f['_id'], 'total' => $this->dinero($f['total'])])->values();
+        return collect($filas)->map(fn ($f): \stdClass => (object) ['fecha' => $f['_id'], 'total' => $this->dinero($f['total'])])->values();
     }
 
     // ---- Productos, clientes y proveedores ----
 
-    /** @return Collection<int,object{nombre:string,codigo:?string,total_vendido:int,total_facturado:float}> */
+    /** @return Collection<int,mixed> */
     public function productosMasVendidos(string $desde, string $hasta, int $limite): Collection
     {
         $filas = $this->agregar('ventas_detalle', [
@@ -104,7 +104,7 @@ class ReportesService
             ['$limit' => $limite],
         ]);
 
-        return collect($filas)->map(fn ($f) => (object) [
+        return collect($filas)->map(fn ($f): \stdClass => (object) [
             'nombre'          => $f['producto']['nombre'],
             'codigo'          => $f['producto']['codigo'] ?? null,
             'total_vendido'   => (int) $f['total_vendido'],
@@ -112,7 +112,7 @@ class ReportesService
         ])->values();
     }
 
-    /** @return Collection<int,object{nombre:string,apellido:?string,email:?string,total_compras:int,total_gastado:float}> */
+    /** @return Collection<int,mixed> */
     public function mejoresClientes(string $desde, string $hasta, int $limite): Collection
     {
         $filas = $this->agregar('ventas', [
@@ -124,7 +124,7 @@ class ReportesService
             ['$limit'  => $limite],
         ]);
 
-        return collect($filas)->map(fn ($f) => (object) [
+        return collect($filas)->map(fn ($f): \stdClass => (object) [
             'nombre'        => $f['cliente']['nombre'],
             'apellido'      => $f['cliente']['apellido'] ?? null,
             'email'         => $f['cliente']['email'] ?? null,
@@ -133,7 +133,7 @@ class ReportesService
         ])->values();
     }
 
-    /** @return Collection<int,object{nombre:string,email:?string,telefono:?string,total_compras:int,total_gastado:float}> */
+    /** @return Collection<int,mixed> */
     public function proveedoresRanking(int $limite): Collection
     {
         $filas = $this->agregar('compras', [
@@ -145,7 +145,7 @@ class ReportesService
             ['$limit'  => $limite],
         ]);
 
-        return collect($filas)->map(fn ($f) => (object) [
+        return collect($filas)->map(fn ($f): \stdClass => (object) [
             'nombre'        => $f['proveedor']['nombre'],
             'email'         => $f['proveedor']['email'] ?? null,
             'telefono'      => $f['proveedor']['telefono'] ?? null,
@@ -168,7 +168,7 @@ class ReportesService
      * Ganancia por producto en un rango: facturado menos costo de lo vendido
      * (cantidad x precio de compra actual del producto).
      *
-     * @return Collection<int,object>
+     * @return Collection<int,mixed>
      */
     public function rentabilidadPorProducto(string $desde, string $hasta): Collection
     {
@@ -188,7 +188,7 @@ class ReportesService
             ['$sort'      => ['ganancia_total' => -1]],
         ]);
 
-        return collect($filas)->map(function ($f) {
+        return collect($filas)->map(function ($f): \stdClass {
             $facturado = $this->dinero($f['total_facturado']);
             $ganancia = $this->dinero($f['ganancia_total']);
 
@@ -232,7 +232,7 @@ class ReportesService
     /**
      * Los productos que más ganancia dejaron en un mes.
      *
-     * @return Collection<int,object{nombre:string,vendidos:int,ganancia:float}>
+     * @return Collection<int,mixed>
      */
     public function topRentables(int $anio, int $mes, int $limite): Collection
     {
@@ -251,7 +251,7 @@ class ReportesService
             ['$limit'     => $limite],
         ]);
 
-        return collect($filas)->map(fn ($f) => (object) [
+        return collect($filas)->map(fn ($f): \stdClass => (object) [
             'nombre'   => $f['producto']['nombre'],
             'vendidos' => (int) $f['vendidos'],
             'ganancia' => $this->dinero($f['ganancia']),
@@ -261,7 +261,7 @@ class ReportesService
     /**
      * Unidades vendidas por nombre de producto en un rango (gráfico del dashboard).
      *
-     * @return Collection<int,object{nombre:string,cantidad:int}>
+     * @return Collection<int,mixed>
      */
     public function topProductosPorCantidad(string $desde, string $hasta, int $limite): Collection
     {
@@ -275,13 +275,13 @@ class ReportesService
             ['$limit' => $limite],
         ]);
 
-        return collect($filas)->map(fn ($f) => (object) ['nombre' => $f['_id'], 'cantidad' => (int) $f['cantidad']])->values();
+        return collect($filas)->map(fn ($f): \stdClass => (object) ['nombre' => $f['_id'], 'cantidad' => (int) $f['cantidad']])->values();
     }
 
     /**
      * Cantidad de movimientos de stock por tipo en un mes.
      *
-     * @return Collection<int,object{tipo:string,cantidad:int}>
+     * @return Collection<int,mixed>
      */
     public function movimientosDelMes(int $anio, int $mes): Collection
     {
@@ -293,7 +293,7 @@ class ReportesService
             ['$sort'  => ['_id' => 1]],
         ]);
 
-        return collect($filas)->map(fn ($f) => (object) ['tipo' => $f['_id'], 'cantidad' => (int) $f['cantidad']])->values();
+        return collect($filas)->map(fn ($f): \stdClass => (object) ['tipo' => $f['_id'], 'cantidad' => (int) $f['cantidad']])->values();
     }
 
     // ---- Piezas de pipeline ----
@@ -355,7 +355,7 @@ class ReportesService
 
     private function coleccion(string $nombre): ColeccionMongo
     {
-        return DB::connection('mongodb')->getDatabase()->selectCollection($nombre);
+        return Conexion::mongo()->getDatabase()->selectCollection($nombre);
     }
 
     /**
@@ -367,7 +367,7 @@ class ReportesService
         $filas = [];
 
         foreach ($this->coleccion($coleccion)->aggregate($pipeline) as $fila) {
-            $filas[] = $fila->getArrayCopy();
+            $filas[] = $fila instanceof \ArrayObject ? $fila->getArrayCopy() : (array) $fila;
         }
 
         return $filas;

@@ -3,7 +3,18 @@
 namespace App\Models;
 
 use App\Traits\Auditable;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $nombre
+ * @property mixed $direccion
+ * @property bool $es_principal
+ * @property bool $activo
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Deposito extends ModeloMongo
 {
     use Auditable;

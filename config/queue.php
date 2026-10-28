@@ -121,8 +121,10 @@ return [
     */
 
     'failed' => [
-        'driver'   => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
-        'database' => env('DB_CONNECTION', 'sqlite'),
+        // La cola es `sync`: un job que falla lanza su excepción en el momento y no queda
+        // registrado en ninguna tabla.
+        'driver'   => env('QUEUE_FAILED_DRIVER', 'null'),
+        'database' => env('DB_CONNECTION', 'mongodb'),
         'table'    => 'failed_jobs',
     ],
 

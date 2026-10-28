@@ -5,7 +5,27 @@ namespace App\Models;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $numero
+ * @property mixed $cliente_id
+ * @property Carbon|null $fecha
+ * @property mixed $validez_dias
+ * @property string $subtotal
+ * @property string $descuento
+ * @property mixed $descuento_tipo
+ * @property string $impuesto
+ * @property string $total
+ * @property mixed $estado
+ * @property mixed $venta_id
+ * @property mixed $observaciones
+ * @property mixed $user_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Presupuesto extends ModeloMongo
 {
     use Auditable;

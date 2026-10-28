@@ -1,20 +1,16 @@
 # Blueprint de Render — https://render.com/docs/blueprint-spec
 #
-# Uso:
-#   1. Render > New > Blueprint > conectar este repositorio.
-#   2. Render crea la base Postgres y el web service, y los enlaza solo.
-#   3. Cargar APP_KEY a mano (es el único valor que Render no puede generar):
-#        php artisan key:generate --show
-#      y pegar el resultado completo, incluido el prefijo "base64:".
+# La base de datos es MongoDB Atlas (no la crea Render). Antes del primer deploy:
+#   1. Crear en Atlas un cluster con replica set (todos lo son) y un plan que NO se
+#      pause por inactividad (el gratuito M0 sí se pausa: ver docs/DESPLIEGUE-MONGODB.md).
+#   2. Crear un usuario de base de datos y permitir la IP de Render en "Network Access".
+#   3. Render > New > Blueprint > conectar este repositorio.
+#   4. Cargar a mano los dos valores que Render no puede generar:
+#        APP_KEY      -> php artisan key:generate --show   (con el prefijo "base64:")
+#        MONGODB_URI  -> la cadena de conexión de Atlas (mongodb+srv://<usuario>:<clave>@<cluster>.mongodb.net/?retryWrites=true&w=majority)
 #
-# El primer deploy corre las migraciones y, si DB_SEED_ON_BOOT=true, carga los
-# datos de demostración (ver docker/entrypoint.sh).
-
-databases:
-  - name: crud-erp-db
-    databaseName: crud_erp
-    user: crud_erp
-    plan: free
+# El primer deploy crea los índices (php artisan mongo:indices) y, si DB_SEED_ON_BOOT=true,
+# carga los datos de demostración (ver docker/entrypoint.sh).
 
 services:
   - type: web
@@ -22,7 +18,8 @@ services:
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /login
+    # /up responde 200 solo si MongoDB contesta (ver AppServiceProvider).
+    healthCheckPath: /up
     autoDeploy: true
     envVars:
       # --- Aplicación ---
@@ -41,39 +38,23 @@ services:
       - key: APP_FAKER_LOCALE
         value: es_AR
 
-      # --- Base de datos (enlazada automáticamente a crud-erp-db) ---
+      # --- Base de datos: MongoDB Atlas ---
       - key: DB_CONNECTION
-        value: pgsql
-      - key: DB_HOST
-        fromDatabase:
-          name: crud-erp-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: crud-erp-db
-          property: port
-      - key: DB_DATABASE
-        fromDatabase:
-          name: crud-erp-db
-          property: database
-      - key: DB_USERNAME
-        fromDatabase:
-          name: crud-erp-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: crud-erp-db
-          property: password
+        value: mongodb
+      - key: MONGODB_URI
+        sync: false          # cargar a mano: cadena de conexión de Atlas
+      - key: MONGODB_DATABASE
+        value: crud_erp
 
-      # --- Sesión, caché y colas sobre la misma base ---
+      # --- Sesión, caché y cola: drivers que no necesitan base de datos ---
       - key: SESSION_DRIVER
-        value: database
+        value: cookie
       - key: SESSION_SECURE_COOKIE   # la demo se sirve solo por HTTPS
         value: "true"
       - key: CACHE_STORE
-        value: database
+        value: file
       - key: QUEUE_CONNECTION
-        value: database
+        value: sync
 
       # --- Demo: poblar el sistema en el primer arranque ---
       # Sólo siembra si la base está vacía. Poner en "false" si es una
@@ -101,13 +82,12 @@ services:
       - key: MAIL_MAILER
         value: log
 
-      # --- Cola y tareas programadas ---
-      # En el plan gratuito no hay servicios de fondo, así que el worker de
-      # colas y el programador corren dentro del mismo contenedor web (ver
-      # docker/entrypoint.sh). Para una instalación real conviene ponerlos en su
-      # propio servicio —descomentar el bloque "worker" de abajo— y dejar esto
-      # en "false", para que un reinicio del web no interrumpa un job a medias.
-      - key: RUN_WORKERS
+      # --- Tareas programadas ---
+      # En el plan gratuito no hay servicios de fondo, así que el programador corre dentro
+      # del mismo contenedor web (ver docker/entrypoint.sh). Para una instalación real
+      # conviene un cron job de Render que corra `php artisan schedule:run` cada minuto, y
+      # dejar esto en "false".
+      - key: RUN_SCHEDULER
         value: "true"
 
       # --- Archivos subidos (adjuntos, PDFs, backups) ---
@@ -126,15 +106,3 @@ services:
         sync: false
       - key: AWS_BUCKET
         sync: false
-
-# --- Worker dedicado (instalación real) ---
-# Descomentar junto con RUN_WORKERS=false en el servicio web. Requiere un plan
-# pago: Render no ofrece workers en el plan gratuito.
-#
-#  - type: worker
-#    name: crud-erp-worker
-#    runtime: docker
-#    dockerfilePath: ./Dockerfile
-#    dockerCommand: php artisan queue:work --tries=3 --max-time=3600
-#    envVars:
-#      - fromGroup: crud-erp   # mismas variables que el servicio web

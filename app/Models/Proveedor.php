@@ -6,9 +6,20 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property-read float $saldo_actual
+ * @property int $id
+ * @property int $_id
+ * @property mixed $nombre
+ * @property mixed $cuit
+ * @property mixed $telefono
+ * @property mixed $email
+ * @property mixed $direccion
+ * @property mixed $estado
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class Proveedor extends ModeloMongo
 {

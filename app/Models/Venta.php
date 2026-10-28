@@ -6,7 +6,30 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $numero
+ * @property mixed $cliente_id
+ * @property mixed $deposito_id
+ * @property Carbon|null $fecha
+ * @property string $total
+ * @property string $subtotal
+ * @property string $descuento
+ * @property mixed $descuento_tipo
+ * @property string $impuesto
+ * @property string $total_final
+ * @property string $pagado
+ * @property mixed $estado_pago
+ * @property mixed $estado
+ * @property mixed $motivo_anulacion
+ * @property bool $stock_aplicado
+ * @property mixed $user_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Venta extends ModeloMongo
 {
     use Auditable, HasFactory;
@@ -106,7 +129,7 @@ class Venta extends ModeloMongo
         // whereHas no existe entre colecciones: se buscan primero los clientes.
         $clienteIds = Cliente::where(fn ($q) => $q->where('nombre', 'like', "%{$buscar}%")
             ->orWhere('apellido', 'like', "%{$buscar}%"))
-            ->get()->modelKeys();
+            ->pluck('id')->all();
 
         return $query->where(fn ($q) => $q->whereIn('cliente_id', $clienteIds)
             ->orWhere('numero', 'like', "%{$buscar}%"));

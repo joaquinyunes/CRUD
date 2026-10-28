@@ -17,7 +17,7 @@ class Consulta extends Builder
 {
     protected function compileWheres(): array
     {
-        foreach ($this->wheres ?? [] as $i => $where) {
+        foreach ($this->wheres as $i => $where) {
             if (! is_string($where['column'] ?? null)) {
                 continue;
             }
@@ -76,7 +76,9 @@ class Consulta extends Builder
         $mongo = ['=' => '$eq', '!=' => '$ne', '<>' => '$ne', '<' => '$lt', '<=' => '$lte', '>' => '$gt', '>=' => '$gte'][$operator]
             ?? throw new \InvalidArgumentException("Operador no soportado en whereColumn: {$operator}");
 
-        return $this->whereRaw(['$expr' => [$mongo => ['$'.$first, '$'.$second]]], [], $boolean);
+        $this->wheres[] = ['type' => 'raw', 'sql' => ['$expr' => [$mongo => ['$'.$first, '$'.$second]]], 'boolean' => $boolean];
+
+        return $this;
     }
 
     /** Eloquent la usa al cargar relaciones con ids enteros; en Mongo es un whereIn común. */

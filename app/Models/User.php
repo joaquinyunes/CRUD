@@ -17,8 +17,24 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $name
+ * @property mixed $email
+ * @property string $password
+ * @property mixed $role_id
+ * @property bool $activo
+ * @property Carbon|null $email_verified_at
+ * @property Carbon|null $two_factor_confirmed_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property mixed $two_factor_secret
+ * @property mixed $two_factor_recovery_codes
+ */
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends ModeloMongo implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract, MustVerifyEmail
 {

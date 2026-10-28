@@ -4,6 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $presupuesto_id
+ * @property mixed $producto_id
+ * @property mixed $cantidad
+ * @property string $precio
+ * @property string $subtotal
+ */
 class PresupuestoDetalle extends ModeloMongo
 {
     public $timestamps = false;

@@ -4,7 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $user_id
+ * @property mixed $ip
+ * @property mixed $accion
+ * @property mixed $modelo_afectado
+ * @property mixed $modelo_id
+ * @property array|null $valor_anterior
+ * @property array|null $valor_nuevo
+ * @property Carbon|null $created_at
+ */
 class Auditoria extends ModeloMongo
 {
     public $timestamps = false;

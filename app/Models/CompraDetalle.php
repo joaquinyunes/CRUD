@@ -5,6 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $compra_id
+ * @property mixed $producto_id
+ * @property mixed $cantidad
+ * @property string $precio
+ * @property string $subtotal
+ */
 class CompraDetalle extends ModeloMongo
 {
     use HasFactory;

@@ -203,8 +203,7 @@ class DevolucionController extends Controller
         $devoluciones = Devolucion::where('tipo', $tipo)
             ->where($col, $docId)
             ->where('estado', 'registrada')
-            ->get()
-            ->modelKeys();
+            ->pluck('id')->all();
 
         return DevolucionDetalle::whereIn('devolucion_id', $devoluciones)
             ->get()

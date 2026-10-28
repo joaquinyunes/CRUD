@@ -4,7 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $titulo
+ * @property mixed $descripcion
+ * @property mixed $prioridad
+ * @property mixed $estado
+ * @property Carbon|null $fecha_limite
+ * @property mixed $asignada_a
+ * @property mixed $user_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Tarea extends ModeloMongo
 {
     use HasFactory;

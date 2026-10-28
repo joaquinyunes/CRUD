@@ -4,7 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $producto_id
+ * @property mixed $deposito_id
+ * @property mixed $tipo
+ * @property mixed $cantidad
+ * @property mixed $user_id
+ * @property mixed $referencia_tipo
+ * @property mixed $referencia_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class MovimientoStock extends ModeloMongo
 {
     use HasFactory;

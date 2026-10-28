@@ -37,7 +37,7 @@ abstract class ModeloMongo extends Model
     /** Un id o clave foránea que llega como texto ("7") se guarda como entero. */
     public function setAttribute($key, $value)
     {
-        if (is_string($key) && Consulta::esClave($key)) {
+        if (Consulta::esClave($key)) {
             $value = Consulta::entero($value);
         }
 
@@ -47,6 +47,11 @@ abstract class ModeloMongo extends Model
     /**
      * Igual que el del paquete, pero devolviendo RelacionMuchosAMuchos (acepta un id
      * suelto o una Collection en sync/attach). Con un modelo SQL del otro lado no cambia nada.
+     *
+     * @template TRelatedModel of \Illuminate\Database\Eloquent\Model
+     *
+     * @param  class-string<TRelatedModel>  $related
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<TRelatedModel, $this>
      */
     public function belongsToMany($related, $collection = null, $foreignPivotKey = null, $relatedPivotKey = null, $parentKey = null, $relatedKey = null, $relation = null)
     {

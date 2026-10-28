@@ -6,7 +6,30 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $numero
+ * @property mixed $proveedor_id
+ * @property mixed $deposito_id
+ * @property Carbon|null $fecha
+ * @property string $total
+ * @property string $subtotal
+ * @property string $descuento
+ * @property mixed $descuento_tipo
+ * @property string $impuesto
+ * @property string $total_final
+ * @property string $pagado
+ * @property mixed $estado_pago
+ * @property mixed $estado
+ * @property mixed $motivo_anulacion
+ * @property bool $stock_aplicado
+ * @property mixed $user_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Compra extends ModeloMongo
 {
     use Auditable, HasFactory;
@@ -103,7 +126,7 @@ class Compra extends ModeloMongo
         }
 
         // El proveedor vive en MongoDB: no hay whereHas entre bases, se buscan primero sus ids.
-        $proveedorIds = Proveedor::where('nombre', 'like', "%{$buscar}%")->get()->modelKeys();
+        $proveedorIds = Proveedor::where('nombre', 'like', "%{$buscar}%")->pluck('id')->all();
 
         return $query->where(fn ($q) => $q->whereIn('proveedor_id', $proveedorIds)
             ->orWhere('numero', 'like', "%{$buscar}%"));

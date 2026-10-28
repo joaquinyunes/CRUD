@@ -2,7 +2,6 @@
 
 namespace App\Support\Mongo;
 
-use Illuminate\Support\Facades\DB;
 use MongoDB\Database;
 use MongoDB\Operation\FindOneAndUpdate;
 
@@ -33,14 +32,14 @@ class Contadores
      */
     public static function siguienteNumero(string $serie, int $desde): int
     {
-        $conexion = DB::connection('mongodb');
+        $conexion = Conexion::mongo();
 
         return self::incrementar($conexion->getDatabase(), "num:{$serie}", $desde, $conexion->getSession());
     }
 
     public static function existeNumero(string $serie): bool
     {
-        $conexion = DB::connection('mongodb');
+        $conexion = Conexion::mongo();
 
         return $conexion->getCollection('contadores')->countDocuments(
             ['_id' => "num:{$serie}"], ['session' => $conexion->getSession()]
@@ -49,7 +48,7 @@ class Contadores
 
     private static function base(): Database
     {
-        return DB::connection('mongodb')->getDatabase();
+        return Conexion::mongo()->getDatabase();
     }
 
     private static function incrementar(Database $base, string $clave, int $desde, $sesion): int

@@ -5,6 +5,15 @@ namespace App\Models;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $nombre
+ * @property mixed $codigo
+ * @property bool $activo
+ * @property bool $permite_vuelto
+ * @property int $orden
+ */
 class MetodoPago extends ModeloMongo
 {
     use Auditable;

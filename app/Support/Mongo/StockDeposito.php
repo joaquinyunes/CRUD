@@ -2,7 +2,6 @@
 
 namespace App\Support\Mongo;
 
-use Illuminate\Support\Facades\DB;
 use MongoDB\Collection;
 use MongoDB\Driver\Session;
 use MongoDB\Operation\FindOneAndUpdate;
@@ -19,7 +18,7 @@ class StockDeposito
 {
     public static function coleccion(): Collection
     {
-        return DB::connection('mongodb')->getDatabase()->selectCollection('stock_deposito');
+        return Conexion::mongo()->getDatabase()->selectCollection('stock_deposito');
     }
 
     private static function clave(int $productoId, int $depositoId): string
@@ -30,7 +29,7 @@ class StockDeposito
     /** @return array{session?: Session} */
     private static function sesion(): array
     {
-        $sesion = DB::connection('mongodb')->getSession();
+        $sesion = Conexion::mongo()->getSession();
 
         return $sesion ? ['session' => $sesion] : [];
     }

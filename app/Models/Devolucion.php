@@ -5,7 +5,23 @@ namespace App\Models;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $numero
+ * @property mixed $tipo
+ * @property mixed $venta_id
+ * @property mixed $compra_id
+ * @property Carbon|null $fecha
+ * @property mixed $motivo
+ * @property string $total
+ * @property mixed $estado
+ * @property mixed $user_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Devolucion extends ModeloMongo
 {
     use Auditable;

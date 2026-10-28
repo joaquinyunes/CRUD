@@ -18,9 +18,9 @@ use App\Models\User;
 use App\Models\Venta;
 use App\Models\VentaDetalle;
 use App\Models\VentaPago;
+use App\Support\Mongo\Conexion;
 use App\Support\Mongo\StockDeposito;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class DemoSeeder extends Seeder
 {
@@ -172,7 +172,7 @@ class DemoSeeder extends Seeder
                     continue;
                 }
                 $cantidad = rand(1, 5);
-                $precio = $prod->precio_venta;
+                $precio = (float) $prod->precio_venta;
                 $sub = $cantidad * $precio;
                 $subtotal += $sub;
                 $detalles[] = ['producto' => $prod, 'cantidad' => $cantidad, 'precio' => $precio, 'subtotal' => $sub];
@@ -237,7 +237,7 @@ class DemoSeeder extends Seeder
             for ($j = 0; $j < $nDet; $j++) {
                 $prod = $productos[array_rand($productos)];
                 $cantidad = rand(5, 30);
-                $precio = $prod->precio_compra;
+                $precio = (float) $prod->precio_compra;
                 $sub = $cantidad * $precio;
                 $subtotal += $sub;
                 $detalles[] = ['producto' => $prod, 'cantidad' => $cantidad, 'precio' => $precio, 'subtotal' => $sub];
@@ -305,7 +305,7 @@ class DemoSeeder extends Seeder
         ];
 
         foreach ($tablas as $tabla) {
-            DB::connection('mongodb')->table($tabla)->delete();
+            Conexion::mongo()->table($tabla)->delete();
             $this->reiniciarIds($tabla);
         }
     }
@@ -313,7 +313,7 @@ class DemoSeeder extends Seeder
     /** Vuelve la secuencia de ids de la colección a 1 (la numeración de comprobantes sigue). */
     private function reiniciarIds(string $tabla): void
     {
-        DB::connection('mongodb')->table('contadores')->where('_id', "id:{$tabla}")->delete();
+        Conexion::mongo()->table('contadores')->where('_id', "id:{$tabla}")->delete();
     }
 
     /**

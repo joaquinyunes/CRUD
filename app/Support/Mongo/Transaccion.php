@@ -3,7 +3,6 @@
 namespace App\Support\Mongo;
 
 use Closure;
-use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
@@ -20,19 +19,17 @@ class Transaccion
 
     public static function en(Closure $codigo): mixed
     {
-        $conexion = DB::connection('mongodb');
+        $conexion = Conexion::mongo();
 
-        if ($conexion->transactionLevel() > 0) {
+        if (Conexion::enTransaccion()) {
             return $codigo();
         }
 
         try {
             return $conexion->transaction($codigo, self::INTENTOS);
         } catch (Throwable $e) {
-            // El paquete deja el contador de niveles en 1 si el código lanza una excepción.
-            if ($conexion->transactionLevel() > 0) {
-                $conexion->rollBack();
-            }
+            // El paquete deja su contador de niveles en 1 si el código lanza una excepción.
+            $conexion->rollBack();
 
             throw $e;
         }

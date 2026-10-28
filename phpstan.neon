@@ -11,7 +11,5 @@ parameters:
     # nulls sin comprobar, sin exigir anotaciones genéricas en todo el código.
     level: 5
 
-    # Con esto Larastan conoce las columnas reales de cada tabla y deja de
-    # inventar que un modelo no tiene created_at.
-    databaseMigrationsPath:
-        - database/migrations
+    # MongoDB no tiene esquema que leer (antes Larastan lo sacaba de las migraciones):
+    # los campos de cada documento se declaran con @property en el modelo.

@@ -5,7 +5,23 @@ namespace App\Models;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $user_id
+ * @property string $monto_inicial
+ * @property string $monto_final_declarado
+ * @property string $monto_final_sistema
+ * @property string $diferencia
+ * @property mixed $estado
+ * @property mixed $observaciones
+ * @property Carbon|null $abierta_en
+ * @property Carbon|null $cerrada_en
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class CajaSesion extends ModeloMongo
 {
     use Auditable;

@@ -4,7 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $compra_id
+ * @property mixed $metodo_pago_id
+ * @property string $monto
+ * @property mixed $referencia
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class CompraPago extends ModeloMongo
 {
     use HasFactory;

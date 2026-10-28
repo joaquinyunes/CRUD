@@ -229,7 +229,7 @@ class VentaService
     /** @param  array<int,array<string,mixed>>  $pagos */
     public function efectivoDe(array $pagos): float
     {
-        $efectivoIds = MetodoPago::where('codigo', 'efectivo')->get()->modelKeys();
+        $efectivoIds = MetodoPago::where('codigo', 'efectivo')->pluck('id')->all();
 
         return (float) collect($pagos)
             ->filter(fn ($pago) => in_array((int) ($pago['metodo_pago_id'] ?? 0), $efectivoIds, true))
@@ -239,7 +239,7 @@ class VentaService
     /** El efectivo que la venta ya tiene imputado, para ajustar la caja al editarla. */
     public function efectivoRegistradoEn(Venta $venta): float
     {
-        $efectivoIds = MetodoPago::where('codigo', 'efectivo')->get()->modelKeys();
+        $efectivoIds = MetodoPago::where('codigo', 'efectivo')->pluck('id')->all();
 
         return (float) $venta->pagos()->whereIn('metodo_pago_id', $efectivoIds)->sum('monto');
     }

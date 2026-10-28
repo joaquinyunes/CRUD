@@ -4,6 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $clave
+ */
 class Permission extends ModeloMongo
 {
     public $timestamps = false;

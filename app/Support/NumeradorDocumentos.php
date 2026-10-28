@@ -2,8 +2,8 @@
 
 namespace App\Support;
 
+use App\Support\Mongo\Conexion;
 use App\Support\Mongo\Contadores;
-use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /**
@@ -21,7 +21,7 @@ class NumeradorDocumentos
 {
     public static function proximo(string $tabla, string $prefijo, int $digitos = 5): string
     {
-        if (DB::connection('mongodb')->transactionLevel() === 0) {
+        if (! Conexion::enTransaccion()) {
             throw new RuntimeException(
                 'NumeradorDocumentos::proximo() tiene que ejecutarse dentro de una transacción.'
             );
@@ -48,7 +48,7 @@ class NumeradorDocumentos
     {
         $desde = strlen($prefijo) + 1;
 
-        return (int) DB::connection('mongodb')->table($tabla)
+        return (int) Conexion::mongo()->table($tabla)
             ->where('numero', 'like', "{$prefijo}-%")
             ->pluck('numero')
             ->map(fn ($numero) => (int) substr((string) $numero, $desde))

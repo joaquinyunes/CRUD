@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $nombre
+ */
 class Role extends ModeloMongo
 {
     use Auditable;
@@ -66,7 +71,7 @@ class Role extends ModeloMongo
     {
         $comodin = Permission::where('clave', self::TODO)->value('_id');
 
-        return $comodin === null ? [] : self::where('permission_ids', $comodin)->get()->modelKeys();
+        return $comodin === null ? [] : self::where('permission_ids', $comodin)->pluck('id')->all();
     }
 
     public function sincronizarPermisos(array $permissionIds): void

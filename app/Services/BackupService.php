@@ -3,10 +3,10 @@
 namespace App\Services;
 
 use App\Exceptions\ReglaDeNegocioException;
+use App\Support\Mongo\Conexion;
 use App\Support\Mongo\Transaccion;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use MongoDB\BSON\Document;
@@ -65,6 +65,8 @@ class BackupService
             ]);
 
             foreach ($documentos as $documento) {
+                assert($documento instanceof Document);
+
                 gzwrite($gz, '{"t":'.json_encode($coleccion).',"f":'.$documento->toCanonicalExtendedJSON()."}\n");
             }
         }
@@ -179,13 +181,13 @@ class BackupService
 
     private function base(): Database
     {
-        return DB::connection('mongodb')->getDatabase();
+        return Conexion::mongo()->getDatabase();
     }
 
     /** @return array{session?: Session} */
     private function opciones(): array
     {
-        $sesion = DB::connection('mongodb')->getSession();
+        $sesion = Conexion::mongo()->getSession();
 
         return $sesion ? ['session' => $sesion] : [];
     }

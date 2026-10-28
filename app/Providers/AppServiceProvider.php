@@ -4,9 +4,12 @@ namespace App\Providers;
 
 use App\Models\PersonalAccessToken;
 use App\Services\StockService;
+use App\Support\Mongo\Conexion;
 use App\Support\Mongo\VerificadorDePresencia;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
@@ -23,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // /up (el health check de Render y de Docker) solo da 200 si MongoDB contesta.
+        Event::listen(DiagnosingHealth::class, fn () => Conexion::mongo()->getDatabase()->command(['ping' => 1]));
+
         // Los tokens de API viven en MongoDB junto con los usuarios.
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 

@@ -12,6 +12,11 @@ use MongoDB\Laravel\Relations\BelongsToMany;
  *
  * El del paquete solo acepta arrays en sync() y attach(); el código de Laravel
  * suele pasar un id suelto o una Collection (`->pluck('id')`). Acá se normaliza.
+ *
+ * @template TRelatedModel of Model
+ * @template TDeclaringModel of Model
+ *
+ * @extends BelongsToMany<TRelatedModel, TDeclaringModel>
  */
 class RelacionMuchosAMuchos extends BelongsToMany
 {
@@ -22,7 +27,7 @@ class RelacionMuchosAMuchos extends BelongsToMany
 
     public function attach($id, array $attributes = [], $touch = true)
     {
-        return parent::attach($this->comoLista($id), $attributes, $touch);
+        parent::attach($this->comoLista($id), $attributes, $touch);
     }
 
     /** Sin ids, detach() tiene que soltar todo lo que el padre tiene (el del paquete no hace nada). */
@@ -37,12 +42,12 @@ class RelacionMuchosAMuchos extends BelongsToMany
 
     private function comoLista(mixed $ids): mixed
     {
-        if ($ids instanceof Arrayable && ! $ids instanceof Collection) {
-            $ids = $ids->toArray();
-        }
-
         if ($ids instanceof Model || $ids instanceof Collection) {
             return $ids;
+        }
+
+        if ($ids instanceof Arrayable) {
+            $ids = $ids->toArray();
         }
 
         return array_map(Consulta::entero(...), array_values((array) $ids));

@@ -4,7 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $titulo
+ * @property mixed $descripcion
+ * @property mixed $color
+ * @property Carbon|null $inicio
+ * @property Carbon|null $fin
+ * @property bool $todo_el_dia
+ * @property mixed $user_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Evento extends ModeloMongo
 {
     use HasFactory;

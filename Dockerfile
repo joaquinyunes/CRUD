@@ -13,13 +13,12 @@ RUN npm run build
 FROM dunglas/frankenphp:1-php8.3 AS app
 
 # Extensiones que usa el sistema:
-#   pdo_pgsql / pdo_mysql -> base de datos
+#   mongodb               -> base de datos (driver oficial de MongoDB)
 #   gd                    -> PDFs con dompdf y phpspreadsheet
 #   zip                   -> exportación a Excel
 #   bcmath, intl          -> cálculos de totales y formato de moneda
 RUN install-php-extensions \
-      pdo_pgsql \
-      pdo_mysql \
+      mongodb \
       gd \
       zip \
       bcmath \

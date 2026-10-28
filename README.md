@@ -6,7 +6,7 @@
   <a href="https://github.com/joaquinyunes/CRUD/actions/workflows/ci.yml"><img src="https://github.com/joaquinyunes/CRUD/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/PHP-8.3-777BB4?logo=php&logoColor=white" alt="PHP 8.3">
   <img src="https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white" alt="Laravel 13">
-  <img src="https://img.shields.io/badge/base%20de%20datos-PostgreSQL%20%7C%20MySQL%20%7C%20SQLite-336791" alt="Bases de datos">
+  <img src="https://img.shields.io/badge/base%20de%20datos-MongoDB-47A248" alt="Bases de datos">
   <img src="https://img.shields.io/badge/PHPStan-nivel%205-2A6F97" alt="PHPStan nivel 5">
   <img src="https://img.shields.io/badge/licencia-source%20available-E2A13B" alt="Licencia">
 </p>
@@ -107,10 +107,10 @@ comprobantes se emiten en **PDF** y los listados se exportan a **Excel** y **CSV
 | Decisión | Por qué | Dónde |
 |---|---|---|
 | **Un solo punto de cálculo de totales** | La fórmula de subtotal, descuento, base imponible e impuesto estaba duplicada en ventas y compras y se desincronizaba. Ahora hay una sola implementación, con tests. | `app/Support/CalculadorTotales.php` |
-| **Numeración de comprobantes centralizada** | Un único lugar decide el número. El consecutivo sale de bloquear la fila del contador de la serie, no de buscar el máximo en la tabla: un `SELECT ... FOR UPDATE` que no devuelve filas no bloquea nada, y con la tabla vacía dos ventas simultáneas se llevaban el mismo número. Si la transacción se revierte, el contador vuelve con ella y la serie no deja huecos. | `app/Support/NumeradorDocumentos.php` |
-| **El stock se mueve en servicios, no en controllers** | Toda alta, baja o ajuste pasa por el servicio de stock, que valida disponibilidad y deja el movimiento auditado. Ningún controller toca `productos.stock` a mano. | `app/Services/StockService.php` |
+| **Numeración de comprobantes centralizada** | Un único lugar decide el número. El consecutivo sale de un contador atómico (`findOneAndUpdate` + `$inc`) dentro de la transacción de MongoDB, no de buscar el máximo en la colección: dos ventas simultáneas nunca se llevan el mismo número, y un test lanza procesos reales a la vez para comprobarlo. Si la transacción se revierte, el contador vuelve con ella y la serie no deja huecos. | `app/Support/NumeradorDocumentos.php` |
+| **El stock se mueve en servicios, no en controllers** | Toda alta, baja o ajuste pasa por el servicio de stock, que descuenta con un único `findOneAndUpdate` (`$inc` solo si alcanza) y deja el movimiento auditado. Ningún controller toca `productos.stock` a mano. | `app/Services/StockService.php` |
 | **Anular en vez de borrar** | Una venta anulada conserva el comprobante y revierte el stock. Nunca se pierde el historial. | `VentaController@anular` |
-| **SQL independiente del motor** | Los reportes agrupaban con `YEARWEEK()` y `DATE_FORMAT()`, exclusivas de MySQL. El dialecto se resuelve en un solo lugar y el CI corre los tests contra los tres motores. | `app/Support/PeriodoSql.php` |
+| **Dinero sin `float`** | Los importes se guardan como `Decimal128` y los totales se suman dentro de MongoDB; recién al mostrarlos pasan a número. | `app/Models/ModeloMongo.php`, `app/Services/ReportesService.php` |
 | **Permisos por clave, no roles hardcodeados** | El middleware pide `permiso:ventas.crear`. Ni siquiera "poder todo" es un nombre de rol: es el permiso comodín `*`. Un rol nuevo llamado "Dueño" con ese permiso manda igual que "Administrador", y a "Administrador" se le puede sacar una parte sin tocar código. | `app/Http/Middleware/CheckPermission.php` |
 | **La API exige los mismos permisos que la web** | Un token pertenece a un usuario, y ese usuario tiene un rol: el token de un usuario de solo lectura recibe 403 al intentar escribir, igual que el botón que no le aparece en pantalla. | `routes/api.php` |
 | **Un solo lugar emite un comprobante** | La API tenía su propia copia de "crear una venta", y había divergido: numeraba con `MAX(id) + 1` e ignoraba el descuento y los medios de pago. Las dos puertas llaman al mismo servicio, así que una venta cargada por pantalla y otra por API salen de la misma serie y con las mismas reglas. | `app/Services/VentaService.php` |
@@ -118,7 +118,7 @@ comprobantes se emiten en **PDF** y los listados se exportan a **Excel** y **CSV
 | **Los formularios no embeben el catálogo** | Traían la lista completa de productos y clientes dentro del HTML, una vez por cada fila. Medido con 5.000 productos: el formulario de venta pesaba 2 MB y ahora pesa 35 KB. | `public/js/buscador.js` |
 | **Nada con historial se borra: se archiva** | Un proveedor con compras o un usuario con ventas no se pueden borrar sin perder los comprobantes. En vez de dejar que reviente la clave foránea, el sistema los archiva o los desactiva y lo explica. | `ProveedorController@destroy`, `UserController@destroy` |
 | **Auditoría en todos los módulos** | Ventas, compras, caja, devoluciones, presupuestos, usuarios, roles y configuración registran quién cambió qué y desde dónde, con el valor anterior y el nuevo. Nunca se guardan hashes de contraseña ni tokens. | `app/Traits/Auditable.php` |
-| **Backup y restauración sin binarios externos** | Antes ejecutaba `mysqldump` por línea de comandos: no funcionaba en PostgreSQL (la base que se despliega), la contraseña viajaba en el comando y el contenedor no trae esos clientes. Ahora es un servicio en PHP que escribe un `.json.gz` fila por fila, restaura todo o nada, se niega a restaurar sobre otra estructura y corre solo cada noche conservando 14 copias. | `app/Services/BackupService.php` |
+| **Backup y restauración sin binarios externos** | Antes ejecutaba `mysqldump` por línea de comandos: no funcionaba con la base que se despliega, la contraseña viajaba en el comando y el contenedor no trae esos clientes. Ahora es un servicio en PHP que escribe un `.json.gz` documento por documento (JSON extendido, así los ids, los decimales y las fechas vuelven idénticos), restaura todo o nada, se niega a restaurar un respaldo de otra base o de una versión más nueva y corre solo cada noche conservando 14 copias. | `app/Services/BackupService.php` |
 | **Los adjuntos se sirven con permiso** | Los archivos subidos iban al disco público: cualquiera con la URL los descargaba sin sesión. Ahora van al disco privado (o al bucket S3) y se entregan por rutas que piden `archivos.ver`. | `app/Http/Controllers/ArchivoController.php` |
 | **Lo que la configuración promete, se cumple** | Apagar los descuentos y el límite de descuento se guardaban pero nadie los leía. Ahora el servicio de ventas los aplica; por encima del límite descuenta solo quien tiene `ventas.descuento_libre`. | `app/Services/VentaService.php` |
 | **Rutas separadas por módulo** | 30 archivos de rutas en lugar de un `web.php` de 800 líneas. | `routes/` |
@@ -158,24 +158,11 @@ node docs/capturas.cjs
 
 ## Instalación
 
-### Opción 1 — Local en 2 minutos (SQLite, sin servidor de base de datos)
+MongoDB necesita un **replica set** (aunque sea de un solo nodo): las ventas, el stock y la caja usan
+transacciones. Hace falta además la extensión PHP `mongodb` (`pecl install mongodb`, o
+`install-php-extensions mongodb`).
 
-```bash
-git clone https://github.com/joaquinyunes/CRUD.git
-cd CRUD
-composer install
-cp .env.example .env
-php artisan key:generate
-touch database/database.sqlite
-php artisan migrate --seed
-php artisan db:seed --class=DemoSeeder
-npm install && npm run build
-php artisan serve
-```
-
-Entrar a http://localhost:8000 con `admin@admin.com` / `password`.
-
-### Opción 2 — Docker (PostgreSQL incluido, sin instalar PHP)
+### Opción 1 — Docker (MongoDB incluido, sin instalar PHP)
 
 ```bash
 docker compose run --rm app php artisan key:generate --show
@@ -187,30 +174,52 @@ Copiar el valor —con el prefijo `base64:`— a un archivo `.env` como `APP_KEY
 docker compose up --build
 ```
 
-Queda en http://localhost:8080 con los datos de demo ya cargados.
+Queda en http://localhost:8080 con los datos de demo ya cargados (`admin@admin.com` / `password`).
 
-### Opción 3 — MySQL / MariaDB
+### Opción 2 — Local, con un `mongod` propio
 
-Descomentar el bloque de MySQL en `.env` y correr `php artisan migrate --seed`.
+```bash
+# un mongod de un solo nodo, como replica set (una vez: rs.initiate())
+mongod --replSet rs0 --dbpath ./data --bind_ip 127.0.0.1
+
+git clone https://github.com/joaquinyunes/CRUD.git
+cd CRUD
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan mongo:indices          # crea los índices (reemplaza a las migraciones)
+php artisan db:seed                # permisos, roles y cuentas base
+php artisan db:seed --class=DemoSeeder
+npm install && npm run build
+php artisan serve
+```
+
+Entrar a http://localhost:8000 con `admin@admin.com` / `password`.
+
+### Opción 3 — MongoDB Atlas
+
+Poner la cadena de conexión del cluster en `MONGODB_URI` (en `.env`, nunca en el repositorio) y correr
+`php artisan mongo:indices`. Ver [`docs/DESPLIEGUE-MONGODB.md`](docs/DESPLIEGUE-MONGODB.md).
 
 ---
 
 ## Deploy en Render
 
-El repositorio trae un [blueprint de Render](render.yaml) que crea el servicio web y la base
-PostgreSQL ya enlazados entre sí.
+El repositorio trae un [blueprint de Render](render.yaml) que crea el servicio web. La base es
+**MongoDB Atlas** (no la crea Render): la guía paso a paso, con lo que hay que cargar a mano, está en
+[`docs/DESPLIEGUE-MONGODB.md`](docs/DESPLIEGUE-MONGODB.md).
 
 1. **Render → New → Blueprint** y conectar este repositorio.
-2. Render detecta `render.yaml` y propone el web service más la base Postgres.
-3. Cargar la única variable que Render no puede generar:
+2. Render detecta `render.yaml` y propone el web service.
+3. Cargar las dos variables que Render no puede generar: `MONGODB_URI` (la cadena de Atlas) y `APP_KEY`:
 
    ```bash
    php artisan key:generate --show
    ```
 
    Pegar el resultado completo en la variable de entorno `APP_KEY`.
-4. Deploy. El primer arranque corre las migraciones y, con `DB_SEED_ON_BOOT=true`, carga los datos de
-   demostración.
+4. Deploy. El primer arranque crea los índices (`mongo:indices`) y, con `DB_SEED_ON_BOOT=true`, carga los
+   datos de demostración.
 
 Para la instalación real de un cliente, poner `DB_SEED_ON_BOOT=false` y cargar `ADMIN_EMAIL` y
 `ADMIN_PASSWORD` (12 caracteres o más): al arrancar, `php artisan sistema:instalar` deja al día los
@@ -227,14 +236,13 @@ que va a facturar de verdad, tres cosas cambian:
 |---|---|---|
 | **Datos de demostración** | `DB_SEED_ON_BOOT=true` | `false`. El comando `demo:sembrar` sólo siembra si la base está vacía y, si no puede verificarlo, no toca nada: es preferible arrancar sin datos que pisar los de un cliente. |
 | **Archivos subidos** (adjuntos, PDFs, backups) | disco del contenedor, que se borra en cada deploy | `FILESYSTEM_DISK=s3` con las credenciales de cualquier S3 (AWS, Cloudflare R2, Backblaze B2, MinIO). El driver ya viene instalado. |
-| **Cola y tareas programadas** | dentro del contenedor web (`RUN_WORKERS=true`) | servicio de fondo aparte —el bloque `worker` comentado en [`render.yaml`](render.yaml)— y `RUN_WORKERS=false`, para que reiniciar el web no corte un job a la mitad. |
+| **Tareas programadas** | dentro del contenedor web (`RUN_SCHEDULER=true`) | un cron job de Render que corra `php artisan schedule:run` cada minuto y `RUN_SCHEDULER=false`. La cola es `sync`: no hay worker. |
 
 Lo que corre solo, una vez configurado el programador: los presupuestos vencen al pasar su validez,
-sale un aviso diario de stock crítico, y se purgan los tokens de API vencidos y los jobs fallidos
-viejos. Está todo en [`routes/console.php`](routes/console.php).
+sale un aviso diario de stock crítico, se hace un backup nocturno y se purgan los tokens de API vencidos. Está todo en [`routes/console.php`](routes/console.php).
 
 > **Sobre Vercel:** no es el lugar para este sistema. Vercel es serverless: no hay proceso
-> persistente, ni sistema de archivos escribible para `storage/`, ni base de datos relacional propia.
+> persistente, ni sistema de archivos escribible para `storage/`, ni base de datos propia.
 > Las sesiones, los PDFs generados, los archivos adjuntos y las colas dejarían de funcionar. Render
 > —o cualquier VPS con Docker— es la opción correcta.
 
@@ -246,7 +254,7 @@ viejos. Está todo en [`routes/console.php`](routes/console.php).
 php artisan test
 ```
 
-**219 tests.** Cubren las reglas que importan, no getters y setters:
+**269 tests**, sobre un `mongod` con replica set (en CI se levanta en un contenedor). Cubren las reglas que importan, no getters y setters:
 
 **Negocio**
 - el stock se descuenta al confirmar una venta y se repone al anularla;
@@ -257,7 +265,8 @@ php artisan test
 - la caja cierra con la diferencia correcta;
 - la cuenta corriente imputa cada pago al comprobante correcto;
 - una orden de compra recibida parcialmente queda abierta por el resto;
-- los reportes por período funcionan en SQLite, MySQL y PostgreSQL;
+- dos ventas simultáneas, desde procesos distintos, no repiten número ni dejan el stock negativo;
+- cada total de los reportes coincide con el mismo cálculo hecho en PHP puro, y el dinero se guarda como `Decimal128`;
 - el total cierra contra la suma de sus partes al centavo, con descuentos en porcentaje y decimales.
 
 **Permisos y seguridad**
@@ -335,16 +344,16 @@ app/
   Models/               31 modelos Eloquent
   Services/             VentaService, CompraService, StockService, CajaService,
                         PagoDocumentoService, DobleFactorService
-  Support/              CalculadorTotales, NumeradorDocumentos, PeriodoSql, Orden
+  Support/              CalculadorTotales, NumeradorDocumentos, Orden, Mongo/ (transacciones, contadores, consultas)
   Policies/             autorización por dueño del comprobante
   Traits/Auditable      registro automático de cambios, en todos los módulos
 database/
-  migrations/           39 migraciones
+  mongo/indices.php     índices de MongoDB (reemplazan a las migraciones)
   seeders/DemoSeeder    datos de demostración realistas
 routes/                 32 archivos, uno por módulo
 resources/views/        Blade + Alpine, design system propio (public/css/rhythm.css)
 public/js/buscador.js   autocompletado de los formularios de carga
-tests/                  207 tests: negocio, permisos, integridad de datos y seguridad
+tests/                  269 tests: negocio, concurrencia, permisos, integridad de datos y seguridad
 phpstan.neon            análisis estático nivel 5
 docker/ Dockerfile render.yaml docker-compose.yml
 ```
@@ -353,9 +362,9 @@ docker/ Dockerfile render.yaml docker-compose.yml
 
 ## Stack
 
-- **Backend:** Laravel 13 · PHP 8.3 · Eloquent · Sanctum
+- **Backend:** Laravel 13 · PHP 8.3 · Eloquent (mongodb/laravel-mongodb) · Sanctum
 - **Frontend:** Blade · Alpine.js · Tailwind · design system propio
-- **Base de datos:** PostgreSQL, MySQL/MariaDB o SQLite
+- **Base de datos:** MongoDB (replica set; Atlas en producción)
 - **Documentos:** dompdf (PDF) · maatwebsite/excel (Excel, CSV)
 - **Infraestructura:** Docker (FrankenPHP) · Render · GitHub Actions
 

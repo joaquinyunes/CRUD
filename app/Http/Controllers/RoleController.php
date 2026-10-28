@@ -17,8 +17,8 @@ class RoleController extends Controller
         $usuariosPorRol = User::all(['role_id'])->countBy('role_id');
 
         foreach ($roles as $rol) {
-            $rol->permissions_count = count($rol->permission_ids ?? []);
-            $rol->users_count = $usuariosPorRol[$rol->id] ?? 0;
+            $rol->setAttribute('permissions_count', count($rol->permission_ids ?? []));
+            $rol->setAttribute('users_count', $usuariosPorRol[$rol->id] ?? 0);
         }
 
         return view('roles.index', compact('roles'));

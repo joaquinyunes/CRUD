@@ -6,7 +6,27 @@ use App\Support\Mongo\StockDeposito;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $_id
+ * @property mixed $codigo
+ * @property mixed $codigo_barra
+ * @property mixed $nombre
+ * @property mixed $descripcion
+ * @property mixed $categoria_id
+ * @property mixed $marca
+ * @property string $precio_compra
+ * @property string $precio_venta
+ * @property int $stock
+ * @property int $stock_minimo
+ * @property mixed $unidad_medida_id
+ * @property mixed $imagen
+ * @property mixed $estado
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Producto extends ModeloMongo
 {
     use Auditable, HasFactory;
