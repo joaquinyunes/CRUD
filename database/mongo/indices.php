@@ -27,6 +27,10 @@ return [
         [['estado' => 1], ['name' => 'estado']],
     ],
 
+    'depositos' => [
+        [['es_principal' => 1], ['name' => 'es_principal']],
+    ],
+
     'metodos_pago' => [
         [['codigo' => 1], ['name' => 'codigo']],
     ],
@@ -158,6 +162,44 @@ return [
     'presupuestos_detalle' => [
         [['presupuesto_id' => 1], ['name' => 'presupuesto_id']],
         [['producto_id' => 1], ['name' => 'producto_id']],
+    ],
+
+    // ---- Fase 6: plataforma ----
+
+    'configuracion' => [
+        [['clave' => 1], ['unique' => true, 'name' => 'clave_unica']],
+    ],
+
+    'auditoria' => [
+        [['created_at' => -1], ['name' => 'fecha']],
+        [['modelo_afectado' => 1, 'modelo_id' => 1], ['name' => 'modelo']],
+        [['user_id' => 1], ['name'                           => 'user_id']],
+    ],
+
+    'notificaciones' => [
+        [['user_id' => 1, 'leida' => 1], ['name' => 'usuario_leida']],
+    ],
+
+    'tareas' => [
+        [['estado' => 1], ['name' => 'estado']],
+        [['asignada_a' => 1], ['name' => 'asignada_a']],
+    ],
+
+    'eventos' => [
+        [['user_id' => 1], ['name' => 'user_id']],
+    ],
+
+    'archivos' => [
+        [['relacionado_tipo' => 1, 'relacionado_id' => 1], ['name' => 'relacionado']],
+        [['user_id' => 1], ['name' => 'user_id']],
+    ],
+
+    // Contadores de ids y de numeración: sin índices propios (`_id` es la clave), pero se respaldan.
+    'contadores' => [],
+
+    // Tokens para restablecer la contraseña (los usa el broker de Laravel).
+    'password_reset_tokens' => [
+        [['email' => 1], ['name' => 'email']],
     ],
 
     // `contadores` usa `_id` ("id:ventas", "num:ventas:VTA"): único por construcción.

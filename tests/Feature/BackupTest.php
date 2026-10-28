@@ -49,8 +49,8 @@ class BackupTest extends TestCase
         $this->assertTrue($servicio->existe($nombre));
 
         // Después del respaldo: se borra todo lo de ventas y se inventa otra cosa.
-        DB::table('ventas_detalle')->delete();
-        DB::table('ventas')->delete();
+        DB::connection('mongodb')->table('ventas_detalle')->delete();
+        DB::connection('mongodb')->table('ventas')->delete();
         Producto::query()->update(['nombre' => 'Cambiado', 'stock' => 999]);
         Producto::factory()->create(['nombre' => 'Posterior']);
 
@@ -58,11 +58,11 @@ class BackupTest extends TestCase
 
         $this->assertSame($venta->numero, Venta::firstOrFail()->numero);
         $this->assertSame(1, Venta::count());
-        $this->assertSame(1, DB::table('ventas_detalle')->count());
+        $this->assertSame(1, DB::connection('mongodb')->table('ventas_detalle')->count());
         $this->assertSame(['Original'], Producto::pluck('nombre')->all());
         $this->assertSame(8, Producto::firstOrFail()->stock);
         $this->assertNotNull(User::find($admin->id));
-        $this->assertSame(1, (int) DB::table('contadores')->where('serie', 'like', 'ventas:%')->value('ultimo'));
+        $this->assertSame(1, (int) DB::connection('mongodb')->getCollection('contadores')->findOne(['_id' => 'num:ventas:VTA'])['ultimo']);
     }
 
     public function test_un_archivo_que_no_es_un_backup_no_toca_la_base(): void
@@ -109,7 +109,7 @@ class BackupTest extends TestCase
 
         $lineas = explode("\n", gzdecode(Storage::disk('local')->get('backups/'.$nombre)));
         $cabecera = json_decode($lineas[0], true);
-        $cabecera['migraciones'][] = '2099_01_01_000000_del_futuro';
+        $cabecera['colecciones'][] = 'coleccion_del_futuro';
         $lineas[0] = json_encode($cabecera);
 
         $otro = tempnam(sys_get_temp_dir(), 'x');
@@ -140,8 +140,8 @@ class BackupTest extends TestCase
         $admin = $this->admin();
         $this->conVenta($admin);
         $nombre = app(BackupService::class)->crear();
-        DB::table('ventas_detalle')->delete();
-        DB::table('ventas')->delete();
+        DB::connection('mongodb')->table('ventas_detalle')->delete();
+        DB::connection('mongodb')->table('ventas')->delete();
 
         $archivo = UploadedFile::fake()->createWithContent('b.json.gz', Storage::disk('local')->get('backups/'.$nombre));
         $this->actingAs($admin)->post(route('backup.restaurar'), ['backup_file' => $archivo])

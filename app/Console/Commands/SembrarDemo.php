@@ -2,9 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
@@ -35,13 +34,7 @@ class SembrarDemo extends Command
         }
 
         try {
-            if (! Schema::hasTable('users')) {
-                $this->info('Todavía no hay tabla de usuarios; se siembra.');
-
-                return $this->sembrar();
-            }
-
-            $usuarios = DB::table('users')->count();
+            $usuarios = User::count();
         } catch (Throwable $e) {
             // No se pudo saber si hay datos: no se toca nada. Sembrar a ciegas
             // sería destruir la base de un cliente por un error de conexión.

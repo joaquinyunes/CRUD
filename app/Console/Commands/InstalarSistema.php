@@ -5,10 +5,10 @@ namespace App\Console\Commands;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\Mongo\Transaccion;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\UniversalSeeder;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
@@ -36,7 +36,7 @@ class InstalarSistema extends Command
 
     public function handle(): int
     {
-        DB::transaction(function () {
+        Transaccion::en(function () {
             $this->callSilent('db:seed', ['--class' => PermissionSeeder::class, '--force' => true]);
             $this->callSilent('db:seed', ['--class' => UniversalSeeder::class, '--force' => true]);
 

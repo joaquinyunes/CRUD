@@ -3,6 +3,9 @@
 namespace App\Traits;
 
 use App\Models\Auditoria;
+use MongoDB\BSON\Decimal128;
+use MongoDB\BSON\ObjectId;
+use MongoDB\BSON\UTCDateTime;
 
 /**
  * Registra en la tabla de auditoría cada alta, cambio y baja del modelo.
@@ -85,6 +88,23 @@ trait Auditable
         $propias = property_exists($this, 'noAuditar') ? $this->noAuditar : [];
         $excluir = array_merge($this->noAuditarPorDefecto, $propias);
 
-        return array_diff_key($atributos, array_flip($excluir));
+        return self::comoEscalares(array_diff_key($atributos, array_flip($excluir)));
+    }
+
+    /**
+     * Fechas y decimales de MongoDB (UTCDateTime, Decimal128) pasan a texto: la auditoría
+     * se lee en pantalla y tiene que decir "2026-10-27 10:00:00" o "217.80".
+     *
+     * @param  array<string,mixed>  $atributos
+     * @return array<string,mixed>
+     */
+    private static function comoEscalares(array $atributos): array
+    {
+        return array_map(fn ($valor) => match (true) {
+            $valor instanceof UTCDateTime                            => $valor->toDateTime()->format('Y-m-d H:i:s'),
+            $valor instanceof Decimal128, $valor instanceof ObjectId => (string) $valor,
+            is_array($valor)                                         => self::comoEscalares($valor),
+            default                                                  => $valor,
+        }, $atributos);
     }
 }

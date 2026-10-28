@@ -132,7 +132,7 @@ class ValidacionModulosTest extends TestCase
             'archivo' => UploadedFile::fake()->create('script.php', 10, 'application/x-php'),
         ])->assertSessionHasErrors('archivo');
 
-        $this->assertDatabaseCount('archivos', 0);
+        $this->assertDatabaseCount('archivos', 0, 'mongodb');
     }
 
     public function test_un_metodo_de_pago_no_repite_codigo(): void

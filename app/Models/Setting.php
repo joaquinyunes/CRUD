@@ -3,10 +3,9 @@
 namespace App\Models;
 
 use App\Traits\Auditable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
-class Setting extends Model
+class Setting extends ModeloMongo
 {
     use Auditable;
 

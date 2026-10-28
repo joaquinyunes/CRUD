@@ -46,17 +46,20 @@ class TareaController extends Controller
         $usuarios = User::orderBy('name')->get();
 
         if ($vista === 'kanban') {
-            $porPrioridad = "CASE prioridad WHEN 'alta' THEN 1 WHEN 'media' THEN 2 ELSE 3 END";
+            // Mongo no ordena por una condición: se ordena al leer (alta, media, el resto).
+            $porPrioridad = fn (Tarea $t) => ['alta' => 1, 'media' => 2][$t->prioridad] ?? 3;
 
             $pendientes = Tarea::with('asignada', 'creadaPor')
                 ->where('estado', 'pendiente')
-                ->orderByRaw($porPrioridad)
-                ->get();
+                ->get()
+                ->sortBy($porPrioridad)
+                ->values();
 
             $enProgreso = Tarea::with('asignada', 'creadaPor')
                 ->where('estado', 'en_progreso')
-                ->orderByRaw($porPrioridad)
-                ->get();
+                ->get()
+                ->sortBy($porPrioridad)
+                ->values();
 
             $completadas = Tarea::with('asignada', 'creadaPor')
                 ->where('estado', 'completada')

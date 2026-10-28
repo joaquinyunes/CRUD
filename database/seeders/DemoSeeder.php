@@ -17,9 +17,10 @@ use App\Models\UnidadMedida;
 use App\Models\User;
 use App\Models\Venta;
 use App\Models\VentaDetalle;
+use App\Models\VentaPago;
+use App\Support\Mongo\StockDeposito;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class DemoSeeder extends Seeder
 {
@@ -299,29 +300,20 @@ class DemoSeeder extends Seeder
     private function limpiarTablas(): void
     {
         $tablas = [
-            'movimientos_stock', 'ventas_detalle', 'ventas', 'compras_detalle', 'compras',
-            'clientes', 'proveedores', 'productos', 'categorias',
+            'movimientos_stock', 'ventas_detalle', 'ventas_pago', 'ventas', 'compras_detalle', 'compras',
+            'stock_deposito', 'clientes', 'proveedores', 'productos', 'categorias',
         ];
 
-        Schema::disableForeignKeyConstraints();
-
         foreach ($tablas as $tabla) {
-            DB::table($tabla)->delete();
-            $this->reiniciarNumeracion($tabla);
+            DB::connection('mongodb')->table($tabla)->delete();
+            $this->reiniciarIds($tabla);
         }
-
-        Schema::enableForeignKeyConstraints();
     }
 
-    /** Vuelve el autoincremento a 1, con la sintaxis que entiende cada motor. */
-    private function reiniciarNumeracion(string $tabla): void
+    /** Vuelve la secuencia de ids de la colección a 1 (la numeración de comprobantes sigue). */
+    private function reiniciarIds(string $tabla): void
     {
-        match (DB::connection()->getDriverName()) {
-            'sqlite'           => DB::statement('DELETE FROM sqlite_sequence WHERE name = ?', [$tabla]),
-            'pgsql'            => DB::statement("SELECT setval(pg_get_serial_sequence('$tabla', 'id'), 1, false)"),
-            'mysql', 'mariadb' => DB::statement("ALTER TABLE $tabla AUTO_INCREMENT = 1"),
-            default            => null,
-        };
+        DB::connection('mongodb')->table('contadores')->where('_id', "id:{$tabla}")->delete();
     }
 
     /**
@@ -362,10 +354,7 @@ class DemoSeeder extends Seeder
 
     private function asignarStock(int $depositoId, int $productoId, int $cantidad): void
     {
-        DB::table('stock_deposito')->updateOrInsert(
-            ['producto_id' => $productoId, 'deposito_id' => $depositoId],
-            ['cantidad' => $cantidad]
-        );
+        StockDeposito::fijar($productoId, $depositoId, $cantidad);
     }
 
     /**
@@ -442,13 +431,13 @@ class DemoSeeder extends Seeder
                 ? round($total * 0.4, 2)       // pago parcial
                 : $total;                      // saldada
 
-            DB::table('ventas_pago')->insert([
+            (new VentaPago)->forceFill([
                 'venta_id'       => $venta->id,
                 'metodo_pago_id' => MetodoPago::orderBy('id')->value('id'),
                 'monto'          => $pagado,
                 'created_at'     => $venta->fecha,
                 'updated_at'     => $venta->fecha,
-            ]);
+            ])->save();
         }
     }
 }

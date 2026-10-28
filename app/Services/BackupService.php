@@ -3,39 +3,41 @@
 namespace App\Services;
 
 use App\Exceptions\ReglaDeNegocioException;
+use App\Support\Mongo\Transaccion;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use MongoDB\BSON\Document;
+use MongoDB\Database;
+use MongoDB\Driver\Session;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Respaldo y restauración de la base, en PHP y sin binarios externos.
  *
- * El módulo anterior ejecutaba `mysqldump` y `mysql` por línea de comandos, con
- * la conexión "mysql" escrita a mano. En la instalación que se despliega
- * (PostgreSQL, dentro de un contenedor que no trae ninguno de los dos clientes)
- * la pantalla no podía hacer nada, y la contraseña viajaba en la línea de
- * comandos, visible para cualquier proceso del servidor.
+ * El archivo es un .json.gz con una línea de cabecera y una línea por documento:
+ * `{"t":"ventas","f":{...}}`, donde `f` es JSON extendido canónico de MongoDB. Así
+ * los ids enteros, los Decimal128 (el dinero) y las fechas vuelven exactamente como
+ * estaban. Se escribe y se lee de a un documento, así que el tamaño de la base no
+ * es el tamaño de la memoria.
  *
- * El archivo es un .json.gz con una línea de cabecera y una línea por fila. Se
- * escribe y se lee de a una fila, así que el tamaño de la base no es el tamaño
- * de la memoria. Funciona igual en SQLite, MySQL y PostgreSQL, y solo se puede
- * restaurar en el motor y con la estructura (migraciones) con que se creó.
+ * Solo se restaura en el mismo motor (el respaldo de una instalación SQL anterior
+ * se rechaza) y en una versión del sistema que conozca todas sus colecciones.
  */
 class BackupService
 {
     private const FORMATO = 1;
 
+    private const MOTOR = 'mongodb';
+
     private const DIRECTORIO = 'backups';
 
-    /** Tablas que no son datos del negocio: se regeneran solas o no deben volver. */
-    private const EXCLUIDAS = [
-        'migrations', 'cache', 'cache_locks', 'sessions', 'jobs', 'job_batches',
-        'failed_jobs', 'password_reset_tokens', 'personal_access_tokens',
-    ];
+    /** Colecciones que no son datos del negocio: no deben volver con una restauración. */
+    private const EXCLUIDAS = ['personal_access_tokens', 'password_reset_tokens'];
+
+    private const LOTE = 500;
 
     public const PATRON_NOMBRE = '/^backup_\d{4}-\d{2}-\d{2}_\d{6}\.json\.gz$/';
 
@@ -47,18 +49,23 @@ class BackupService
         // algunos contenedores ese directorio no es escribible por el proceso web.
         File::ensureDirectoryExists(storage_path('app/tmp'));
         $temporal = (string) tempnam(storage_path('app/tmp'), 'bkp');
+        $colecciones = $this->colecciones();
 
         $gz = gzopen($temporal, 'wb6');
         gzwrite($gz, json_encode([
             'formato'     => self::FORMATO,
-            'driver'      => DB::getDriverName(),
+            'driver'      => self::MOTOR,
             'fecha'       => now()->toIso8601String(),
-            'migraciones' => $this->migraciones(),
+            'colecciones' => $colecciones,
         ], JSON_UNESCAPED_UNICODE)."\n");
 
-        foreach ($this->tablasEnOrden() as $tabla) {
-            foreach (DB::table($tabla)->cursor() as $fila) {
-                gzwrite($gz, json_encode(['t' => $tabla, 'f' => $fila], JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION)."\n");
+        foreach ($colecciones as $coleccion) {
+            $documentos = $this->base()->selectCollection($coleccion)->find([], [
+                'typeMap' => ['root' => 'bson', 'document' => 'bson', 'array' => 'bson'],
+            ]);
+
+            foreach ($documentos as $documento) {
+                gzwrite($gz, '{"t":'.json_encode($coleccion).',"f":'.$documento->toCanonicalExtendedJSON()."}\n");
             }
         }
         gzclose($gz);
@@ -75,6 +82,10 @@ class BackupService
      * Reemplaza los datos actuales por los del respaldo, todo o nada: si algo
      * falla a mitad de camino la transacción se revierte y la base queda como estaba.
      *
+     * shortcut: una sola transacción de MongoDB dura como máximo 60 s (por defecto);
+     * alcanza para decenas de miles de documentos. Para bases más grandes, restaurar en una
+     * base temporal y renombrarla.
+     *
      * @throws ReglaDeNegocioException
      */
     public function restaurar(string $rutaArchivo): void
@@ -87,18 +98,16 @@ class BackupService
         try {
             $this->verificarCabecera(json_decode((string) gzgets($gz), true));
 
-            $tablas = $this->tablasEnOrden();
+            $colecciones = $this->colecciones();
 
-            DB::transaction(function () use ($gz, $tablas) {
-                foreach (array_reverse($tablas) as $tabla) {
-                    DB::table($tabla)->delete();
+            Transaccion::en(function () use ($gz, $colecciones) {
+                $opciones = $this->opciones();
+
+                foreach ($colecciones as $coleccion) {
+                    $this->base()->selectCollection($coleccion)->deleteMany([], $opciones);
                 }
 
-                $this->insertarFilas($gz, $tablas);
-
-                if (DB::getDriverName() === 'pgsql') {
-                    $this->realinearSecuencias($tablas);
-                }
+                $this->insertarDocumentos($gz, $colecciones, $opciones);
             });
         } finally {
             gzclose($gz);
@@ -168,10 +177,28 @@ class BackupService
         return Storage::disk(config('filesystems.default'));
     }
 
-    /** @return list<string> */
-    private function migraciones(): array
+    private function base(): Database
     {
-        return DB::table('migrations')->orderBy('migration')->pluck('migration')->all();
+        return DB::connection('mongodb')->getDatabase();
+    }
+
+    /** @return array{session?: Session} */
+    private function opciones(): array
+    {
+        $sesion = DB::connection('mongodb')->getSession();
+
+        return $sesion ? ['session' => $sesion] : [];
+    }
+
+    /**
+     * Las colecciones de datos: las que declara database/mongo/indices.php (la lista
+     * de todo lo que el sistema guarda), menos las que no deben respaldarse.
+     *
+     * @return list<string>
+     */
+    private function colecciones(): array
+    {
+        return array_values(array_diff(array_keys(require database_path('mongo/indices.php')), self::EXCLUIDAS));
     }
 
     /**
@@ -185,14 +212,16 @@ class BackupService
             throw new ReglaDeNegocioException('El archivo no es un respaldo de este sistema.', 'backup_file');
         }
 
-        if (($cabecera['driver'] ?? null) !== DB::getDriverName()) {
+        if (($cabecera['driver'] ?? null) !== self::MOTOR) {
             throw new ReglaDeNegocioException(
-                'El respaldo es de una base '.($cabecera['driver'] ?? '?').' y esta instalación usa '.DB::getDriverName().'.',
+                'El respaldo es de una base '.($cabecera['driver'] ?? '?').' y esta instalación usa '.self::MOTOR.'.',
                 'backup_file'
             );
         }
 
-        if (($cabecera['migraciones'] ?? null) !== $this->migraciones()) {
+        // Un respaldo de una versión anterior tiene menos colecciones y se restaura bien;
+        // uno de una versión más nueva trae colecciones que esta no conoce.
+        if (array_diff($cabecera['colecciones'] ?? [], $this->colecciones()) !== []) {
             throw new ReglaDeNegocioException(
                 'El respaldo es de otra versión de la estructura de la base. Actualizá el sistema a la versión con que se creó antes de restaurarlo.',
                 'backup_file'
@@ -202,102 +231,46 @@ class BackupService
 
     /**
      * @param  resource  $gz
-     * @param  list<string>  $tablas
+     * @param  list<string>  $colecciones
+     * @param  array<string,mixed>  $opciones
      */
-    private function insertarFilas($gz, array $tablas): void
+    private function insertarDocumentos($gz, array $colecciones, array $opciones): void
     {
-        $conocidas = array_flip($tablas);
-        $tabla = '';
+        $conocidas = array_flip($colecciones);
+        $coleccion = '';
         $lote = [];
 
         while (($linea = gzgets($gz)) !== false) {
-            $registro = json_decode($linea, true);
-
-            if (! is_array($registro) || ! isset($registro['t'], $registro['f']) || ! isset($conocidas[$registro['t']])) {
+            // La línea es `{"t":"<colección>","f":<documento en JSON extendido>}`.
+            if (! preg_match('/^\{"t":("(?:[^"\\\\]|\\\\.)*"),"f":(\{.*\})\}\s*$/s', $linea, $partes)
+                || ! isset($conocidas[json_decode($partes[1])])) {
                 throw new ReglaDeNegocioException('El respaldo está dañado o no pertenece a este sistema.', 'backup_file');
             }
 
-            if ($registro['t'] !== $tabla || count($lote) >= 500) {
-                $this->insertarLote($tabla, $lote);
-                $tabla = $registro['t'];
+            if (json_decode($partes[1]) !== $coleccion || count($lote) >= self::LOTE) {
+                $this->insertarLote($coleccion, $lote, $opciones);
+                $coleccion = json_decode($partes[1]);
                 $lote = [];
             }
 
-            $lote[] = $registro['f'];
+            try {
+                $lote[] = Document::fromJSON($partes[2]);
+            } catch (\Throwable) {
+                throw new ReglaDeNegocioException('El respaldo está dañado o no pertenece a este sistema.', 'backup_file');
+            }
         }
 
-        $this->insertarLote($tabla, $lote);
-    }
-
-    /** @param  list<array<string,mixed>>  $filas */
-    private function insertarLote(string $tabla, array $filas): void
-    {
-        if ($filas === []) {
-            return;
-        }
-
-        // Un tope de variables por sentencia: SQLite arrastra límites bajos.
-        foreach (array_chunk($filas, max(1, intdiv(900, count($filas[0])))) as $trozo) {
-            DB::table($tabla)->insert($trozo);
-        }
+        $this->insertarLote($coleccion, $lote, $opciones);
     }
 
     /**
-     * Insertar ids a mano no avanza la secuencia de PostgreSQL: la próxima alta
-     * intentaría el id 1 y chocaría con una fila restaurada.
-     *
-     * @param  list<string>  $tablas
+     * @param  list<Document>  $documentos
+     * @param  array<string,mixed>  $opciones
      */
-    private function realinearSecuencias(array $tablas): void
+    private function insertarLote(string $coleccion, array $documentos, array $opciones): void
     {
-        foreach ($tablas as $tabla) {
-            if (Schema::hasColumn($tabla, 'id')) {
-                DB::statement(
-                    "SELECT setval(pg_get_serial_sequence('\"{$tabla}\"', 'id'), COALESCE(MAX(id), 1), MAX(id) IS NOT NULL) FROM \"{$tabla}\""
-                );
-            }
+        if ($documentos !== []) {
+            $this->base()->selectCollection($coleccion)->insertMany($documentos, $opciones);
         }
-    }
-
-    /**
-     * Las tablas de datos, con cada una después de las que referencia por clave
-     * foránea: se vacía en el orden inverso y se llena en este.
-     *
-     * @return list<string>
-     */
-    private function tablasEnOrden(): array
-    {
-        $tablas = array_values(array_diff(Schema::getTableListing(schemaQualified: false), self::EXCLUIDAS));
-        sort($tablas);
-
-        $dependencias = [];
-        foreach ($tablas as $tabla) {
-            $dependencias[$tabla] = collect(Schema::getForeignKeys($tabla))
-                ->pluck('foreign_table')
-                ->unique()
-                ->filter(fn ($destino) => $destino !== $tabla && in_array($destino, $tablas, true))
-                ->values()
-                ->all();
-        }
-
-        $orden = [];
-        while ($dependencias !== []) {
-            $listas = array_keys(array_filter(
-                $dependencias,
-                fn ($destinos) => array_diff($destinos, $orden) === []
-            ));
-
-            if ($listas === []) {
-                // Un ciclo entre tablas: se las agrega tal cual en vez de colgarse.
-                $listas = array_keys($dependencias);
-            }
-
-            foreach ($listas as $tabla) {
-                $orden[] = $tabla;
-                unset($dependencias[$tabla]);
-            }
-        }
-
-        return $orden;
     }
 }

@@ -178,7 +178,7 @@ class ApiYWebComparteReglasTest extends TestCase
             'modelo_afectado' => Venta::class,
             'accion'          => 'created',
             'user_id'         => $admin->id,
-        ]);
+        ], 'mongodb');
     }
 
     public function test_un_usuario_de_solo_lectura_sigue_sin_poder_vender_por_api(): void

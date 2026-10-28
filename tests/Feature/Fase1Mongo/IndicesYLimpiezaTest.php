@@ -96,8 +96,9 @@ class IndicesYLimpiezaTest extends TestCase
         $this->setUpLimpiaMongo();
 
         $this->assertSame(0, DB::connection('mongodb')->table('ventas')->count());
-        // Los contadores arrancan de cero: solo queda el del depósito recién sembrado.
-        $this->assertSame(['id:depositos'], DB::connection('mongodb')->getCollection('contadores')->distinct('_id'));
+        // Los contadores arrancan de cero: solo quedan los del depósito recién sembrado y su auditoría.
+        $contadores = DB::connection('mongodb')->getCollection('contadores')->distinct('_id');
+        $this->assertEqualsCanonicalizing(['id:depositos', 'id:auditoria'], $contadores);
         $this->assertArrayHasKey('numero_unico', $this->indices('ventas'));
         // Queda el depósito principal (en SQL lo sembraba una migración) y los ids arrancan de nuevo.
         $this->assertSame(1, Deposito::principalId());
