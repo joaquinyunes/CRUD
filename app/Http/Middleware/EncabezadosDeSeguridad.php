@@ -9,13 +9,25 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Encabezados que le piden al navegador que no ayude a un atacante.
  *
- * No hay Content-Security-Policy a propósito: las pantallas usan scripts y
- * estilos en línea, y una política que no los permita rompería la interfaz,
- * mientras que una que los permita (`unsafe-inline`) no protege de lo que más
- * interesa. Cuando esos bloques salgan a archivos propios, es lo que sigue.
+ * La Content-Security-Policy completa va en modo SOLO REPORTE: las pantallas usan
+ * scripts y estilos en línea, así que `unsafe-inline` sigue permitido y la
+ * política todavía no frena inyecciones de script. Lo que sí delimita ya es de
+ * dónde se cargan scripts, estilos, imágenes y conexiones. Para activarla, cambiar el nombre del encabezado a Content-Security-Policy;
+ * el paso siguiente es sacar los
+ * bloques en línea a archivos propios y quitar `unsafe-inline`.
+ * Aparte va un CSP aplicado solo con `frame-ancestors` (equivale a X-Frame-Options).
  */
 class EncabezadosDeSeguridad
 {
+    // cdn.jsdelivr.net: Chart.js (dashboard) y FullCalendar (calendario).
+    // 'unsafe-eval': Alpine.js evalúa sus expresiones x-data con new Function;
+    // se quita migrando al build @alpinejs/csp.
+    private const CSP_REPORT_ONLY = "default-src 'self'; "
+        ."script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
+        ."style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        ."img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; "
+        ."object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
+
     public function handle(Request $request, Closure $next): Response
     {
         $respuesta = $next($request);
@@ -25,6 +37,8 @@ class EncabezadosDeSeguridad
         $respuesta->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $respuesta->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $respuesta->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+        $respuesta->headers->set('Content-Security-Policy', "frame-ancestors 'self'");
+        $respuesta->headers->set('Content-Security-Policy-Report-Only', self::CSP_REPORT_ONLY);
 
         // Solo por HTTPS tiene sentido (y es peligroso mandarlo por HTTP plano de
         // desarrollo, donde el navegador recordaría de no volver a usarlo).
