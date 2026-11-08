@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Contracts\FacturacionProvider;
 use App\Models\PersonalAccessToken;
+use App\Services\Facturacion\FacturacionInterna;
 use App\Services\StockService;
 use App\Support\Mongo\Conexion;
 use App\Support\Mongo\VerificadorDePresencia;
@@ -20,6 +22,10 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(StockService::class);
+
+        // Hasta elegir proveedor certificado (y contador), el comprobante es interno y sin CAE.
+        // Para enchufar uno: bind(FacturacionProvider::class, MiProveedor::class) acá.
+        $this->app->bind(FacturacionProvider::class, FacturacionInterna::class);
 
         // exists:/unique: con ids numéricos sobre MongoDB (ver VerificadorDePresencia).
         $this->app->extend('validation.presence', fn ($verificador, $app) => new VerificadorDePresencia($app['db']));

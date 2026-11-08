@@ -56,6 +56,34 @@ class CajaTest extends TestCase
         $this->assertEquals(-11, $sesion->diferencia);
     }
 
+    public function test_el_cierre_con_el_efectivo_exacto_da_diferencia_cero(): void
+    {
+        $admin = $this->admin();
+        $efectivo = MetodoPago::create(['nombre' => 'Efectivo', 'codigo' => 'efectivo', 'activo' => true, 'orden' => 1]);
+        $cliente = Cliente::factory()->create();
+        $producto = Producto::factory()->create(['stock' => 100]);
+
+        $this->actingAs($admin)->post(route('caja.abrir'), ['monto_inicial' => 500]);
+        // Dos ventas en efectivo (121 cada una) y un egreso de 50.
+        for ($i = 0; $i < 2; $i++) {
+            $this->actingAs($admin)->post(route('ventas.store'), [
+                'cliente_id'   => $cliente->id,
+                'fecha'        => now()->toDateString(),
+                'estado'       => 'completada',
+                'detalles'     => [['producto_id' => $producto->id, 'cantidad' => 1, 'precio' => 100]],
+                'metodos_pago' => [['metodo_pago_id' => $efectivo->id, 'monto' => 121]],
+            ]);
+        }
+        $this->actingAs($admin)->post(route('caja.movimiento'), ['tipo' => 'egreso', 'concepto' => 'Insumos', 'monto' => 50]);
+
+        // 500 + 242 - 50 = 692
+        $this->actingAs($admin)->post(route('caja.cerrar'), ['monto_final_declarado' => 692]);
+
+        $sesion = CajaSesion::first();
+        $this->assertEquals(692, $sesion->monto_final_sistema);
+        $this->assertEquals(0, $sesion->diferencia);
+    }
+
     public function test_no_se_puede_abrir_dos_cajas(): void
     {
         $admin = $this->admin();

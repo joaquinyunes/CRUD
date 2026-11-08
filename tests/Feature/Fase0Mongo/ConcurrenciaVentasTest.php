@@ -105,4 +105,17 @@ class ConcurrenciaVentasTest extends TestCase
         $this->assertSame(20, DB::connection('mongodb')->table('movimientos_stock')->where('tipo', 'salida')->count());
         $this->assertCount(20, array_unique(array_column($exitosas, 'numero')));
     }
+
+    public function test_el_ultimo_item_lo_vende_uno_solo(): void
+    {
+        $producto = Producto::factory()->create(['stock' => 1]);
+        $cliente = Cliente::factory()->create();
+
+        $respuestas = $this->venderEnParalelo(6, 1, [$producto->id], $cliente->id, 1);
+
+        $this->assertCount(1, array_filter($respuestas, fn ($r) => $r['ok']), json_encode($respuestas));
+        $this->assertCount(5, array_filter($respuestas, fn ($r) => ! $r['ok'] && $r['error'] === 'stock'), json_encode($respuestas));
+        $this->assertSame(0, $producto->fresh()->stock);
+        $this->assertSame(1, DB::connection('mongodb')->table('ventas')->count());
+    }
 }
