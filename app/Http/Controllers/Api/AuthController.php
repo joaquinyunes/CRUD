@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
 use App\Models\User;
+use App\Services\DobleFactorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -15,7 +17,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'email'    => ['required', 'email'],
-            'password' => ['required'],
+            'password' => ['required', 'string'],
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -30,6 +32,20 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['Esta cuenta está desactivada.'],
             ]);
+        }
+
+        // El doble factor también cierra la puerta de la API: la contraseña sola
+        // no emite un token a quien lo tiene activo.
+        if ($user->tieneDobleFactor()) {
+            $codigo = $request->input('codigo');
+
+            if (! is_string($codigo) || ! app(DobleFactorService::class)->verificar($user, $codigo)) {
+                throw ValidationException::withMessages([
+                    'codigo' => ['Falta el código del doble factor o es incorrecto.'],
+                ]);
+            }
+        } elseif (config('sistema.doble_factor_admin_obligatorio') && $user->role?->tienePermiso(Role::TODO)) {
+            return response()->json(['error' => 'Activá el doble factor desde el panel web antes de usar la API.'], 403);
         }
 
         $token = $user->createToken('auth-token')->plainTextToken;

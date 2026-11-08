@@ -13,6 +13,7 @@ class PdfController extends Controller
     public function facturaVenta($id)
     {
         $venta = Venta::with(['detalles.producto', 'cliente', 'user', 'pagos.metodoPago'])->findOrFail($id);
+        $this->authorize('view', $venta);
         $empresa = Setting::obtenerGrupo('empresa');
         $moneda = Setting::obtener('sistema_simbolo_moneda', '$');
         $pdf = Pdf::loadView('pdf.factura-venta', compact('venta', 'empresa', 'moneda'));
@@ -23,6 +24,7 @@ class PdfController extends Controller
     public function boletaVenta($id)
     {
         $venta = Venta::with(['detalles.producto', 'cliente', 'user', 'pagos.metodoPago'])->findOrFail($id);
+        $this->authorize('view', $venta);
         $empresa = Setting::obtenerGrupo('empresa');
         $moneda = Setting::obtener('sistema_simbolo_moneda', '$');
         $pdf = Pdf::loadView('pdf.boleta-venta', compact('venta', 'empresa', 'moneda'));

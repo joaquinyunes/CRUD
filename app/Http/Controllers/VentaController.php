@@ -27,7 +27,7 @@ class VentaController extends Controller
 
     public function index(Request $request): View
     {
-        $query = Venta::with('cliente', 'user', 'pagos.metodoPago');
+        $query = Venta::with('cliente', 'user', 'pagos.metodoPago')->visiblesPara($request->user());
 
         if ($request->filled('buscar')) {
             $query->buscar($request->buscar);
@@ -137,6 +137,7 @@ class VentaController extends Controller
 
     public function show(Venta $venta): View
     {
+        $this->authorize('view', $venta);
         $venta->load(['detalles.producto', 'cliente', 'user', 'pagos.metodoPago']);
 
         return view('ventas.show', compact('venta'));

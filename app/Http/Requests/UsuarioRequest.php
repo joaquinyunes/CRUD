@@ -25,7 +25,7 @@ class UsuarioRequest extends FormRequest
             'email'   => ['required', 'email', 'max:255', Rule::unique('mongodb.users', 'email')->ignore($usuario?->id)],
             'role_id' => ['nullable', 'exists:mongodb.roles,id'],
             // En una edición, dejar la contraseña vacía significa "no cambiarla".
-            'password' => [$esAlta ? 'required' : 'nullable', 'confirmed', Password::min(8)],
+            'password' => [$esAlta ? 'required' : 'nullable', 'confirmed', Password::min(12)],
             'activo'   => ['nullable', 'boolean'],
         ];
     }
@@ -35,7 +35,7 @@ class UsuarioRequest extends FormRequest
     {
         return [
             'email.unique'       => 'Ya hay un usuario con ese correo.',
-            'password.min'       => 'La contraseña tiene que tener al menos 8 caracteres.',
+            'password.min'       => 'La contraseña tiene que tener al menos 12 caracteres.',
             'password.confirmed' => 'Las dos contraseñas no coinciden.',
         ];
     }

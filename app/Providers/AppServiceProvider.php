@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
@@ -28,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // /up (el health check de Render y de Docker) solo da 200 si MongoDB contesta.
         Event::listen(DiagnosingHealth::class, fn () => Conexion::mongo()->getDatabase()->command(['ping' => 1]));
+
+        // Contraseñas: 12 o más caracteres en todo el sistema (alta, cambio y reseteo).
+        Password::defaults(fn () => Password::min(12));
 
         // Los tokens de API viven en MongoDB junto con los usuarios.
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);

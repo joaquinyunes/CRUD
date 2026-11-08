@@ -80,7 +80,9 @@ class AccesoPorPermisoTest extends TestCase
             $this->actingAs($sinPermisos)->get($url)->assertForbidden();
         }
 
-        $this->actingAs($this->usuarioCon('ventas.ver'))->get(route('pdf.venta', $venta->id))->assertOk();
+        // Con solo ventas.ver se ven las ventas propias; la de otro pide ventas.gestionar_todas.
+        $this->actingAs($this->usuarioCon('ventas.ver'))->get(route('pdf.venta', $venta->id))->assertForbidden();
+        $this->actingAs($this->usuarioCon('ventas.ver', 'ventas.gestionar_todas'))->get(route('pdf.venta', $venta->id))->assertOk();
         $this->actingAs($this->usuarioCon('ventas.ver'))->get(route('pdf.compra', $compra->id))->assertForbidden();
         $this->actingAs($this->usuarioCon('compras.ver'))->get(route('pdf.compra', $compra->id))->assertOk();
     }

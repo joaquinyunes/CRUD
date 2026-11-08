@@ -28,6 +28,11 @@ class EncabezadosDeSeguridad
         ."img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; "
         ."object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
 
+    // Lo que se puede aplicar ya sin romper pantallas: sin plugins, sin <base> ajeno,
+    // formularios solo hacia el propio dominio y sin <iframe> ajeno. script-src sigue
+    // en solo reporte hasta sacar los bloques en línea (ver docs/SEGURIDAD.md, S2).
+    private const CSP_APLICADA = "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
+
     public function handle(Request $request, Closure $next): Response
     {
         $respuesta = $next($request);
@@ -37,7 +42,7 @@ class EncabezadosDeSeguridad
         $respuesta->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $respuesta->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $respuesta->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
-        $respuesta->headers->set('Content-Security-Policy', "frame-ancestors 'self'");
+        $respuesta->headers->set('Content-Security-Policy', self::CSP_APLICADA);
         $respuesta->headers->set('Content-Security-Policy-Report-Only', self::CSP_REPORT_ONLY);
 
         // Solo por HTTPS tiene sentido (y es peligroso mandarlo por HTTP plano de

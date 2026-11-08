@@ -120,6 +120,17 @@ class Venta extends ModeloMongo
         return round((float) $this->total_final - (float) $this->pagado - $this->totalDevuelto(), 2);
     }
 
+    /**
+     * Quien no tiene `ventas.gestionar_todas` ve solo las ventas que hizo él
+     * (mínimo privilegio: un vendedor no ve lo de otro).
+     */
+    public function scopeVisiblesPara($query, User $usuario)
+    {
+        return $usuario->role?->tienePermiso('ventas.gestionar_todas')
+            ? $query
+            : $query->where('user_id', $usuario->id);
+    }
+
     public function scopeBuscar($query, ?string $buscar)
     {
         if (! $buscar) {

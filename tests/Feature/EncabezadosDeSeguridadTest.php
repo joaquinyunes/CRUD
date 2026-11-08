@@ -14,7 +14,7 @@ class EncabezadosDeSeguridadTest extends TestCase
         $respuesta->assertHeader('X-Frame-Options', 'SAMEORIGIN');
         $respuesta->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
         $respuesta->assertHeaderMissing('Strict-Transport-Security');
-        $respuesta->assertHeader('Content-Security-Policy', "frame-ancestors 'self'");
+        $respuesta->assertHeader('Content-Security-Policy', "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'");
         $this->assertStringContainsString("default-src 'self'", $respuesta->headers->get('Content-Security-Policy-Report-Only'));
     }
 

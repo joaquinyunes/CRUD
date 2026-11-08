@@ -3,6 +3,7 @@
 use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\EncabezadosDeSeguridad;
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\ExigirDobleFactorAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -30,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Una cuenta desactivada deja de servir en el acto, tenga sesión abierta
         // o un token de API ya emitido.
-        $middleware->web(append: [EnsureUserIsActive::class]);
+        $middleware->web(append: [EnsureUserIsActive::class, ExigirDobleFactorAdmin::class]);
         $middleware->api(append: [EnsureUserIsActive::class]);
 
         // Global y no del grupo web: también las respuestas 404 y las de error los llevan.

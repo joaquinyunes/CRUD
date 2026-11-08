@@ -41,6 +41,18 @@ class Auditoria extends ModeloMongo
         'created_at'     => 'datetime',
     ];
 
+    /**
+     * El registro de auditoría es de solo agregar: ni un administrador puede
+     * reescribir ni borrar una línea desde la aplicación. (En la base, el usuario
+     * de Atlas de la app debería tener además un rol sin `update`/`remove` sobre
+     * esta colección; ver docs/SEGURIDAD.md.)
+     */
+    protected static function booted(): void
+    {
+        static::updating(fn () => throw new \LogicException('La auditoría es inmutable: no se puede modificar.'));
+        static::deleting(fn () => throw new \LogicException('La auditoría es inmutable: no se puede borrar.'));
+    }
+
     /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {

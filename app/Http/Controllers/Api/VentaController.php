@@ -25,12 +25,13 @@ class VentaController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = Venta::with(['cliente', 'user', 'detalles.producto']);
+        $query = Venta::with(['cliente', 'user', 'detalles.producto'])->visiblesPara($request->user());
 
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
-            $query->where('numero', 'like', "%{$buscar}%")
-                ->orWhereHas('cliente', fn ($q) => $q->where('nombre', 'like', "%{$buscar}%"));
+            // Agrupado: un orWhere suelto se saltaría el filtro de visibilidad.
+            $query->where(fn ($q) => $q->where('numero', 'like', "%{$buscar}%")
+                ->orWhereHas('cliente', fn ($c) => $c->where('nombre', 'like', "%{$buscar}%")));
         }
 
         if ($request->filled('estado')) {
@@ -69,6 +70,7 @@ class VentaController extends Controller
 
     public function show(Venta $venta): VentaResource
     {
+        $this->authorize('view', $venta);
         $venta->load(['detalles.producto', 'cliente', 'user']);
 
         return new VentaResource($venta);
@@ -76,6 +78,8 @@ class VentaController extends Controller
 
     public function destroy(Venta $venta): JsonResponse
     {
+        $this->authorize('delete', $venta);
+
         Transaccion::en(function () use ($venta) {
             $this->stockDoc->revertirVenta($venta);
             $venta->update(['estado' => 'anulada', 'motivo_anulacion' => 'Anulada vía API']);
