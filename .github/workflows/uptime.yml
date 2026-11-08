@@ -1,0 +1,26 @@
+name: Uptime
+
+# V7: avisa si el sistema se cae. Si falla, GitHub manda mail al dueño del repo.
+# Cargar la URL en Settings > Secrets and variables > Actions > Variables > URL_PRODUCCION
+# (ej. https://mi-cliente.onrender.com). Sin la variable, no hace nada.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  up:
+    runs-on: ubuntu-latest
+    if: ${{ vars.URL_PRODUCCION != '' }}
+    steps:
+      - name: /up debe dar 200 (y solo da 200 si MongoDB contesta)
+        env:
+          URL: ${{ vars.URL_PRODUCCION }}
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -m 30 -w '%{http_code}' "$URL/up" || true)
+            [ "$code" = "200" ] && exit 0
+            sleep 20
+          done
+          echo "::error::$URL/up devolvió $code"
+          exit 1

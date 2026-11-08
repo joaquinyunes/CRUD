@@ -1,0 +1,27 @@
+# Actualizaciones semanales agrupadas. Render despliega solo al hacer merge a main
+# (autoDeploy), así que se agrupan para no disparar un deploy por cada paquete.
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 3
+    groups:
+      composer-minor-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 3
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: docker
+    directory: /
+    schedule: { interval: weekly, day: monday }

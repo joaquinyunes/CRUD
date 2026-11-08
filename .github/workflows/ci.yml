@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, integracion]
   pull_request:
     branches: [main]
 
@@ -128,3 +128,33 @@ jobs:
           buscar 'Slack' 'xox[abprs]-[0-9A-Za-z-]{10,}'
           buscar 'URL de base con clave' '(mongodb(\+srv)?|postgres(ql)?)://[^:/@\s"'"'"'<$]+:(?!(?i:password|clave|contrase|xxx|tu_|your))[^@\s"'"'"'<$\{]{6,}@[A-Za-z0-9.-]+\.(mongodb\.net|neon\.tech|supabase\.(co|com)|render\.com|rds\.amazonaws\.com)'
           exit $fallo
+
+  docker:
+    name: Imagen Docker (build y /up responde 200)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir la imagen
+        run: docker build -t crud-erp:ci .
+
+      - name: Levantar MongoDB (replica set) y la imagen
+        run: |
+          docker network create ci
+          docker run -d --name mongo --network ci mongo:7 --replSet rs0 --bind_ip_all
+          for i in $(seq 1 30); do docker exec mongo mongosh --quiet --eval 'db.runCommand({ping:1}).ok' && break; sleep 2; done
+          docker exec mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"mongo:27017"}]})'
+          for i in $(seq 1 30); do docker exec mongo mongosh --quiet --eval 'db.hello().isWritablePrimary' | grep -q true && break; sleep 2; done
+          docker run -d --name app --network ci -p 8080:8080             -e APP_ENV=production -e APP_DEBUG=false             -e APP_KEY="base64:$(openssl rand -base64 32)"             -e DB_CONNECTION=mongodb -e MONGODB_URI="mongodb://mongo:27017/?replicaSet=rs0"             -e MONGODB_DATABASE=crud_erp_ci -e SESSION_DRIVER=cookie -e CACHE_STORE=file             -e DB_SEED_ON_BOOT=false -e ADMIN_EMAIL=ci@example.com -e "ADMIN_PASSWORD=$(openssl rand -hex 16)"             crud-erp:ci
+
+      - name: /up responde 200 y el login se ve
+        run: |
+          for i in $(seq 1 40); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/up || true)
+            [ "$code" = "200" ] && break
+            sleep 3
+          done
+          docker logs app | tail -30
+          [ "$code" = "200" ] || { echo "/up devolvio $code"; exit 1; }
+          curl -fsS http://localhost:8080/login | grep -qi "<form"
+          curl -sI http://localhost:8080/login | grep -i "x-frame-options"

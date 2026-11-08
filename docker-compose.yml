@@ -20,11 +20,13 @@ services:
       APP_FALLBACK_LOCALE: es
       DB_CONNECTION: mongodb
       MONGODB_URI: mongodb://mongo:27017/?replicaSet=rs0
-      MONGODB_DATABASE: crud_erp
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-crud_erp}
       SESSION_DRIVER: cookie
       CACHE_STORE: file
       QUEUE_CONNECTION: sync
-      DB_SEED_ON_BOOT: "true"
+      DB_SEED_ON_BOOT: ${DB_SEED_ON_BOOT:-true}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       LOG_CHANNEL: stderr
     depends_on:
       mongo:

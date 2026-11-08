@@ -39,3 +39,7 @@ mysql_output.txt
 
 # Config local del launcher del editor (rutas propias de cada máquina)
 /.claude
+
+# Variables de cada cliente (APP_KEY, contraseñas): nunca al repo
+/instancias/
+/backups/
