@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---------- 1. Assets del front (Vite + Tailwind) ----------
-FROM node:22-alpine AS assets
+FROM node:25-alpine AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
