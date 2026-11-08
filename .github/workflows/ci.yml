@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Las ventas usan transacciones, que MongoDB solo da sobre un replica set
       # (aunque sea de un solo nodo). Un service container no permite pasarle
@@ -38,7 +38,7 @@ jobs:
           coverage: none
 
       - name: Cachear dependencias de Composer
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: vendor
           key: composer-${{ hashFiles('composer.lock') }}
@@ -61,7 +61,7 @@ jobs:
     name: Análisis estático (PHPStan nivel 5)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
@@ -74,7 +74,7 @@ jobs:
     name: Estilo de código (Pint)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
@@ -87,7 +87,7 @@ jobs:
     name: Dependencias con vulnerabilidades conocidas
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
@@ -107,7 +107,7 @@ jobs:
     name: Escaneo de secretos
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Busca formas de claves reales en los archivos versionados. Imprime solo
       # archivo, línea y tipo: nunca el valor. Si falla, rotar la clave antes de borrarla.
       - name: Buscar patrones de secretos
@@ -133,7 +133,7 @@ jobs:
     name: Imagen Docker (build y /up responde 200)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Construir la imagen
         run: docker build -t crud-erp:ci .
