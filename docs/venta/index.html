@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema Administrativo para comercios — ventas, stock y caja</title>
+<meta name="description" content="Ventas, stock por depósito, caja con arqueo y cuentas corrientes en un sistema propio, sin cuota por usuario.">
+<style>
+  :root { --tinta:#17212b; --azul:#1f4e79; --gris:#5b6773; --fondo:#f6f8fa; --aviso:#fff4d6; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.55 system-ui, "Segoe UI", Arial, sans-serif; color:var(--tinta); background:#fff; }
+  .w { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
+  header { background: var(--azul); color:#fff; padding: 56px 0 48px; }
+  h1 { font-size: clamp(1.7rem, 4vw, 2.6rem); margin:0 0 12px; line-height:1.15; }
+  h2 { font-size: 1.5rem; margin: 0 0 14px; color: var(--azul); }
+  section { padding: 40px 0; border-bottom: 1px solid #e3e8ee; }
+  .btn { display:inline-block; background:#fff; color:var(--azul); font-weight:700; padding:12px 20px; border-radius:8px; text-decoration:none; margin-top:14px; }
+  .grid { display:grid; gap:16px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .card { background:var(--fondo); border:1px solid #e3e8ee; border-radius:10px; padding:16px; }
+  .card h3 { margin:0 0 6px; font-size:1.05rem; }
+  .precio { font-size:1.8rem; font-weight:700; color:var(--azul); }
+  figure { margin:0; } figure img { width:100%; height:auto; border:1px solid #d5dbe2; border-radius:8px; }
+  figcaption { font-size:.85rem; color:var(--gris); margin-top:4px; }
+  .nota { background:var(--aviso); border-left:4px solid #d99a00; padding:10px 14px; border-radius:4px; font-size:.95rem; }
+  ul { padding-left: 20px; } a { color: var(--azul); }
+  footer { padding: 28px 0; color: var(--gris); font-size:.9rem; }
+  /* PENDIENTE (dueño): reemplazar los textos con la marca [..] antes de publicar */
+  .pendiente { background:#ffe3e3; padding:0 4px; border-radius:3px; }
+</style>
+</head>
+<body>
+<header><div class="w">
+  <h1>Ventas, stock y caja de tu comercio en un sistema propio</h1>
+  <p>Para comercios con stock y caja que hoy llevan todo en planillas: sabé qué tenés, quién te debe y si la caja cierra — sin pagar una cuota por cada usuario.</p>
+  <a class="btn" href="#contacto">Pedir una charla de 20 minutos</a>
+</div></header>
+
+<section><div class="w">
+  <h2>El problema</h2>
+  <ul>
+    <li><b>«No sé cuánto stock tengo.»</b> Se vende lo que no hay, o se compra lo que sobra.</li>
+    <li><b>«La caja nunca cierra.»</b> Sin arqueo no se sabe si falta plata ni quién la movió.</li>
+    <li><b>«No sé quién me debe.»</b> Las cuentas corrientes viven en un cuaderno.</li>
+    <li><b>«Mi empleado ve todo.»</b> Y cuando algo cambia, nadie sabe quién lo cambió.</li>
+  </ul>
+</div></section>
+
+<section><div class="w">
+  <h2>Qué hace</h2>
+  <div class="grid">
+    <div class="card"><h3>Ventas con stock real</h3>Bloquea la venta si no hay stock. Numera solo. Devoluciones que reingresan la mercadería.</div>
+    <div class="card"><h3>Caja con arqueo</h3>Abrís, mové, cerrás: el sistema calcula lo esperado y te muestra la diferencia.</div>
+    <div class="card"><h3>Cuenta corriente</h3>Saldo de cada cliente y proveedor; los pagos se aplican a la deuda más vieja.</div>
+    <div class="card"><h3>Roles y auditoría</h3>Cada vendedor ve lo suyo. Quién cambió qué y cuándo queda registrado y no se puede borrar.</div>
+    <div class="card"><h3>Seguridad</h3>Doble factor para el administrador, copias de seguridad cada noche y datos que son tuyos.</div>
+    <div class="card"><h3>Reportes</h3>Ganancia por producto y categoría, stock crítico, rankings. Exporta a Excel.</div>
+  </div>
+</div></section>
+
+<section><div class="w">
+  <h2>Cómo se ve</h2>
+  <div class="grid">
+    <figure><img src="../screenshots/venta-nueva.png" alt="Pantalla de nueva venta" loading="lazy"><figcaption>Nueva venta</figcaption></figure>
+    <figure><img src="../screenshots/caja.png" alt="Pantalla de caja" loading="lazy"><figcaption>Caja con arqueo</figcaption></figure>
+    <figure><img src="../screenshots/dashboard.png" alt="Panel principal" loading="lazy"><figcaption>Panel principal</figcaption></figure>
+  </div>
+  <p class="nota">Las capturas son del entorno de demostración, con datos de ejemplo. <span class="pendiente">[Video de 20–30 s: a grabar con el entorno de demostración]</span></p>
+</div></section>
+
+<section><div class="w">
+  <h2>Precio</h2>
+  <div class="grid">
+    <div class="card"><h3>Instalación</h3><div class="precio">USD 3.000</div>Tu instancia, dominio, carga de tus datos, capacitación y manual.</div>
+    <div class="card"><h3>Mensual</h3><div class="precio">USD 120 / mes</div>Hosting, copias con restauración probada, actualizaciones de seguridad y soporte por escrito (respuesta en 1 día hábil).</div>
+    <div class="card"><h3>Completo</h3><div class="precio">USD 10.000</div>Instalación + migración de tus datos + 12 meses de Mensual + integraciones locales (Mercado Pago, WhatsApp, factura electrónica con proveedor certificado).</div>
+  </div>
+  <p class="nota">Precios en revisión: <span class="pendiente">[confirmar con el primer cliente antes de publicar]</span>. No incluyen las cuentas de terceros (hosting en la nube, proveedor de facturación). La factura electrónica la emite un proveedor certificado con tu contador: el sistema no la inventa.</p>
+</div></section>
+
+<section><div class="w">
+  <h2>Caso real</h2>
+  <p><span class="pendiente">[Se completa con el primer cliente piloto: rubro, qué pasaba antes, qué cambió, con su permiso.]</span> No publicamos casos inventados.</p>
+</div></section>
+
+<section id="contacto"><div class="w">
+  <h2>Contacto</h2>
+  <p><span class="pendiente">[Nombre · WhatsApp · correo]</span></p>
+  <p>Una charla de 20 minutos para ver si encaja con tu negocio. Si no encaja, te lo decimos.</p>
+</div></section>
+
+<footer><div class="w">Sistema Administrativo · <span class="pendiente">[razón social / CUIT]</span> · <a href="#">Política de privacidad</a> <span class="pendiente">[pendiente: revisión legal]</span></div></footer>
+</body>
+</html>

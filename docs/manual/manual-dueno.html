@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Manual del dueño — Sistema Administrativo</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  body { font: 11pt/1.45 "Segoe UI", Arial, sans-serif; color: #1c1c1c; }
+  h1 { font-size: 22pt; margin: 0 0 4pt; } h2 { font-size: 14pt; margin: 18pt 0 4pt; border-bottom: 2px solid #1f4e79; padding-bottom: 2pt; color: #1f4e79; }
+  h3 { font-size: 11.5pt; margin: 10pt 0 2pt; }
+  img { max-width: 100%; border: 1px solid #ccc; margin: 4pt 0; }
+  figure { margin: 6pt 0; break-inside: avoid; } figcaption { font-size: 9pt; color: #555; }
+  .aviso { background: #fff4d6; border-left: 4px solid #d99a00; padding: 6pt 9pt; margin: 8pt 0; break-inside: avoid; }
+  ol, ul { margin: 3pt 0 3pt 18pt; padding: 0; } li { margin: 2pt 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; } td, th { border: 1px solid #bbb; padding: 3pt 6pt; text-align: left; vertical-align: top; }
+  .portada { margin-bottom: 10pt; } .chico { font-size: 9pt; color: #555; }
+  h2 { break-after: avoid; }
+</style>
+</head>
+<body>
+<div class="portada">
+  <h1>Manual del dueño</h1>
+  <div>Sistema Administrativo — ventas, stock, caja y cuentas corrientes</div>
+  <div class="chico">Versión 1 · noviembre 2026 · Las capturas son del entorno de demostración (datos de ejemplo), no de un negocio real.</div>
+</div>
+
+<h2>1. Ingresar y proteger la cuenta</h2>
+<ol>
+  <li>Entrá a la dirección que te dio quien instaló el sistema e iniciá sesión con tu correo y contraseña.</li>
+  <li><b>Doble factor (obligatorio para el administrador):</b> en el primer ingreso el sistema te lleva a <i>Perfil</i>. Instalá una app de autenticación (Google Authenticator, Authy, Bitwarden…), escaneá el QR y escribí el código de 6 dígitos.</li>
+  <li><b>Guardá los códigos de recuperación</b> en un lugar fuera del sistema (papel en la caja fuerte, gestor de claves). Cada uno sirve una sola vez y se muestran una sola vez.</li>
+  <li>La contraseña tiene que tener 12 caracteres o más. Después de 5 intentos fallidos el sistema espera unos minutos.</li>
+</ol>
+<div class="aviso"><b>Si perdés el teléfono y los códigos:</b> escribile al soporte. Lo desactiva desde el servidor (<code>usuario:quitar-doble-factor</code>) y volvés a activarlo en tu próximo ingreso.</div>
+
+<h2>2. Cargar productos, clientes y proveedores</h2>
+<ul>
+  <li><b>De a uno:</b> menús <i>Productos</i>, <i>Clientes</i>, <i>Proveedores</i> → botón <i>Nuevo</i>.</li>
+  <li><b>Desde Excel/CSV:</b> menú <i>Importar</i>. Elegí qué importás, subí el archivo y revisá el resumen. Antes de importar todo, probá con 5 filas.</li>
+  <li>El <b>stock mínimo</b> de cada producto marca cuándo aparece en rojo y en el aviso diario de reposición.</li>
+</ul>
+<figure><img src="../screenshots/productos.png" alt="Listado de productos"><figcaption>Productos: los que están en stock crítico se ven marcados.</figcaption></figure>
+
+<h2>3. Vender</h2>
+<ol>
+  <li><i>Ventas → Nueva venta</i>. Elegí el cliente (se busca escribiendo), agregá productos y cantidades.</li>
+  <li>Elegí cómo se cobra (efectivo, transferencia, tarjeta, cuenta corriente). Para cobrar en efectivo <b>tiene que haber una caja abierta</b>.</li>
+  <li>El sistema <b>no deja vender más de lo que hay en stock</b> y numera solo los comprobantes.</li>
+  <li>Cada vendedor ve y anula <b>solo sus propias ventas</b>; un supervisor ve todas.</li>
+  <li>Desde el detalle de la venta imprimís el PDF.</li>
+</ol>
+<figure><img src="../screenshots/venta-nueva.png" alt="Nueva venta"><figcaption>Nueva venta con el total calculado.</figcaption></figure>
+<div class="aviso">El comprobante que emite el sistema es <b>interno</b>: no es una factura fiscal. La factura electrónica la emite el proveedor certificado que elijas junto con tu contador.</div>
+
+<h2>4. Caja: abrir, mover y cerrar</h2>
+<ol>
+  <li><i>Caja → Abrir</i> con el efectivo con el que arrancás.</li>
+  <li>Durante el día: las ventas en efectivo suman solas; los gastos se cargan como <i>egreso</i> con su concepto.</li>
+  <li><i>Cerrar caja</i>: contá el efectivo y escribilo. El sistema calcula <b>inicial + ingresos − egresos</b> y te muestra la diferencia. <b>Diferencia 0 = la caja cierra.</b> Si no es 0, anotá el motivo en observaciones.</li>
+</ol>
+<figure><img src="../screenshots/caja.png" alt="Caja"><figcaption>Caja con su arqueo.</figcaption></figure>
+
+<h2>5. Devoluciones</h2>
+<p>Desde el detalle de la venta → <i>Devolución</i>: elegí los productos y cantidades (no se puede devolver más de lo vendido). El stock vuelve solo y baja el saldo del cliente.</p>
+
+<h2>6. Quién me debe: cuentas corrientes</h2>
+<p><i>Cuentas</i> muestra el saldo de cada cliente y proveedor. Al cobrar, registrá el pago: el sistema lo aplica a las deudas más viejas primero.</p>
+<figure><img src="../screenshots/cuenta-corriente.png" alt="Cuenta corriente"><figcaption>Cuenta corriente de un cliente.</figcaption></figure>
+
+<h2>7. Stock, depósitos y compras</h2>
+<ul>
+  <li><i>Compras</i> suma stock al recibir la mercadería; <i>Órdenes de compra</i> sirven para pedir y recibir en partes.</li>
+  <li><i>Depósitos → Transferir</i> mueve mercadería entre depósitos; los ajustes de stock quedan registrados en la auditoría (quién y cuándo).</li>
+</ul>
+<figure><img src="../screenshots/stock-depositos.png" alt="Stock por depósito"><figcaption>Stock por depósito.</figcaption></figure>
+
+<h2>8. Reportes y ganancia</h2>
+<p><i>Reportes</i>: ventas por período, rentabilidad por producto y categoría, stock crítico, rankings. Se exportan a Excel.</p>
+<figure><img src="../screenshots/reporte-ganancias.png" alt="Reporte de ganancias"><figcaption>Rentabilidad con margen.</figcaption></figure>
+
+<h2>9. Usuarios y permisos</h2>
+<ul>
+  <li><i>Usuarios → Nuevo</i>: contraseña de 12+ caracteres y un rol. Para dar de baja a alguien <b>desactivalo</b> (no se borra: sus ventas quedan). Se desconecta en el acto.</li>
+  <li><i>Roles</i>: elegí qué puede hacer cada rol. Dale a cada persona lo mínimo que necesita.</li>
+  <li><i>Auditoría</i> muestra quién cambió qué y cuándo; no se puede editar ni borrar.</li>
+</ul>
+<figure><img src="../screenshots/roles.png" alt="Roles y permisos"><figcaption>Roles y permisos por módulo.</figcaption></figure>
+
+<h2>10. Copias de seguridad</h2>
+<ul>
+  <li>El sistema hace una copia <b>cada noche</b> y guarda las últimas 14. Ahí también podés crear una a mano y descargarla.</li>
+  <li><b>Antes de cualquier cambio grande</b> (importar miles de filas, cambiar precios) creá una copia.</li>
+  <li>Restaurar <b>reemplaza todo</b> por lo que había en la copia. Hacelo con ayuda del soporte la primera vez.</li>
+</ul>
+
+<h2>11. Qué hago si algo falla</h2>
+<table>
+  <tr><th>Síntoma</th><th>Qué hacer</th></tr>
+  <tr><td>No abre el sistema</td><td>Esperá 2 minutos y recargá. Si sigue, escribile al soporte con el texto exacto de la pantalla (ver runbook).</td></tr>
+  <tr><td>«No hay stock suficiente»</td><td>Revisá el stock del depósito; si el físico es mayor, hacé un ajuste con motivo.</td></tr>
+  <tr><td>No me deja cobrar en efectivo</td><td>Falta abrir la caja.</td></tr>
+  <tr><td>Olvidé la contraseña</td><td>«¿Olvidaste tu contraseña?» en el login; o un administrador te la cambia.</td></tr>
+  <tr><td>Perdí el doble factor</td><td>Usá un código de recuperación o pedile al soporte que lo desactive.</td></tr>
+</table>
+</body>
+</html>

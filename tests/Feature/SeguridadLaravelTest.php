@@ -227,4 +227,19 @@ class SeguridadLaravelTest extends TestCase
         $this->assertNotContains('*', config('cors.allowed_origins'));
         $this->assertFalse(config('cors.supports_credentials'));
     }
+
+    public function test_el_rescate_por_consola_quita_el_doble_factor(): void
+    {
+        $this->roles();
+        $admin = $this->administrador();
+        $servicio = app(DobleFactorService::class);
+        $servicio->iniciarAlta($admin);
+        $servicio->confirmar($admin, app(Google2FA::class)->getCurrentOtp($servicio->secretoDe($admin->fresh())));
+        $this->assertTrue($admin->fresh()->tieneDobleFactor());
+
+        $this->artisan('usuario:quitar-doble-factor', ['email' => $admin->email])->assertSuccessful();
+
+        $this->assertFalse($admin->fresh()->tieneDobleFactor());
+        $this->artisan('usuario:quitar-doble-factor', ['email' => 'nadie@x.com'])->assertFailed();
+    }
 }

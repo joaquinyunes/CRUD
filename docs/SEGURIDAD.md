@@ -1,0 +1,32 @@
+# Seguridad — crud-erp (paquete S aplicado a Laravel)
+
+Revisión del 08/11/2026 sobre la rama `integracion`. Cada fila dice qué se hizo, **cómo se comprobó** y qué queda. Lo que no se pudo comprobar figura como tal.
+
+| # | Tema | Estado | Evidencia |
+|---|---|---|---|
+| S1 | Dependencias | ✅ | `composer audit`: **8 avisos en 5 paquetes → 0** (symfony 7.4.23). `npm audit --omit=dev`: **0**. `npm audit` completo: 5 (2 críticas, 2 altas, 1 moderada) **solo en herramientas de build** (Tailwind 3 y su cadena de globbing); no se despliegan. Cerrarlas exige migrar a Tailwind 4: decisión aparte. |
+| S2 | CSP | 🟡 | Se **aplican** `object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'`. `script-src` sigue en **solo reporte** (`Content-Security-Policy-Report-Only`): las pantallas usan scripts en línea y Alpine.js necesita `unsafe-eval`. Para bloquear hay que sacar los bloques en línea a archivos y pasar a `@alpinejs/csp`. Hoy **no frena una inyección de script**. |
+| S3 | Rate limiting | ✅ | Login web: 5 intentos por correo+IP y bloqueo temporal (`LoginRequest`). `/api/login`: 5 por minuto. API autenticada: 60 por minuto por usuario/IP. Desafío 2FA: 5 intentos / 5 min. Tests: `SeguridadLaravelTest` (429 al 6.º intento, web y API). Webhooks: **no hay en este proyecto** (ver S6). |
+| S4 | Cuentas | ✅ (con un límite) | Hash bcrypt (`BCRYPT_ROUNDS=12`). Contraseña mínima **12** en alta, cambio y reseteo (antes 8 en el alta de usuarios). **2FA TOTP** con códigos de recuperación; **obligatorio para el administrador en producción** (`DOBLE_FACTOR_ADMIN_OBLIGATORIO`; sin 2FA solo llega a su perfil) y exigido también en `/api/login`. Cookies `Secure; HttpOnly; SameSite=Lax` (comprobado con `curl` contra la app en modo producción). **Límite:** la sesión vive en una cookie cifrada (`SESSION_DRIVER=cookie`), así que no se puede «cerrar sesión en todos los dispositivos» desde el servidor; se compensa con `EnsureUserIsActive` (desactivar a alguien lo echa en el acto, también sus tokens de API). Pasar a sesión en base de datos es el paso siguiente. |
+| S5 | Validación | ✅ | `FormRequest` en cada módulo. Login de la API rechaza arrays (`{"$ne":null}`) con 422 (antes, una contraseña-array llegaba a `Hash::check`). Subidas: lista blanca `jpg,jpeg,png,webp,pdf`, 10 MB, tipo detectado **por contenido** (test: un `.jpg` con código PHP no sube), disco privado, descarga solo con permiso. |
+| S6 | Webhooks | n/a | El proyecto no recibe webhooks. Cuando se integre Mercado Pago: firma `x-signature`, idempotencia por id de evento y tests con firma inválida y evento repetido (ver el paquete S de `..\PLAN-VENTA-10K.md`). |
+| S7 | Roles y auditoría | ✅ | Permisos por clave + `CheckPermission`. **Nuevo:** quien no tiene `ventas.gestionar_todas` solo ve (lista, detalle, PDF, API) y anula las ventas **propias** — antes veía las de todos aunque el material comercial decía lo contrario. Auditoría de solo agregar: `update`/`delete` del modelo lanzan excepción (test). **Recomendación 👤:** en Atlas, un rol propio para la app con `insert`/`find` (sin `update`/`remove`) sobre `auditoria`, así tampoco puede borrarla alguien con la cadena de conexión. |
+| S8 | Secretos | ✅ | Los mismos patrones del CI (claves privadas, AWS, GitHub, Stripe, Mercado Pago, JWT, Google, Slack, URLs de base con clave) corridos sobre **el historial completo (110 commits): 0 coincidencias**. `.env` y `.env.production` nunca estuvieron en el historial. `.env.example` sin valores. **No se corrió gitleaks** (no está instalado): hacerlo una vez antes de entregar. |
+| S9 | CORS y encabezados | ✅ (falta `security.txt` 👤) | `config/cors.php` sin orígenes (`CORS_ALLOWED_ORIGINS` para abrir uno exacto); test: un preflight desde otro origen no recibe `Access-Control-Allow-Origin`. `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS (solo HTTPS en producción). `/.well-known/security.txt`: falta el correo de contacto del vendedor. |
+| S10 | Backups | ✅ local · 👤 Atlas | Backup de la aplicación cada noche (03:00, 14 copias) + `scripts/backup-mongodump.sh` / `restore-mongodump.sh`. **Restauración probada** el 08/11/2026 contra un MongoDB real (replica set local): cambiar un dato, restaurar y ver el dato original. Detalle en [BACKUPS.md](BACKUPS.md). Falta la prueba en el Atlas del cliente. |
+| S11 | Dependabot/CI | 🟡 | `.github/dependabot.yml` semanal y agrupado (composer, npm, actions, docker). El CI ya corre `composer audit` y `npm audit --audit-level=high`. **El CI no pudo ejecutarse el 08/11/2026: GitHub informó «la cuenta está bloqueada por un problema de facturación»** — hay que resolverlo (👤) para que los jobs corran. |
+| S12 | Datos personales | 👤 | Política de privacidad y términos con profesional (Ley 25.326). Exportar/borrar los datos de un cliente a pedido: hoy es manual desde la base; no hay pantalla. |
+| S13 | Revisión final | ✅ (propia) | Revisión del diff de esta tanda más las rutas de ventas, archivos y API. Hallazgos corregidos: (1) la búsqueda de la API de ventas usaba un `orWhere` suelto que se saltaba cualquier filtro de visibilidad; (2) `/api/ventas/{id}` (ver y anular) no autorizaba por dueño; (3) contraseña mínima de 8 en el alta; (4) el login de la API no pedía 2FA; (5) CORS quedaba en el valor por defecto del framework; (6) la cookie de sesión no era `Secure` por defecto en producción. **Pendiente:** CSP de scripts (S2) y sesión en servidor (S4). |
+
+## Cómo se verificó (08/11/2026)
+- `composer audit` → «No security vulnerability advisories found».
+- `npm audit --omit=dev` → 0 vulnerabilidades.
+- Tests: ver `PLAN-VENTA-10K.md` (cifras reales de la última corrida completa).
+- La app se arrancó en modo producción (`APP_ENV=production`, `APP_DEBUG=false`) contra un MongoDB local: `/up` → 200, `/login` con `X-Frame-Options` y CSP, cookies con `Secure; HttpOnly; SameSite=Lax`, un 404 no filtra trazas, `/dashboard` sin sesión → 302 al login.
+
+## Operación segura (para quien administra una instalación)
+1. `APP_DEBUG=false`, `APP_ENV=production` (ya en `render.yaml`; hay un test que lo exige).
+2. Activar el 2FA del administrador en el primer ingreso y guardar los códigos de recuperación fuera del sistema.
+3. `ADMIN_PASSWORD` de 12+ caracteres, distinta en cada cliente (`scripts/nueva-instancia.sh` la genera).
+4. `FILESYSTEM_DISK=s3` con un bucket privado: los adjuntos se sirven a través de la app con permiso, nunca por URL pública.
+5. `TRUSTED_PROXIES`: en Render queda `*`; en un servidor propio, la red del balanceador.
