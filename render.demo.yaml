@@ -1,0 +1,111 @@
+# BLUEPRINT DE DEMO (V3) — servicio y base SEPARADOS del real (docs/DEMO.md).
+# Blueprint de Render — https://render.com/docs/blueprint-spec
+#
+# La base de datos es MongoDB Atlas (no la crea Render). Antes del primer deploy:
+#   1. Crear en Atlas un cluster con replica set (todos lo son) y un plan que NO se
+#      pause por inactividad (el gratuito M0 sí se pausa: ver docs/DESPLIEGUE-MONGODB.md).
+#   2. Crear un usuario de base de datos y permitir la IP de Render en "Network Access".
+#   3. Render > New > Blueprint > conectar este repositorio.
+#   4. Cargar a mano los dos valores que Render no puede generar:
+#        APP_KEY      -> php artisan key:generate --show   (con el prefijo "base64:")
+#        MONGODB_URI  -> la cadena de conexión de Atlas (mongodb+srv://<usuario>:<clave>@<cluster>.mongodb.net/?retryWrites=true&w=majority)
+#
+# El primer deploy crea los índices (php artisan mongo:indices) y, si DB_SEED_ON_BOOT=true,
+# carga los datos de demostración (ver docker/entrypoint.sh).
+
+services:
+  - type: web
+    name: crud-erp-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    # /up responde 200 solo si MongoDB contesta (ver AppServiceProvider).
+    healthCheckPath: /up
+    autoDeploy: true
+    envVars:
+      # --- Aplicación ---
+      - key: APP_NAME
+        value: Sistema Administrativo
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false          # cargar a mano: php artisan key:generate --show
+      - key: APP_LOCALE
+        value: es
+      - key: APP_FALLBACK_LOCALE
+        value: es
+      - key: APP_FAKER_LOCALE
+        value: es_AR
+
+      # --- Base de datos: MongoDB Atlas ---
+      - key: DB_CONNECTION
+        value: mongodb
+      - key: MONGODB_URI
+        sync: false          # cargar a mano: cadena de conexión de Atlas
+      - key: MONGODB_DATABASE
+        value: crud_erp_demo
+
+      # --- Sesión, caché y cola: drivers que no necesitan base de datos ---
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: SESSION_SECURE_COOKIE   # la demo se sirve solo por HTTPS
+        value: "true"
+      - key: CACHE_STORE
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+
+      # --- DEMO: datos de ejemplo y cuentas conocidas. NUNCA apuntar a la base de un cliente ---
+      - key: DB_SEED_ON_BOOT
+        value: "true"
+      - key: DEMO_MODE
+        value: "true"
+      - key: DOBLE_FACTOR_ADMIN_OBLIGATORIO
+        value: "false"
+
+      # Poner en "true" si se quiere que la demo pública se reinicie sola en
+      # cada arranque, descartando lo que hayan cargado los visitantes.
+      - key: DB_SEED_ALWAYS
+        value: "false"
+
+      # --- Primera cuenta (instalación real, DB_SEED_ON_BOOT=false) ---
+      # Se crea una sola vez, si no existe. La contraseña: 12 caracteres o más.
+      # En la demo no se usan: ahí las cuentas las crea el sembrado.
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_NAME
+        value: Administrador
+
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: MAIL_MAILER
+        value: log
+
+      # --- Tareas programadas ---
+      # En el plan gratuito no hay servicios de fondo, así que el programador corre dentro
+      # del mismo contenedor web (ver docker/entrypoint.sh). Para una instalación real
+      # conviene un cron job de Render que corra `php artisan schedule:run` cada minuto, y
+      # dejar esto en "false".
+      - key: RUN_SCHEDULER
+        value: "true"
+
+      # --- Archivos subidos (adjuntos, PDFs, backups) ---
+      # IMPORTANTE para una instalación real: el disco del contenedor es
+      # efímero y se borra en cada deploy. Con "local", los adjuntos y los
+      # backups desaparecen. Para producción hay que poner s3 y cargar las
+      # cuatro variables de abajo (sirve cualquier S3: AWS, Cloudflare R2,
+      # Backblaze B2, MinIO).
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_DEFAULT_REGION
+        sync: false
+      - key: AWS_BUCKET
+        sync: false

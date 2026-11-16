@@ -5,6 +5,9 @@
  * (que el contenedor corre al arrancar); en la demo no se usan.
  */
 return [
+    // Entorno de demostración (V3): muestra un cartel «DEMO» en todas las pantallas.
+    'demo' => filter_var(env('DEMO_MODE', false), FILTER_VALIDATE_BOOLEAN),
+
     // Los administradores no operan sin doble factor (S4). Se enciende solo en producción.
     'doble_factor_admin_obligatorio' => filter_var(
         env('DOBLE_FACTOR_ADMIN_OBLIGATORIO', env('APP_ENV') === 'production'),

@@ -56,11 +56,12 @@ services:
       - key: QUEUE_CONNECTION
         value: sync
 
-      # --- Demo: poblar el sistema en el primer arranque ---
-      # Sólo siembra si la base está vacía. Poner en "false" si es una
-      # instalación real de un cliente.
+      # --- Datos de demostración: APAGADO por defecto ---
+      # "true" crea cuentas conocidas (admin@admin.com / password) y datos de ejemplo:
+      # solo para el entorno de demo (ver render.demo.yaml y docs/DEMO.md). Una
+      # instalación real arranca con false y se crea con ADMIN_EMAIL / ADMIN_PASSWORD.
       - key: DB_SEED_ON_BOOT
-        value: "true"
+        value: "false"
 
       # Poner en "true" si se quiere que la demo pública se reinicie sola en
       # cada arranque, descartando lo que hayan cargado los visitantes.

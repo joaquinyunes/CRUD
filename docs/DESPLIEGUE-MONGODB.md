@@ -22,7 +22,7 @@ persona con acceso a las cuentas de Atlas y de Render; el repositorio ya trae to
 2. Cargar a mano las dos variables que figuran con `sync: false` (nunca van al repositorio):
    - `MONGODB_URI`: la cadena de Atlas del paso anterior.
    - `APP_KEY`: la salida de `php artisan key:generate --show` (con el prefijo `base64:`).
-3. Para una instalación real: `DB_SEED_ON_BOOT=false`, `ADMIN_EMAIL` y `ADMIN_PASSWORD` (12 caracteres o
+3. `render.yaml` ya viene en modo instalación real (`DB_SEED_ON_BOOT=false`; la demo tiene su propio `render.demo.yaml`, ver `docs/DEMO.md`). Cargar `ADMIN_EMAIL` y `ADMIN_PASSWORD` (12 caracteres o
    más), y `FILESYSTEM_DISK=s3` con las variables de AWS/R2/B2 (el disco del contenedor se borra en cada deploy,
    y con él los backups).
 4. Deploy. El arranque (`docker/entrypoint.sh`) verifica la conexión con reintentos, crea los índices con

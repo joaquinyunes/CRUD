@@ -11,6 +11,10 @@
         <link rel="stylesheet" href="{{ asset('css/rhythm.css') }}">
     </head>
     <body>
+        {{-- Cartel de demo: el entorno real nunca se usa para mostrar (V3) --}}
+        @if(config('sistema.demo'))
+            <div role="status" style="position:sticky;top:0;z-index:9999;background:#b45309;color:#fff;text-align:center;padding:6px 10px;font:600 13px/1.3 system-ui,sans-serif;">DEMO — datos de ejemplo, no son de un negocio real</div>
+        @endif
         <div class="r-login-wrap">
             <a href="/" class="r-login-logo">
                 <div class="r-login-logo-icon">SA</div>

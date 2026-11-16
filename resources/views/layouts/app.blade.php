@@ -12,6 +12,11 @@
 </head>
 <body style="background: var(--color-paper); color: var(--color-ink); font-family: var(--font-body);">
 
+    {{-- Cartel de demo: el entorno real nunca se usa para mostrar (V3) --}}
+    @if(config('sistema.demo'))
+        <div role="status" style="position:sticky;top:0;z-index:9999;background:#b45309;color:#fff;text-align:center;padding:6px 10px;font:600 13px/1.3 system-ui,sans-serif;">DEMO — datos de ejemplo, no son de un negocio real</div>
+    @endif
+
     {{-- Sidebar --}}
     @include('layouts.partials.sidebar')
     <div class="r-sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>

@@ -17,3 +17,8 @@ docs/screenshots/*.png
 !README.md
 tests
 .phpunit.result.cache
+
+# Nunca dentro de la imagen: variables de clientes, copias de seguridad y documentación
+instancias
+backups
+docs

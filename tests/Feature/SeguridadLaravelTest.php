@@ -242,4 +242,24 @@ class SeguridadLaravelTest extends TestCase
         $this->assertFalse($admin->fresh()->tieneDobleFactor());
         $this->artisan('usuario:quitar-doble-factor', ['email' => 'nadie@x.com'])->assertFailed();
     }
+
+    public function test_el_blueprint_real_no_siembra_demo_y_el_de_demo_si_y_con_otra_base(): void
+    {
+        $real = file_get_contents(base_path('render.yaml'));
+        $demo = file_get_contents(base_path('render.demo.yaml'));
+
+        $this->assertMatchesRegularExpression('/key: DB_SEED_ON_BOOT\s+value: "false"/', $real);
+        $this->assertMatchesRegularExpression('/key: DB_SEED_ON_BOOT\s+value: "true"/', $demo);
+        $this->assertMatchesRegularExpression('/key: DEMO_MODE\s+value: "true"/', $demo);
+        $this->assertMatchesRegularExpression('/key: MONGODB_DATABASE\s+value: crud_erp_demo/', $demo);
+        $this->assertMatchesRegularExpression('/key: MONGODB_DATABASE\s+value: crud_erp\s/', $real);
+    }
+
+    public function test_el_cartel_demo_aparece_solo_con_demo_mode(): void
+    {
+        $this->get('/login')->assertOk()->assertDontSee('DEMO — datos de ejemplo');
+
+        config(['sistema.demo' => true]);
+        $this->get('/login')->assertOk()->assertSee('DEMO — datos de ejemplo');
+    }
 }
