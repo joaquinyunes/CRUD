@@ -4,7 +4,7 @@ Leé primero `..\PLAN-VENTA-10K.md` (veredicto, paquetes **S** y **V**). Rama de
 ## Números reales (corridos el 08/11/2026, PHP 8.3.35, MongoDB 8.2.6 replica set local)
 | Verificación | Resultado |
 |---|---|
-| `php artisan test` (`MONGODB_DATABASE=crud_erp_test_x`) | **285 / 285 pasan · 1.055 aserciones · 6 min 8 s** (antes de esta tanda: 269 / 269, 990 aserciones, 12 min 51 s — sobre `mongodb`+`seguridad-ci` ya integradas) |
+| `php artisan test` (`MONGODB_DATABASE=crud_erp_test_x`) | **287 / 287 pasan · 1.064 aserciones · 6 min 30 s** (corrida del 16/11/2026) (antes de esta tanda: 269 / 269, 990 aserciones, 12 min 51 s — sobre `mongodb`+`seguridad-ci` ya integradas) |
 | `composer audit` | **0 avisos** (antes: 8 avisos en 5 paquetes, symfony; subidos a 7.4.23) |
 | `npm audit --omit=dev` | **0** (el `npm audit` completo marca 5, solo de build: Tailwind 3) |
 | PHPStan (nivel 5, Larastan) | **0 errores** (en nivel 6 hay 145, todos de tipos genéricos/`array` sin documentar: no se subió) |

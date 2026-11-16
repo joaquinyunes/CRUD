@@ -7,6 +7,8 @@ Ordenado por lo que desbloquea. Lo marcado ⛔ frena la venta.
 2. ⛔ **GitHub Actions está bloqueado por facturación** («your account is locked due to a billing issue», 08/11/2026). Mientras siga así: ningún job del CI corre (tests, PHPStan, Pint, `composer audit`, escaneo de secretos, **build de la imagen Docker**) y el aviso de caída (`uptime.yml`) tampoco. Resolverlo en github.com → Settings → Billing.
 3. ⛔ **Imagen Docker sin construir:** no hay Docker en la máquina de desarrollo y el CI está bloqueado (punto 2). Cuando el CI vuelva, el job «Imagen Docker» la construye y comprueba `/up`; o en cualquier máquina con Docker: `docker build -t crud-erp . && ./scripts/nueva-instancia.sh prueba tu@mail.com --local`.
 
+0b. ⛔ **`git push` da 403: «You must verify your email address»** (16/11/2026). Verificar el correo en github.com/settings/emails. Hasta entonces, el commit `3986578` (demo, `.dockerignore`, guías de Docker) está **solo en local** en la rama `integracion`; `main` en GitHub sigue en `9d612b9`.
+
 ## 1. Cuentas e infraestructura (E8–E10)
 - **E8 Atlas:** cluster que no se pause (el M0 se pausa y no tiene backups), usuario `readWrite` sobre `crud_erp` (idealmente con rol sin `update/remove` sobre `auditoria`), regla de red. Guía: `docs/DESPLIEGUE-MONGODB.md`.
 - **E9 Render:** Blueprint desde `render.yaml`; cargar `MONGODB_URI`, `APP_KEY`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` (12+), `DB_SEED_ON_BOOT=false`, `FILESYSTEM_DISK=s3` + `AWS_*`. Un plan de pago (el Free se duerme y pierde el disco). `scripts/nueva-instancia.sh` genera las claves.
