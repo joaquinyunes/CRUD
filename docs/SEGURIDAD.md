@@ -30,3 +30,46 @@ Revisión del 08/11/2026 sobre la rama `integracion`. Cada fila dice qué se hiz
 3. `ADMIN_PASSWORD` de 12+ caracteres, distinta en cada cliente (`scripts/nueva-instancia.sh` la genera).
 4. `FILESYSTEM_DISK=s3` con un bucket privado: los adjuntos se sirven a través de la app con permiso, nunca por URL pública.
 5. `TRUSTED_PROXIES`: en Render queda `*`; en un servidor propio, la red del balanceador.
+
+---
+
+# Revisión de seguridad independiente (19/11/2026) — hallazgos y estado
+
+Una revisión de solo lectura encontró fallas en la lógica de negocio, no en la configuración. Cada una se arregló **con test** en la rama `fix/revision-seguridad` (tests en `tests/Feature/RevisionSeguridad/`).
+
+| # | Hallazgo | Arreglo | Test |
+|---|---|---|---|
+| H1 | Devolver una venta/compra que nunca movió stock fabricaba stock y caja | `DevolucionService`: exige `completada` + `stock_aplicado`, dentro de la transacción | `DevolucionesYAnulacionesTest` |
+| H2 | Anular o editar un documento ya devuelto duplicaba el stock | `VentaService::anular` / `CompraService::anular`: se rechaza si hay devoluciones (web y API) | ídem |
+| H3 | Carreras: «ya devuelto» y estado leídos fuera de la transacción | `Bloqueo::tomar`: candado optimista que relee el documento y fuerza el reintento; lo ya devuelto se calcula adentro | ídem (6 procesos reales). **Ojo:** ese test también pasaba sin el candado, porque el stock del producto ya chocaba solo; el candado es defensa en profundidad |
+| H4 | Escalada de privilegios por editar roles/usuarios | `User::puedeOtorgar/puedeAsignarRol/puedeAdministrar`; el rol con `*` se protege por permiso, no por nombre | `EscaladaDePrivilegiosTest` |
+| M1 | Exportes sin filtro de dueño; costo visible al Vendedor | `visiblesPara` en exportes; costo solo con `reportes.ver`; el Vendedor demo ya no trae reportes | `ExportesYCostosTest` |
+| M2 | IDOR en compras (web, API, PDF) | `Compra::visiblesPara` + `authorize` | `VisibilidadYTopesTest` |
+| M3 | Devoluciones y archivos sin dueño | `Devolucion::visiblesPara`; archivos: dueño o `archivos.gestionar_todas` | ídem |
+| M4 | Reembolsos y egresos manuales sin tope | `devoluciones.reembolsar`; egresos > `caja_tope_egreso` (20.000 por defecto) piden `caja.egreso_libre` | ídem |
+| M5 | Arqueo no ciego; efectivo en la caja de otro; varias cajas abiertas | Sin caja propia se rechaza; índice único parcial; la pantalla oculta ingresos/egresos/esperado mientras está abierta | `CajaPropiaTest` |
+| M6 | 2FA se iniciaba/regeneraba sin contraseña y se podía pisar | Contraseña obligatoria; no se reinicia uno activo | `DobleFactorTest` |
+| M7 | Sesión no revocable, tokens eternos | `AuthenticateSession` + `logoutOtherDevices` + tokens revocados al cambiar la clave; vencen a las 8 h (`SANCTUM_EXPIRATION`) | `SesionesYTokensTest` |
+| M8 | Fórmulas en Excel; `formato` libre | `CeldaSegura` antepone `'`; `formato` solo `xlsx`/`csv` | `ExportesYCostosTest` |
+| M9 | Precio enviado por el cliente; crédito no verificado al editar | El precio sale del producto salvo `ventas.precio_libre`; `verificarCredito` también al actualizar | `PreciosYCreditoTest` |
+| M10 | Restaurar borraba la auditoría; permisos de rol sin huella | Restaurar no toca `auditoria` y se audita; `Role::sincronizarPermisos` registra antes/después | `AuditoriaDeRestauracionTest` |
+| B1 | Operadores NoSQL en filtros (`?x[$ne]=0`) | Middleware `RechazarOperadoresMongo` en web y API (400) | `BajasTest` |
+| B2 | Importar stock escribía el campo sin rastro | Se importa como ajuste (`registrarAjuste`), con movimiento y depósito; negativo se rechaza | `BajasTest` |
+| B3 | Código TOTP reutilizable | `verifyKeyNewer` + `two_factor_ultimo_paso`; el límite por cuenta ya existía | `DobleFactorTest` |
+| B4 | `MAIL_MAILER=log` deja tokens de reset en logs; `FILESYSTEM_DISK=public` | `public` en producción **impide arrancar**; el mailer `log` avisa al arrancar (`sistema:instalar`) | `BajasTest` |
+| B5 | Dompdf y SSRF por `empresa_logo` | Verificado: `enable_remote=false`, `enable_php=false` y el logo no se usa en los PDF | `BajasTest` |
+
+## Permisos nuevos (una instalación existente no los trae sola)
+`ventas.precio_libre`, `caja.egreso_libre`, `devoluciones.reembolsar`, `archivos.gestionar_todas`. `php artisan sistema:instalar` los crea y se los da al administrador; **a Supervisor u otros roles hay que asignárselos desde Roles**. Sin ellos: un vendedor cobra al precio de lista, no reembolsa en efectivo, no hace egresos grandes ni ve archivos ajenos.
+
+## Cambios de comportamiento que el dueño va a notar
+- Vender, cobrar o reembolsar **en efectivo exige tener la caja propia abierta**.
+- Cada vendedor ve (y exporta) solo sus ventas y compras; el Vendedor demo ya no ve reportes ni costos.
+- Una venta o compra con devoluciones **no se puede anular ni editar**: se devuelve el resto o se hace una nota.
+- Las sesiones y tokens se cortan al cambiar la contraseña; los tokens de API duran 8 horas.
+
+## Lo que sigue siendo del usuario / no cubierto
+- **Datos viejos:** las ventas/compras con devoluciones registradas **antes** de este arreglo pueden haber quedado con stock inflado; revisar en la instancia real.
+- El rol de Atlas sin `update/remove` sobre `auditoria` (ver S7) y un SMTP real para producción (B4).
+- Los arreglos no tienen pasada de CI: GitHub Actions sigue bloqueado por facturación y el `git push` por correo sin verificar.
+- Sin pentest externo: esta revisión fue de lectura de código; no se probó contra una instancia desplegada.
