@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ReglaDeNegocioException;
 use App\Exceptions\StockInsuficienteException;
 use App\Http\Requests\CompraRequest;
 use App\Models\Compra;
@@ -25,7 +26,7 @@ class CompraController extends Controller
 
     public function index(Request $request): View
     {
-        $query = Compra::with('proveedor', 'user');
+        $query = Compra::with('proveedor', 'user')->visiblesPara($request->user());
 
         if ($request->filled('buscar')) {
             $query->buscar($request->buscar);
@@ -94,6 +95,8 @@ class CompraController extends Controller
 
         try {
             $this->compras->actualizar($compra, $request->validated());
+        } catch (ReglaDeNegocioException $e) {
+            return back()->withErrors([$e->campo => $e->getMessage()])->withInput();
         } catch (StockInsuficienteException $e) {
             return back()->withErrors(['detalles' => $e->getMessage()])->withInput();
         }
@@ -111,13 +114,9 @@ class CompraController extends Controller
 
         try {
             Transaccion::en(function () use ($request, $compra) {
-                $this->stockDoc->revertirCompra($compra);
-                $compra->update([
-                    'estado'           => 'anulada',
-                    'motivo_anulacion' => $request->input('motivo', 'Anulada por el usuario'),
-                ]);
+                $this->compras->anular($compra, $request->input('motivo', 'Anulada por el usuario'));
             });
-        } catch (StockInsuficienteException $e) {
+        } catch (StockInsuficienteException|ReglaDeNegocioException $e) {
             return back()->withErrors(['general' => 'No se puede anular: '.$e->getMessage()]);
         }
 
@@ -126,6 +125,7 @@ class CompraController extends Controller
 
     public function show(Compra $compra): View
     {
+        $this->authorize('view', $compra);
         $compra->load(['detalles.producto', 'proveedor', 'user']);
 
         return view('compras.show', compact('compra'));

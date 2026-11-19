@@ -35,6 +35,7 @@ class PdfController extends Controller
     public function facturaCompra($id)
     {
         $compra = Compra::with(['detalles.producto', 'proveedor', 'user'])->findOrFail($id);
+        $this->authorize('view', $compra);
         $pdf = Pdf::loadView('pdf.factura-compra', compact('compra'));
 
         return $pdf->stream("compra-{$compra->numero}.pdf");

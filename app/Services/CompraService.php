@@ -3,12 +3,14 @@
 namespace App\Services;
 
 use App\Events\CompraCreada;
+use App\Exceptions\ReglaDeNegocioException;
 use App\Exceptions\StockInsuficienteException;
 use App\Models\Compra;
 use App\Models\Deposito;
 use App\Models\Producto;
 use App\Models\Setting;
 use App\Support\CalculadorTotales;
+use App\Support\Mongo\Bloqueo;
 use App\Support\Mongo\Transaccion;
 use App\Support\NumeradorDocumentos;
 use Illuminate\Support\Collection;
@@ -85,6 +87,7 @@ class CompraService
     public function actualizar(Compra $compra, array $datos): Compra
     {
         Transaccion::en(function () use ($compra, $datos) {
+            $this->bloquearParaCambiar($compra);
             $this->stockDoc->revertirCompra($compra);
 
             $detalles = $this->construirDetalles($datos['detalles']);
@@ -177,6 +180,32 @@ class CompraService
      *
      * @param  array<int,array<string,mixed>>  $detalles
      */
+    /**
+     * Anula la compra descontando el stock que había sumado. Con devoluciones a
+     * proveedor registradas no se anula (el stock ya se descontó una vez).
+     *
+     * @throws ReglaDeNegocioException
+     * @throws StockInsuficienteException
+     */
+    public function anular(Compra $compra, string $motivo): void
+    {
+        Transaccion::en(function () use ($compra, $motivo) {
+            $this->bloquearParaCambiar($compra);
+            $this->stockDoc->revertirCompra($compra);
+            $compra->update(['estado' => 'anulada', 'motivo_anulacion' => $motivo]);
+        });
+    }
+
+    /** @throws ReglaDeNegocioException */
+    private function bloquearParaCambiar(Compra $compra): void
+    {
+        Bloqueo::tomar($compra, ['estado' => ['!=', 'anulada']], 'La compra ya está anulada.');
+
+        if ($compra->totalDevuelto() > 0) {
+            throw new ReglaDeNegocioException('La compra tiene devoluciones a proveedor registradas: no se puede anular ni editar.');
+        }
+    }
+
     public function actualizarCostos(array $detalles): void
     {
         foreach ($detalles as $detalle) {

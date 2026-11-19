@@ -12,7 +12,6 @@ use App\Models\User;
 use App\Models\Venta;
 use App\Services\StockDocumentoService;
 use App\Services\VentaService;
-use App\Support\Mongo\Transaccion;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -124,13 +123,11 @@ class VentaController extends Controller
             return redirect()->route('ventas.index')->with('success', 'La venta ya estaba anulada.');
         }
 
-        Transaccion::en(function () use ($request, $venta) {
-            $this->stockDoc->revertirVenta($venta);
-            $venta->update([
-                'estado'           => 'anulada',
-                'motivo_anulacion' => $request->input('motivo', 'Anulada por el usuario'),
-            ]);
-        });
+        try {
+            $this->ventas->anular($venta, $request->input('motivo', 'Anulada por el usuario'));
+        } catch (ReglaDeNegocioException $e) {
+            return back()->withErrors(['general' => 'No se puede anular: '.$e->getMessage()]);
+        }
 
         return redirect()->route('ventas.index')->with('success', 'Venta anulada correctamente. El stock fue devuelto.');
     }

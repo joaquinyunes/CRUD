@@ -119,6 +119,14 @@ class Compra extends ModeloMongo
         return round((float) $this->total_final - (float) $this->pagado - $this->totalDevuelto(), 2);
     }
 
+    /** Quien no tiene `compras.gestionar_todas` ve solo las compras que cargó él. */
+    public function scopeVisiblesPara($query, User $usuario)
+    {
+        return $usuario->role?->tienePermiso('compras.gestionar_todas')
+            ? $query
+            : $query->where('user_id', $usuario->id);
+    }
+
     public function scopeBuscar($query, ?string $buscar)
     {
         if (! $buscar) {

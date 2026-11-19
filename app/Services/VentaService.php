@@ -13,6 +13,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Models\Venta;
 use App\Support\CalculadorTotales;
+use App\Support\Mongo\Bloqueo;
 use App\Support\Mongo\Transaccion;
 use App\Support\NumeradorDocumentos;
 use Illuminate\Support\Collection;
@@ -118,6 +119,7 @@ class VentaService
         $efectivoAnterior = $this->efectivoRegistradoEn($venta);
 
         Transaccion::en(function () use ($venta, $datos, $pagos) {
+            $this->bloquearParaCambiar($venta);
             $this->stockDoc->revertirVenta($venta);
 
             $detalles = $this->construirDetalles($datos['detalles']);
@@ -154,6 +156,36 @@ class VentaService
         $this->ajustarEfectivoEnCaja($venta, $efectivoAnterior, $pagos);
 
         return $venta;
+    }
+
+    /**
+     * Anula la venta devolviendo el stock. Una venta con devoluciones no se anula:
+     * el stock ya volvió una vez y volvería otra (stock que no existe).
+     *
+     * @throws ReglaDeNegocioException
+     */
+    public function anular(Venta $venta, string $motivo): void
+    {
+        Transaccion::en(function () use ($venta, $motivo) {
+            $this->bloquearParaCambiar($venta);
+            $this->stockDoc->revertirVenta($venta);
+            $venta->update(['estado' => 'anulada', 'motivo_anulacion' => $motivo]);
+        });
+    }
+
+    /**
+     * Candado y control, DENTRO de la transacción: el documento se relee, no debe
+     * estar anulado y no debe tener devoluciones (que ya movieron stock por su cuenta).
+     *
+     * @throws ReglaDeNegocioException
+     */
+    private function bloquearParaCambiar(Venta $venta): void
+    {
+        Bloqueo::tomar($venta, ['estado' => ['!=', 'anulada']], 'La venta ya está anulada.');
+
+        if ($venta->totalDevuelto() > 0) {
+            throw new ReglaDeNegocioException('La venta tiene devoluciones registradas: no se puede anular ni editar.');
+        }
     }
 
     /**

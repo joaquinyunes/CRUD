@@ -10,7 +10,6 @@ use App\Http\Resources\VentaResource;
 use App\Models\Venta;
 use App\Services\StockDocumentoService;
 use App\Services\VentaService;
-use App\Support\Mongo\Transaccion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -80,10 +79,11 @@ class VentaController extends Controller
     {
         $this->authorize('delete', $venta);
 
-        Transaccion::en(function () use ($venta) {
-            $this->stockDoc->revertirVenta($venta);
-            $venta->update(['estado' => 'anulada', 'motivo_anulacion' => 'Anulada vía API']);
-        });
+        try {
+            $this->ventas->anular($venta, 'Anulada vía API');
+        } catch (ReglaDeNegocioException $e) {
+            throw ValidationException::withMessages([$e->campo => $e->getMessage()]);
+        }
 
         return response()->json(['message' => 'Venta anulada correctamente.']);
     }

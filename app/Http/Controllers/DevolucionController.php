@@ -2,17 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ReglaDeNegocioException;
 use App\Exceptions\StockInsuficienteException;
 use App\Http\Requests\DevolucionRequest;
 use App\Models\Compra;
 use App\Models\Devolucion;
-use App\Models\DevolucionDetalle;
-use App\Models\Producto;
 use App\Models\Venta;
-use App\Services\CajaService;
-use App\Services\StockService;
-use App\Support\Mongo\Transaccion;
-use App\Support\NumeradorDocumentos;
+use App\Services\DevolucionService;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,10 +16,7 @@ use Illuminate\View\View;
 
 class DevolucionController extends Controller
 {
-    public function __construct(
-        private StockService $stock,
-        private CajaService $caja,
-    ) {}
+    public function __construct(private DevolucionService $devoluciones) {}
 
     public function index(Request $request): View
     {
@@ -51,72 +44,23 @@ class DevolucionController extends Controller
 
     public function createVenta(Venta $venta): View
     {
-        abort_if($venta->estado === 'anulada', 404);
+        $this->authorize('view', $venta);
+        abort_unless($venta->estado === 'completada' && $venta->stock_aplicado, 404);
         $venta->load('detalles.producto');
-        $devueltos = $this->devueltosPorProducto('venta', $venta->id);
+        $devueltos = $this->devoluciones->devueltosPorProducto('venta', $venta->id);
 
         return view('devoluciones.form-venta', compact('venta', 'devueltos'));
     }
 
     public function storeVenta(DevolucionRequest $request, Venta $venta): RedirectResponse
     {
-        abort_if($venta->estado === 'anulada', 404);
-
-        $venta->load('detalles');
-        $devueltos = $this->devueltosPorProducto('venta', $venta->id);
-        $lineas = [];
-
-        foreach ($request->detalles as $d) {
-            if ((int) $d['cantidad'] <= 0) {
-                continue;
-            }
-            $original = $venta->detalles->firstWhere('producto_id', (int) $d['producto_id']);
-            if (! $original) {
-                return back()->withErrors(['detalles' => 'Un producto no pertenece a la venta.'])->withInput();
-            }
-            $disponible = $original->cantidad - ($devueltos[$original->producto_id] ?? 0);
-            if ($d['cantidad'] > $disponible) {
-                return back()->withErrors(['detalles' => "No podés devolver más de {$disponible} de «{$original->producto->nombre}»."])->withInput();
-            }
-            $lineas[] = [
-                'producto_id' => $original->producto_id,
-                'cantidad'    => (int) $d['cantidad'],
-                'precio'      => (float) $original->precio,
-                'subtotal'    => round($d['cantidad'] * $original->precio, 2),
-            ];
-        }
-
-        if (empty($lineas)) {
-            return back()->withErrors(['detalles' => 'Ingresá al menos una cantidad a devolver.'])->withInput();
-        }
+        $this->authorize('view', $venta);
+        abort_unless($venta->estado === 'completada' && $venta->stock_aplicado, 404);
 
         try {
-            Transaccion::en(function () use ($venta, $request, $lineas) {
-                $devolucion = Devolucion::create([
-                    'numero'   => $this->generarNumero(),
-                    'tipo'     => 'venta',
-                    'venta_id' => $venta->id,
-                    'fecha'    => now()->toDateString(),
-                    'motivo'   => $request->motivo,
-                    'total'    => round(collect($lineas)->sum('subtotal'), 2),
-                    'estado'   => 'registrada',
-                    'user_id'  => auth()->id(),
-                ]);
-
-                foreach ($lineas as $l) {
-                    $devolucion->detalles()->create($l);
-                    $this->stock->registrarDevolucion(
-                        Producto::find($l['producto_id']),
-                        $l['cantidad'],
-                        'devolucion_venta',
-                        $devolucion->id
-                    );
-                }
-
-                if ($request->boolean('reembolso_efectivo')) {
-                    $this->caja->registrarMovimiento('egreso', "Reembolso devolución {$devolucion->numero}", (float) $devolucion->total, 'devolucion', $devolucion->id);
-                }
-            });
+            $this->devoluciones->devolverVenta($venta, $request->detalles, $request->motivo, $request->boolean('reembolso_efectivo'), auth()->id());
+        } catch (ReglaDeNegocioException $e) {
+            return back()->withErrors([$e->campo => $e->getMessage()])->withInput();
         } catch (StockInsuficienteException $e) {
             return back()->withErrors(['detalles' => $e->getMessage()])->withInput();
         }
@@ -126,94 +70,27 @@ class DevolucionController extends Controller
 
     public function createCompra(Compra $compra): View
     {
-        abort_if($compra->estado === 'anulada', 404);
+        $this->authorize('view', $compra);
+        abort_unless($compra->estado === 'completada' && $compra->stock_aplicado, 404);
         $compra->load('detalles.producto');
-        $devueltos = $this->devueltosPorProducto('compra', $compra->id);
+        $devueltos = $this->devoluciones->devueltosPorProducto('compra', $compra->id);
 
         return view('devoluciones.form-compra', compact('compra', 'devueltos'));
     }
 
     public function storeCompra(DevolucionRequest $request, Compra $compra): RedirectResponse
     {
-        abort_if($compra->estado === 'anulada', 404);
-
-        $compra->load('detalles');
-        $devueltos = $this->devueltosPorProducto('compra', $compra->id);
-        $lineas = [];
-
-        foreach ($request->detalles as $d) {
-            if ((int) $d['cantidad'] <= 0) {
-                continue;
-            }
-            $original = $compra->detalles->firstWhere('producto_id', (int) $d['producto_id']);
-            if (! $original) {
-                return back()->withErrors(['detalles' => 'Un producto no pertenece a la compra.'])->withInput();
-            }
-            $disponible = $original->cantidad - ($devueltos[$original->producto_id] ?? 0);
-            if ($d['cantidad'] > $disponible) {
-                return back()->withErrors(['detalles' => "No podés devolver más de {$disponible}."])->withInput();
-            }
-            $lineas[] = [
-                'producto_id' => $original->producto_id,
-                'cantidad'    => (int) $d['cantidad'],
-                'precio'      => (float) $original->precio,
-                'subtotal'    => round($d['cantidad'] * $original->precio, 2),
-            ];
-        }
-
-        if (empty($lineas)) {
-            return back()->withErrors(['detalles' => 'Ingresá al menos una cantidad a devolver.'])->withInput();
-        }
+        $this->authorize('view', $compra);
+        abort_unless($compra->estado === 'completada' && $compra->stock_aplicado, 404);
 
         try {
-            Transaccion::en(function () use ($compra, $request, $lineas) {
-                $devolucion = Devolucion::create([
-                    'numero'    => $this->generarNumero(),
-                    'tipo'      => 'compra',
-                    'compra_id' => $compra->id,
-                    'fecha'     => now()->toDateString(),
-                    'motivo'    => $request->motivo,
-                    'total'     => round(collect($lineas)->sum('subtotal'), 2),
-                    'estado'    => 'registrada',
-                    'user_id'   => auth()->id(),
-                ]);
-
-                foreach ($lineas as $l) {
-                    $devolucion->detalles()->create($l);
-                    $this->stock->registrarSalida(
-                        Producto::find($l['producto_id']),
-                        $l['cantidad'],
-                        'devolucion_compra',
-                        $devolucion->id
-                    );
-                }
-            });
+            $this->devoluciones->devolverCompra($compra, $request->detalles, $request->motivo, auth()->id());
+        } catch (ReglaDeNegocioException $e) {
+            return back()->withErrors([$e->campo => $e->getMessage()])->withInput();
         } catch (StockInsuficienteException $e) {
             return back()->withErrors(['detalles' => $e->getMessage()])->withInput();
         }
 
         return redirect()->route('compras.show', $compra)->with('success', 'Devolución a proveedor registrada. El stock fue descontado.');
-    }
-
-    /** @return array<int,int> producto_id => cantidad ya devuelta */
-    private function devueltosPorProducto(string $tipo, int $docId): array
-    {
-        $col = $tipo === 'venta' ? 'venta_id' : 'compra_id';
-
-        $devoluciones = Devolucion::where('tipo', $tipo)
-            ->where($col, $docId)
-            ->where('estado', 'registrada')
-            ->pluck('id')->all();
-
-        return DevolucionDetalle::whereIn('devolucion_id', $devoluciones)
-            ->get()
-            ->groupBy('producto_id')
-            ->map(fn ($lineas) => (int) $lineas->sum('cantidad'))
-            ->all();
-    }
-
-    private function generarNumero(): string
-    {
-        return NumeradorDocumentos::proximo('devoluciones', 'DEV');
     }
 }

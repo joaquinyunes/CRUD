@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ReglaDeNegocioException;
 use App\Exceptions\StockInsuficienteException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CompraRequest;
@@ -22,12 +23,13 @@ class CompraController extends Controller
 
     public function index(Request $request)
     {
-        $query = Compra::with(['proveedor', 'user', 'detalles.producto']);
+        $query = Compra::with(['proveedor', 'user', 'detalles.producto'])->visiblesPara($request->user());
 
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
-            $query->where('numero', 'like', "%{$buscar}%")
-                ->orWhereHas('proveedor', fn ($q) => $q->where('nombre', 'like', "%{$buscar}%"));
+            // Agrupado: un orWhere suelto se saltaría el filtro de visibilidad.
+            $query->where(fn ($q) => $q->where('numero', 'like', "%{$buscar}%")
+                ->orWhereHas('proveedor', fn ($p) => $p->where('nombre', 'like', "%{$buscar}%")));
         }
 
         if ($request->filled('estado')) {
@@ -59,6 +61,7 @@ class CompraController extends Controller
 
     public function show(Compra $compra): JsonResponse
     {
+        $this->authorize('view', $compra);
         $compra->load(['detalles.producto', 'proveedor', 'user']);
 
         return response()->json($compra);
@@ -66,12 +69,11 @@ class CompraController extends Controller
 
     public function destroy(Compra $compra): JsonResponse
     {
+        $this->authorize('delete', $compra);
+
         try {
-            Transaccion::en(function () use ($compra) {
-                $this->stockDoc->revertirCompra($compra);
-                $compra->update(['estado' => 'anulada', 'motivo_anulacion' => 'Anulada vía API']);
-            });
-        } catch (StockInsuficienteException $e) {
+            Transaccion::en(fn () => $this->compras->anular($compra, 'Anulada vía API'));
+        } catch (StockInsuficienteException|ReglaDeNegocioException $e) {
             abort(422, 'No se puede anular: '.$e->getMessage());
         }
 
