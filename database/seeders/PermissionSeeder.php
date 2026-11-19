@@ -92,15 +92,18 @@ class PermissionSeeder extends Seeder
 
         'devoluciones.ver',
         'devoluciones.crear',
+        'devoluciones.reembolsar',
 
         'caja.ver',
         'caja.operar',
+        'caja.egreso_libre',
 
         'reportes.ver',
         'reportes.exportar',
 
         'archivos.ver',
         'archivos.gestionar',
+        'archivos.gestionar_todas',
 
         'tareas.ver',
         'tareas.gestionar',
@@ -126,13 +129,13 @@ class PermissionSeeder extends Seeder
             'stock.ver', 'stock.ajustar',
             'depositos.ver', 'depositos.gestionar',
             'cuentas.ver', 'cuentas.cobrar',
-            'devoluciones.ver', 'devoluciones.crear',
-            'caja.ver', 'caja.operar',
+            'devoluciones.ver', 'devoluciones.crear', 'devoluciones.reembolsar',
+            'caja.ver', 'caja.operar', 'caja.egreso_libre',
             'presupuestos.ver', 'presupuestos.crear', 'presupuestos.editar', 'presupuestos.convertir',
             'ordenes_compra.ver', 'ordenes_compra.crear', 'ordenes_compra.editar', 'ordenes_compra.recibir',
             'reportes.ver', 'reportes.exportar',
             'auditoria.ver',
-            'archivos.ver', 'archivos.gestionar',
+            'archivos.ver', 'archivos.gestionar', 'archivos.gestionar_todas',
             'tareas.ver', 'tareas.gestionar',
             'calendario.ver', 'calendario.gestionar',
         ],

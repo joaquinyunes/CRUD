@@ -6,6 +6,7 @@ use App\Http\Requests\Caja\AbrirCajaRequest;
 use App\Http\Requests\Caja\CerrarCajaRequest;
 use App\Http\Requests\Caja\MovimientoCajaRequest;
 use App\Models\CajaSesion;
+use App\Models\Setting;
 use App\Services\CajaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -47,6 +48,12 @@ class CajaController extends Controller
         $sesion = $this->caja->sesionAbierta(auth()->id());
         if (! $sesion) {
             return back()->withErrors(['monto' => 'No tenés una caja abierta.']);
+        }
+
+        // M4: un egreso manual grande no lo hace cualquiera. El tope se configura (caja_tope_egreso).
+        $tope = (float) Setting::obtener('caja_tope_egreso', '20000');
+        if ($data['tipo'] === 'egreso' && $data['monto'] > $tope && ! auth()->user()->role?->tienePermiso('caja.egreso_libre')) {
+            return back()->withErrors(['monto' => 'Un egreso mayor a $'.number_format($tope, 2, ',', '.').' lo autoriza un supervisor.']);
         }
 
         $this->caja->registrarMovimiento($data['tipo'], $data['concepto'], $data['monto'], 'manual', null);

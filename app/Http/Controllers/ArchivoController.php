@@ -16,7 +16,7 @@ class ArchivoController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Archivo::with('user');
+        $query = Archivo::with('user')->visiblesPara($request->user());
 
         if ($request->filled('relacionado_tipo') && $request->filled('relacionado_id')) {
             $query->paraModelo($request->relacionado_tipo, $request->relacionado_id);
@@ -60,8 +60,10 @@ class ArchivoController extends Controller
         return back()->with('success', 'Archivo subido correctamente.');
     }
 
-    public function destroy(Archivo $archivo): RedirectResponse
+    public function destroy(Request $request, Archivo $archivo): RedirectResponse
     {
+        abort_unless($archivo->esVisiblePara($request->user()), 403);
+
         $disco = Storage::disk($archivo->disco());
 
         if ($disco->exists($archivo->ruta)) {
@@ -73,16 +75,20 @@ class ArchivoController extends Controller
         return back()->with('success', 'Archivo eliminado correctamente.');
     }
 
-    public function download(Archivo $archivo): StreamedResponse
+    public function download(Request $request, Archivo $archivo): StreamedResponse
     {
+        abort_unless($archivo->esVisiblePara($request->user()), 403);
+
         abort_unless(Storage::disk($archivo->disco())->exists($archivo->ruta), 404);
 
         return Storage::disk($archivo->disco())->download($archivo->ruta, $archivo->nombre);
     }
 
     /** Muestra el archivo en el navegador (miniaturas y vista previa de PDF). */
-    public function show(Archivo $archivo): StreamedResponse
+    public function show(Request $request, Archivo $archivo): StreamedResponse
     {
+        abort_unless($archivo->esVisiblePara($request->user()), 403);
+
         abort_unless(Storage::disk($archivo->disco())->exists($archivo->ruta), 404);
 
         return Storage::disk($archivo->disco())->response($archivo->ruta, $archivo->nombre, [

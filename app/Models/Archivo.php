@@ -38,6 +38,19 @@ class Archivo extends ModeloMongo
         'tamano' => 'integer',
     ];
 
+    /** Quien no tiene `archivos.gestionar_todas` ve y borra solo lo que subió él. */
+    public function scopeVisiblesPara($query, User $usuario)
+    {
+        return $usuario->role?->tienePermiso('archivos.gestionar_todas')
+            ? $query
+            : $query->where('user_id', $usuario->id);
+    }
+
+    public function esVisiblePara(User $usuario): bool
+    {
+        return (bool) $usuario->role?->tienePermiso('archivos.gestionar_todas') || $this->user_id === $usuario->id;
+    }
+
     /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {

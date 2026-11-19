@@ -40,6 +40,22 @@ class Devolucion extends ModeloMongo
         'user_id',
     ];
 
+    /**
+     * Ve las devoluciones que registró él y, de las demás, las de los documentos que
+     * puede ver todos (`ventas.gestionar_todas` / `compras.gestionar_todas`).
+     */
+    public function scopeVisiblesPara($query, User $usuario)
+    {
+        $verVentas = (bool) $usuario->role?->tienePermiso('ventas.gestionar_todas');
+        $verCompras = (bool) $usuario->role?->tienePermiso('compras.gestionar_todas');
+
+        return $query->where(function ($q) use ($usuario, $verVentas, $verCompras) {
+            $q->where('user_id', $usuario->id);
+            $verVentas && $q->orWhere('tipo', 'venta');
+            $verCompras && $q->orWhere('tipo', 'compra');
+        });
+    }
+
     protected $casts = [
         'fecha' => 'date',
         'total' => 'decimal:2',

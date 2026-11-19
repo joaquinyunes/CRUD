@@ -21,6 +21,7 @@ class DevolucionController extends Controller
     public function index(Request $request): View
     {
         $query = Devolucion::with(['venta.cliente', 'compra.proveedor', 'user'])
+            ->visiblesPara($request->user())
             ->when($request->filled('tipo'), fn ($q) => $q->where('tipo', $request->tipo));
 
         $devoluciones = Orden::aplicar($query, [
@@ -35,8 +36,10 @@ class DevolucionController extends Controller
         return view('devoluciones.index', compact('devoluciones'));
     }
 
-    public function show(Devolucion $devolucion): View
+    public function show(Request $request, Devolucion $devolucion): View
     {
+        abort_unless(Devolucion::visiblesPara($request->user())->where('_id', $devolucion->id)->exists(), 403);
+
         $devolucion->load(['detalles.producto', 'venta.cliente', 'compra.proveedor', 'user']);
 
         return view('devoluciones.show', compact('devolucion'));
@@ -56,6 +59,11 @@ class DevolucionController extends Controller
     {
         $this->authorize('view', $venta);
         abort_unless($venta->estado === 'completada' && $venta->stock_aplicado, 404);
+
+        // M4: devolver plata de la caja es una decisión de quien supervisa, no de cualquiera.
+        if ($request->boolean('reembolso_efectivo') && ! $request->user()->role?->tienePermiso('devoluciones.reembolsar')) {
+            return back()->withErrors(['reembolso_efectivo' => 'No tenés permiso para reembolsar en efectivo.'])->withInput();
+        }
 
         try {
             $this->devoluciones->devolverVenta($venta, $request->detalles, $request->motivo, $request->boolean('reembolso_efectivo'), auth()->id());
