@@ -21,7 +21,7 @@ class ProductoResource extends JsonResource
             'categoria_id'  => $this->categoria_id,
             'categoria'     => $this->whenLoaded('categoria'),
             'marca'         => $this->marca,
-            'precio_compra' => $this->precio_compra,
+            'precio_compra' => $this->when($request->user()?->puedeVerCostos(), $this->precio_compra),
             'precio_venta'  => $this->precio_venta,
             'stock'         => $this->stock,
             'stock_minimo'  => $this->stock_minimo,

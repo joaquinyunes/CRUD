@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Producto;
+use App\Support\CeldaSegura;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -11,6 +12,9 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class ProductosExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
+    /** El costo (precio de compra) solo sale para quien puede verlo. */
+    public function __construct(private bool $conCosto = false) {}
+
     public function collection()
     {
         return Producto::with('categoria')
@@ -21,34 +25,36 @@ class ProductosExport implements FromCollection, WithHeadings, WithMapping, With
 
     public function headings(): array
     {
-        return [
+        return array_values(array_filter([
             'Código',
             'Nombre',
             'Descripción',
             'Categoría',
             'Marca',
-            'Precio Compra',
+            $this->conCosto ? 'Precio Compra' : null,
             'Precio Venta',
             'Stock',
             'Stock Mínimo',
             'Estado',
-        ];
+        ], fn ($titulo) => $titulo !== null));
     }
 
     public function map($producto): array
     {
-        return [
-            $producto->codigo,
-            $producto->nombre,
-            $producto->descripcion ?? '',
-            $producto->categoria->nombre ?? '',
-            $producto->marca ?? '',
-            $producto->precio_compra,
+        $fila = [
+            CeldaSegura::limpiar($producto->codigo),
+            CeldaSegura::limpiar($producto->nombre),
+            CeldaSegura::limpiar($producto->descripcion ?? ''),
+            CeldaSegura::limpiar($producto->categoria->nombre ?? ''),
+            CeldaSegura::limpiar($producto->marca ?? ''),
+            $this->conCosto ? $producto->precio_compra : null,
             $producto->precio_venta,
             $producto->stock,
             $producto->stock_minimo,
             $producto->estado,
         ];
+
+        return $this->conCosto ? $fila : array_values(array_filter($fila, fn ($v, $i) => $i !== 5, ARRAY_FILTER_USE_BOTH));
     }
 
     public function styles(Worksheet $sheet): array

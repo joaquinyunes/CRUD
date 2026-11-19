@@ -2,7 +2,9 @@
 
 namespace App\Exports;
 
+use App\Models\User;
 use App\Models\Venta;
+use App\Support\CeldaSegura;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -17,7 +19,7 @@ class VentasExport implements FromCollection, WithHeadings, WithMapping, WithSty
 
     protected ?string $estado;
 
-    public function __construct(?string $fechaDesde = null, ?string $fechaHasta = null, ?string $estado = null)
+    public function __construct(protected User $usuario, ?string $fechaDesde = null, ?string $fechaHasta = null, ?string $estado = null)
     {
         $this->fechaDesde = $fechaDesde;
         $this->fechaHasta = $fechaHasta;
@@ -27,6 +29,9 @@ class VentasExport implements FromCollection, WithHeadings, WithMapping, WithSty
     public function collection()
     {
         $query = Venta::with('cliente', 'user');
+
+        // Quien no ve todas las ventas, tampoco las exporta.
+        $query->visiblesPara($this->usuario);
 
         if ($this->fechaDesde) {
             $query->where('fecha', '>=', $this->fechaDesde);
@@ -56,12 +61,12 @@ class VentasExport implements FromCollection, WithHeadings, WithMapping, WithSty
     public function map($venta): array
     {
         return [
-            $venta->numero,
-            ($venta->cliente->nombre ?? '').' '.($venta->cliente->apellido ?? ''),
+            CeldaSegura::limpiar($venta->numero),
+            CeldaSegura::limpiar(($venta->cliente->nombre ?? '').' '.($venta->cliente->apellido ?? '')),
             $venta->fecha->format('d/m/Y'),
             $venta->total,
             ucfirst($venta->estado),
-            $venta->user->name ?? '',
+            CeldaSegura::limpiar($venta->user->name ?? ''),
         ];
     }
 

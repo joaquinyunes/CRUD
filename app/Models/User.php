@@ -143,6 +143,12 @@ class User extends ModeloMongo implements AuthenticatableContract, AuthorizableC
         return $this->role_id ? Role::clavesDe($this->role_id) : [];
     }
 
+    /** El costo de la mercadería y la ganancia son del dueño: los ve quien tiene reportes. */
+    public function puedeVerCostos(): bool
+    {
+        return (bool) $this->role?->tienePermiso('reportes.ver');
+    }
+
     /** Quien tiene el permiso comodín; se mira el permiso, no el nombre del rol. */
     public function esSuperusuario(): bool
     {

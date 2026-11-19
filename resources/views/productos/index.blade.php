@@ -97,7 +97,7 @@
                     <x-th campo="nombre">Nombre</x-th>
                     <x-th campo="categoria">Categoría</x-th>
                     <x-th campo="marca">Marca</x-th>
-                    <x-th campo="precio_compra" align="right" inicial="desc">P. Compra</x-th>
+                    @if(auth()->user()->puedeVerCostos())<x-th campo="precio_compra" align="right" inicial="desc">P. Compra</x-th>@endif
                     <x-th campo="precio_venta" align="right" inicial="desc">P. Venta</x-th>
                     <x-th campo="stock" align="center" inicial="desc">Stock</x-th>
                     <th>Unidad</th>
@@ -121,7 +121,7 @@
                         <td style="font-weight:500;">{{ $producto->nombre }}</td>
                         <td style="color:var(--color-ink-soft);">{{ $producto->categoria->nombre ?? '—' }}</td>
                         <td style="color:var(--color-ink-soft);">{{ $producto->marca ?? '—' }}</td>
-                        <td style="text-align:right;">${{ number_format($producto->precio_compra, 2, ',', '.') }}</td>
+                        @if(auth()->user()->puedeVerCostos())<td style="text-align:right;">${{ number_format($producto->precio_compra, 2, ',', '.') }}</td>@endif
                         <td style="text-align:right; font-weight:500;">${{ number_format($producto->precio_venta, 2, ',', '.') }}</td>
                         <td style="text-align:center;">
                             @if($producto->estaEnStockCritico())
