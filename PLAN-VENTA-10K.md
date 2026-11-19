@@ -39,3 +39,6 @@ Leé primero `..\PLAN-VENTA-10K.md` (veredicto, paquetes **S** y **V**). Rama de
 
 ## Salida
 ☑ tests/PHPStan/Pint verdes ☑ `composer audit` limpio ☐ imagen Docker construye ☐ `/up` 200 en Render ☐ lista de prueba E10 tildada ☐ backup restaurado **en Atlas/Render** (sí en Mongo local)
+
+## Revisión de seguridad independiente (19–20/11/2026)
+Rama local `fix/revision-seguridad` (sin empujar: GitHub pide verificar el correo). H1–H4, M1–M10 y B1–B5 arreglados con test: ver `docs/SEGURIDAD.md`. **334 / 334 tests pasan · 1.270 aserciones · 6 min 6 s · PHPStan 0 errores · Pint verde.**
