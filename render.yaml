@@ -80,6 +80,8 @@ services:
 
       - key: LOG_CHANNEL
         value: stderr
+      # Con "log" el enlace de restablecer contraseña (con su token) queda en los logs y no llega a nadie:
+      # en producción cargar un SMTP (MAIL_MAILER=smtp, MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM_ADDRESS).
       - key: MAIL_MAILER
         value: log
 

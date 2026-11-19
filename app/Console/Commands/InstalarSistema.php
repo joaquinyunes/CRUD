@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\ConfiguracionSegura;
 use App\Support\Mongo\Transaccion;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\UniversalSeeder;
@@ -45,6 +46,10 @@ class InstalarSistema extends Command
         });
 
         $this->info('Permisos, rol Administrador y datos base al día.');
+
+        foreach (ConfiguracionSegura::avisos(app()->isProduction(), (string) config('mail.default')) as $aviso) {
+            $this->warn($aviso);
+        }
 
         return $this->crearAdministrador();
     }

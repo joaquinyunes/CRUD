@@ -4,6 +4,7 @@ use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\EncabezadosDeSeguridad;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\ExigirDobleFactorAdmin;
+use App\Http\Middleware\RechazarOperadoresMongo;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -29,6 +30,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             ThrottleRequests::class.':api',
         ]);
+
+        // Ninguna entrada trae operadores de MongoDB («$ne», «$gt»…).
+        $middleware->web(prepend: [RechazarOperadoresMongo::class]);
+        $middleware->api(prepend: [RechazarOperadoresMongo::class]);
 
         // Una cuenta desactivada deja de servir en el acto, tenga sesión abierta
         // o un token de API ya emitido.

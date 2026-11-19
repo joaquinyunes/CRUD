@@ -220,7 +220,7 @@ class VentaService
 
         return collect($detalles)->map(function (array $item) use ($costos, $productos, $precioLibre): array {
             $cantidad = (int) $item['cantidad'];
-            $precio = round((float) ($precioLibre ? $item['precio'] : ($productos[$item['producto_id']]?->precio_venta ?? $item['precio'])), 2);
+            $precio = round((float) ($precioLibre ? $item['precio'] : ($productos[$item['producto_id']]->precio_venta ?? $item['precio'])), 2);
 
             return [
                 'producto_id'    => $item['producto_id'],

@@ -6,12 +6,14 @@ use App\Contracts\FacturacionProvider;
 use App\Models\PersonalAccessToken;
 use App\Services\Facturacion\FacturacionInterna;
 use App\Services\StockService;
+use App\Support\ConfiguracionSegura;
 use App\Support\Mongo\Conexion;
 use App\Support\Mongo\VerificadorDePresencia;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -35,6 +37,11 @@ class AppServiceProvider extends ServiceProvider
     {
         // /up (el health check de Render y de Docker) solo da 200 si MongoDB contesta.
         Event::listen(DiagnosingHealth::class, fn () => Conexion::mongo()->getDatabase()->command(['ping' => 1]));
+
+        // Configuración que en producción es un agujero: no arranca con el disco público (los avisos, como el mailer log, los muestra sistema:instalar al arrancar).
+        if ($errores = ConfiguracionSegura::errores($this->app->isProduction(), (string) config('filesystems.default'))) {
+            throw new \RuntimeException(implode(' ', $errores));
+        }
 
         // Contraseñas: 12 o más caracteres en todo el sistema (alta, cambio y reseteo).
         Password::defaults(fn () => Password::min(12));

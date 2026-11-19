@@ -35,7 +35,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property mixed $two_factor_secret
  * @property mixed $two_factor_recovery_codes
  */
-#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'two_factor_ultimo_paso'])]
 class User extends ModeloMongo implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract, MustVerifyEmail
 {
     use Auditable;

@@ -7,6 +7,7 @@ use App\Models\Categoria;
 use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\Proveedor;
+use App\Services\StockService;
 use App\Support\LectorCsv;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Str;
@@ -56,20 +57,33 @@ class ImportController extends Controller
             throw new \Exception('El nombre es obligatorio.');
         }
 
-        Producto::updateOrCreate(
-            ['codigo' => $this->codigoDeProducto($data, $nombre)],
-            [
-                'nombre'        => $nombre,
-                'descripcion'   => $data['descripcion'] ?? null,
-                'marca'         => $data['marca'] ?? null,
-                'precio_compra' => LectorCsv::numero($data['precio_compra'] ?? null),
-                'precio_venta'  => LectorCsv::numero($data['precio_venta'] ?? null),
-                'stock'         => (int) LectorCsv::numero($data['stock'] ?? null),
-                'stock_minimo'  => (int) LectorCsv::numero($data['stock_minimo'] ?? null),
-                'categoria_id'  => $this->resolveCategoria($data['categoria'] ?? null),
-                'estado'        => 'activo',
-            ]
-        );
+        $stock = (int) LectorCsv::numero($data['stock'] ?? null);
+        if ($stock < 0) {
+            throw new \Exception('El stock no puede ser negativo.');
+        }
+
+        $producto = Producto::firstOrNew(['codigo' => $this->codigoDeProducto($data, $nombre)]);
+        $producto->fill([
+            'nombre'        => $nombre,
+            'descripcion'   => $data['descripcion'] ?? null,
+            'marca'         => $data['marca'] ?? null,
+            'precio_compra' => LectorCsv::numero($data['precio_compra'] ?? null),
+            'precio_venta'  => LectorCsv::numero($data['precio_venta'] ?? null),
+            'stock_minimo'  => (int) LectorCsv::numero($data['stock_minimo'] ?? null),
+            'categoria_id'  => $this->resolveCategoria($data['categoria'] ?? null),
+            'estado'        => 'activo',
+        ]);
+
+        if (! $producto->exists) {
+            $producto->stock = 0;
+        }
+        $producto->save();
+
+        // El stock del CSV es un AJUSTE como cualquier otro: deja movimiento, queda en el
+        // depósito y en la auditoría. Escribirlo directo dejaba el stock sin rastro.
+        if ($stock !== (int) $producto->stock) {
+            app(StockService::class)->registrarAjuste($producto, $stock, 'Importación CSV');
+        }
     }
 
     /**

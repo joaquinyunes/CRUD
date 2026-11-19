@@ -93,7 +93,22 @@ class DobleFactorService
 
         // La ventana de 1 tolera un paso de 30 segundos para arriba y para
         // abajo: los relojes del teléfono y del servidor nunca están exactos.
-        return $this->google2fa->verifyKey($this->secretoDe($usuario), $codigo, 1);
+        // verifyKeyNewer devuelve el paso aceptado: un código ya usado (o más viejo que
+        // el último aceptado) no vale otra vez, así que uno espiado no sirve de nuevo.
+        $paso = $this->google2fa->verifyKeyNewer(
+            $this->secretoDe($usuario),
+            $codigo,
+            (int) ($usuario->two_factor_ultimo_paso ?? 0),
+            1
+        );
+
+        if ($paso === false) {
+            return false;
+        }
+
+        $usuario->forceFill(['two_factor_ultimo_paso' => $paso])->save();
+
+        return true;
     }
 
     private function consumirCodigoDeRecuperacion(User $usuario, string $codigo): bool
