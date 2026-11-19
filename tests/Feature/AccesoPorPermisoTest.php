@@ -84,7 +84,9 @@ class AccesoPorPermisoTest extends TestCase
         $this->actingAs($this->usuarioCon('ventas.ver'))->get(route('pdf.venta', $venta->id))->assertForbidden();
         $this->actingAs($this->usuarioCon('ventas.ver', 'ventas.gestionar_todas'))->get(route('pdf.venta', $venta->id))->assertOk();
         $this->actingAs($this->usuarioCon('ventas.ver'))->get(route('pdf.compra', $compra->id))->assertForbidden();
-        $this->actingAs($this->usuarioCon('compras.ver'))->get(route('pdf.compra', $compra->id))->assertOk();
+        // Con solo compras.ver se ven las compras propias; la de otro pide compras.gestionar_todas.
+        $this->actingAs($this->usuarioCon('compras.ver'))->get(route('pdf.compra', $compra->id))->assertForbidden();
+        $this->actingAs($this->usuarioCon('compras.ver', 'compras.gestionar_todas'))->get(route('pdf.compra', $compra->id))->assertOk();
     }
 
     public function test_archivos_tareas_calendario_y_configuracion_piden_su_permiso(): void

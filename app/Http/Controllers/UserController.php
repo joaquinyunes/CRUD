@@ -55,6 +55,10 @@ class UserController extends Controller
     {
         $datos = $request->validated();
 
+        if (! $request->user()->puedeAsignarRol($datos['role_id'] ?? null)) {
+            return back()->with('error', 'No podés asignar un rol con más permisos que los tuyos.')->withInput();
+        }
+
         // Los usuarios los da de alta un administrador, no se auto-registran:
         // no tiene sentido mandarles a verificar el correo.
         $datos['email_verified_at'] = now();
@@ -77,6 +81,10 @@ class UserController extends Controller
     public function update(UsuarioRequest $request, User $usuario): RedirectResponse
     {
         $datos = $request->validated();
+
+        if (! $request->user()->puedeAdministrar($usuario) || ! $request->user()->puedeAsignarRol($datos['role_id'] ?? null)) {
+            return back()->with('error', 'No podés modificar a este usuario ni asignarle un rol con más permisos que los tuyos.');
+        }
 
         // Nadie puede dejarse a si mismo sin rol y quedar afuera del sistema.
         if ($usuario->id === Auth::id() && empty($datos['role_id'])) {
@@ -102,6 +110,10 @@ class UserController extends Controller
     {
         $roleId = $request->input('role_id') ?: null;
 
+        if (! $request->user()->puedeAdministrar($usuario) || ! $request->user()->puedeAsignarRol($roleId)) {
+            return back()->with('error', 'No podés modificar a este usuario ni asignarle un rol con más permisos que los tuyos.');
+        }
+
         if ($usuario->id === Auth::id() && $roleId === null) {
             return back()->with('error', 'No podés quitarte el rol a vos mismo.');
         }
@@ -125,8 +137,12 @@ class UserController extends Controller
      * referencian, y la auditoría necesita saber quién hizo cada cosa. Borrarlo
      * fallaba con un error de base de datos apenas tenía un comprobante encima.
      */
-    public function destroy(User $usuario): RedirectResponse
+    public function destroy(Request $request, User $usuario): RedirectResponse
     {
+        if (! $request->user()->puedeAdministrar($usuario)) {
+            return back()->with('error', 'No podés eliminar a un usuario con más permisos que los tuyos.');
+        }
+
         if ($usuario->id === Auth::id()) {
             return back()->with('error', 'No podés eliminar tu propia cuenta desde acá.');
         }
@@ -156,8 +172,10 @@ class UserController extends Controller
     }
 
     /** Vuelve a habilitar la entrada de un usuario desactivado. */
-    public function reactivar(User $usuario): RedirectResponse
+    public function reactivar(Request $request, User $usuario): RedirectResponse
     {
+        abort_unless($request->user()->puedeAdministrar($usuario), 403);
+
         $usuario->update(['activo' => true]);
 
         return redirect()

@@ -137,6 +137,41 @@ class User extends ModeloMongo implements AuthenticatableContract, AuthorizableC
             ->doesntExist();
     }
 
+    /** @return list<string> las claves de permiso del rol del usuario */
+    public function claves(): array
+    {
+        return $this->role_id ? Role::clavesDe($this->role_id) : [];
+    }
+
+    /** Quien tiene el permiso comodín; se mira el permiso, no el nombre del rol. */
+    public function esSuperusuario(): bool
+    {
+        return in_array(Role::TODO, $this->claves(), true);
+    }
+
+    /**
+     * Nadie le da a otro (ni a sí mismo) más poder del que tiene: solo se otorgan
+     * claves que uno ya tiene, y el comodín solo lo otorga quien lo tiene.
+     *
+     * @param  list<string>  $claves
+     */
+    public function puedeOtorgar(array $claves): bool
+    {
+        return $this->esSuperusuario() || array_diff($claves, $this->claves()) === [];
+    }
+
+    /** Un rol se asigna solo si todo lo que da ya lo tiene quien lo asigna. */
+    public function puedeAsignarRol(?int $roleId): bool
+    {
+        return $roleId === null || $this->puedeOtorgar(Role::clavesDe($roleId));
+    }
+
+    /** Editar, borrar o reactivar a otro usuario exige tener al menos su poder. */
+    public function puedeAdministrar(User $otro): bool
+    {
+        return $this->esSuperusuario() || $this->puedeOtorgar($otro->claves());
+    }
+
     /** True si el usuario terminó de dar de alta su doble factor. */
     public function tieneDobleFactor(): bool
     {

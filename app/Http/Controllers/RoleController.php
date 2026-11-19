@@ -39,19 +39,30 @@ class RoleController extends Controller
 
     public function update(RolRequest $request, Role $role): RedirectResponse
     {
-        if ($role->nombre === Role::ADMINISTRADOR) {
+        // Un rol con el comodín (el que puede todo) no se toca desde acá, se llame como se llame.
+        if (in_array(Role::TODO, Role::clavesDe($role->id), true)) {
             return redirect()
                 ->route('roles.index')
-                ->with('error', 'Los permisos del rol Administrador no se pueden modificar.');
+                ->with('error', 'Los permisos de un rol que puede todo no se pueden modificar.');
         }
 
         $permisosSeleccionados = $request->input('permisos', []);
+        $actor = $request->user();
+
+        // Mínimo privilegio: no se agregan permisos que uno no tiene (el comodín, solo quien lo tiene)
+        // ni se reescribe un rol que tiene permisos que uno no tiene (se los quitaría a otros).
+        if (! $actor->puedeOtorgar($permisosSeleccionados) || ! $actor->puedeOtorgar(Role::clavesDe($role->id))) {
+            return redirect()
+                ->route('roles.index')
+                ->with('error', 'No podés dar ni quitar permisos que vos no tenés.');
+        }
 
         $permisosIds = Permission::whereIn('clave', $permisosSeleccionados)
             ->pluck('id')
             ->toArray();
 
         $role->permissions()->sync($permisosIds);
+        Role::olvidarClaves($role->id);
 
         return redirect()
             ->route('roles.index')
