@@ -68,6 +68,8 @@ return [
 
     'caja_sesiones' => [
         [['user_id' => 1, 'estado' => 1], ['name' => 'usuario_estado']],
+        // Una sola caja abierta por usuario, aunque dos pedidos lleguen a la vez.
+        [['user_id' => 1], ['unique' => true, 'name' => 'una_abierta_por_usuario', 'partialFilterExpression' => ['estado' => 'abierta']]],
     ],
 
     'caja_movimientos' => [

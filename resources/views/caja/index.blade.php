@@ -26,22 +26,11 @@
         </form>
     </div>
 @else
+    {{-- Arqueo ciego: mientras la caja está abierta no se muestran ingresos, egresos ni saldo esperado; se cuenta el efectivo y recién al cerrar se compara. --}}
     <div class="r-flex r-gap-4 r-mb-6" style="flex-wrap:wrap;">
         <div class="r-card-flat" style="flex:1; min-width:160px;">
             <span class="r-caption">Inicial</span>
             <div class="r-display-m">${{ number_format($sesion->monto_inicial, 2, ',', '.') }}</div>
-        </div>
-        <div class="r-card-flat" style="flex:1; min-width:160px;">
-            <span class="r-caption">Ingresos</span>
-            <div class="r-display-m" style="color:#059669;">${{ number_format($sesion->totalIngresos(), 2, ',', '.') }}</div>
-        </div>
-        <div class="r-card-flat" style="flex:1; min-width:160px;">
-            <span class="r-caption">Egresos</span>
-            <div class="r-display-m" style="color:#dc2626;">${{ number_format($sesion->totalEgresos(), 2, ',', '.') }}</div>
-        </div>
-        <div class="r-card-flat" style="flex:1; min-width:160px;">
-            <span class="r-caption">Saldo esperado</span>
-            <div class="r-display-m">${{ number_format($sesion->saldoEsperado(), 2, ',', '.') }}</div>
         </div>
     </div>
 

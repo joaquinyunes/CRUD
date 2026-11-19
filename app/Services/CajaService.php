@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Exceptions\ReglaDeNegocioException;
 use App\Models\CajaMovimiento;
 use App\Models\CajaSesion;
 use App\Models\User;
+use MongoDB\Driver\Exception\BulkWriteException;
 use RuntimeException;
 
 class CajaService
@@ -23,13 +25,34 @@ class CajaService
             throw new RuntimeException('Ya tenés una caja abierta. Cerrala antes de abrir otra.');
         }
 
-        return CajaSesion::create([
-            'user_id'       => $user->id,
-            'monto_inicial' => round($montoInicial, 2),
-            'estado'        => 'abierta',
-            'observaciones' => $observaciones,
-            'abierta_en'    => now(),
-        ]);
+        try {
+            return CajaSesion::create([
+                'user_id'       => $user->id,
+                'monto_inicial' => round($montoInicial, 2),
+                'estado'        => 'abierta',
+                'observaciones' => $observaciones,
+                'abierta_en'    => now(),
+            ]);
+        } catch (BulkWriteException $e) {
+            // El índice único cazó una apertura simultánea que el control de arriba no vio.
+            throw new RuntimeException('Ya tenés una caja abierta. Cerrala antes de abrir otra.', 0, $e);
+        }
+    }
+
+    /**
+     * El efectivo entra y sale de la caja de quien lo opera, no de la de otro.
+     *
+     * @throws ReglaDeNegocioException
+     */
+    public function exigirSesionPropia(?int $userId, string $campo = 'general'): CajaSesion
+    {
+        $sesion = $userId ? $this->sesionAbierta($userId) : null;
+
+        if (! $sesion) {
+            throw new ReglaDeNegocioException('Para mover efectivo necesitás tener tu propia caja abierta.', $campo);
+        }
+
+        return $sesion;
     }
 
     public function registrarMovimiento(
@@ -41,7 +64,8 @@ class CajaService
         ?int $userId = null
     ): ?CajaMovimiento {
         $userId ??= auth()->id();
-        $sesion = $this->sesionAbierta($userId) ?? $this->sesionAbierta();
+        // Sin caja propia no se registra nada: nunca cae en la de otro usuario.
+        $sesion = $userId ? $this->sesionAbierta($userId) : null;
 
         if (! $sesion || $monto <= 0) {
             return null;

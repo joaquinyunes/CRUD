@@ -45,6 +45,10 @@ class PagoDocumentoService
 
         $metodo = MetodoPago::findOrFail($metodoPagoId);
 
+        if ($metodo->codigo === 'efectivo') {
+            $this->caja->exigirSesionPropia(auth()->id());
+        }
+
         Transaccion::en(function () use ($doc, $tipo, $metodo, $monto, $referencia) {
             $doc->pagos()->create([
                 'metodo_pago_id' => $metodo->id,

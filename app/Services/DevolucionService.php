@@ -37,6 +37,10 @@ class DevolucionService
 
             $lineas = $this->validar($venta->detalles()->with('producto')->get(), $this->devueltosPorProducto('venta', $venta->id), $pedidas, 'la venta');
 
+            if ($reembolsoEfectivo) {
+                $this->caja->exigirSesionPropia($userId, 'reembolso_efectivo');
+            }
+
             $devolucion = Devolucion::create([
                 'numero'   => NumeradorDocumentos::proximo('devoluciones', 'DEV'),
                 'tipo'     => 'venta',

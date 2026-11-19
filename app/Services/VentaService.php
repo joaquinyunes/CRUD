@@ -60,6 +60,11 @@ class VentaService
         $this->verificarDescuento($totales, $autorId);
         $this->verificarCredito($cliente, $totales['total'], $pagos);
 
+        // El efectivo va a la caja de quien vende: sin caja propia abierta no se emite.
+        if ($this->efectivoDe($pagos) > 0) {
+            $this->caja->exigirSesionPropia($autorId ?? auth()->id(), 'metodos_pago');
+        }
+
         $venta = Transaccion::en(function () use ($datos, $detalles, $totales, $pagos, $autorId) {
             $venta = Venta::create([
                 'numero'         => $this->proximoNumero(),
@@ -117,6 +122,10 @@ class VentaService
 
         $pagos = $datos['metodos_pago'] ?? [];
         $efectivoAnterior = $this->efectivoRegistradoEn($venta);
+
+        if (abs($this->efectivoDe($pagos) - $efectivoAnterior) >= 0.01) {
+            $this->caja->exigirSesionPropia(auth()->id(), 'metodos_pago');
+        }
 
         Transaccion::en(function () use ($venta, $datos, $pagos) {
             $this->bloquearParaCambiar($venta);

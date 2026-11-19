@@ -122,7 +122,11 @@ class VentaStockTest extends TestCase
         $producto = Producto::factory()->create(['stock' => 100]);
         $metodo = MetodoPago::create(['nombre' => 'Efectivo', 'codigo' => 'efectivo', 'activo' => true, 'orden' => 1]);
 
-        $this->actingAs($this->admin())->post(route('ventas.store'), $this->payloadVenta($producto, [
+        $admin = $this->admin();
+        // El efectivo entra en la caja de quien vende: hace falta tenerla abierta.
+        $this->actingAs($admin)->post(route('caja.abrir'), ['monto_inicial' => 0]);
+
+        $this->actingAs($admin)->post(route('ventas.store'), $this->payloadVenta($producto, [
             'detalles'     => [['producto_id' => $producto->id, 'cantidad' => 1, 'precio' => 100]],
             'metodos_pago' => [['metodo_pago_id' => $metodo->id, 'monto' => 50]],
         ]));
