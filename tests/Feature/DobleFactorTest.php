@@ -41,6 +41,10 @@ class DobleFactorTest extends TestCase
         $this->servicio()->iniciarAlta($usuario);
         $this->servicio()->confirmar($usuario, $this->codigoValido($usuario));
 
+        // El código de la confirmación ya se usó (B3: un código no se reutiliza). Para los
+        // tests de login se simula que pasó el período y hay uno nuevo.
+        $usuario->forceFill(['two_factor_ultimo_paso' => 0])->save();
+
         return $usuario->fresh();
     }
 
@@ -230,5 +234,14 @@ class DobleFactorTest extends TestCase
         $this->actingAs($usuario)->post(route('doble-factor.iniciar'))->assertSessionHasErrors('password', errorBag: 'dobleFactor');
 
         $this->assertNull($usuario->fresh()->two_factor_secret);
+    }
+
+    public function test_un_codigo_usado_no_sirve_dos_veces(): void
+    {
+        $usuario = $this->conDobleFactor();
+        $codigo = $this->codigoValido($usuario);
+
+        $this->assertTrue($this->servicio()->verificar($usuario->fresh(), $codigo));
+        $this->assertFalse($this->servicio()->verificar($usuario->fresh(), $codigo), 'Un código espiado no puede usarse de nuevo.');
     }
 }
