@@ -115,9 +115,9 @@ class SeguridadLaravelTest extends TestCase
         User::factory()->create(['email' => 'a@b.com']);
 
         $this->postJson('/api/login', ['email' => ['$ne' => null], 'password' => ['$ne' => null]])
-            ->assertStatus(422);
+            ->assertStatus(400);
         $this->postJson('/api/login', ['email' => 'a@b.com', 'password' => ['$ne' => null]])
-            ->assertStatus(422);
+            ->assertStatus(400);
     }
 
     public function test_un_archivo_con_extension_de_imagen_pero_contenido_php_no_sube(): void
@@ -195,6 +195,8 @@ class SeguridadLaravelTest extends TestCase
         $servicio->confirmar($admin, app(Google2FA::class)->getCurrentOtp($servicio->secretoDe($admin->fresh())));
 
         $this->postJson('/api/login', ['email' => $admin->email, 'password' => 'password'])->assertStatus(422);
+        // El código de la confirmación ya se usó (un código no se reutiliza): se simula el período siguiente.
+        $admin->forceFill(['two_factor_ultimo_paso' => 0])->save();
         $this->postJson('/api/login', [
             'email'    => $admin->email,
             'password' => 'password',
