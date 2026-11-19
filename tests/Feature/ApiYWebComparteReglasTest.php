@@ -11,6 +11,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Models\Venta;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -51,6 +52,8 @@ class ApiYWebComparteReglasTest extends TestCase
 
         Sanctum::actingAs($admin);
         $this->postJson('/api/ventas', $this->datosDeVenta($cliente, $producto))->assertCreated();
+        // Sanctum::actingAs deja la guarda 'sanctum' por defecto; la web vuelve a la suya.
+        Auth::shouldUse('web');
 
         $this->actingAs($admin)->post(route('ventas.store'), $this->datosDeVenta($cliente, $producto));
 

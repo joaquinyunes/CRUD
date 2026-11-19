@@ -177,6 +177,8 @@ class AltasBajasYCuentasTest extends TestCase
             'detalles'   => [['producto_id' => $producto->id, 'cantidad' => 1, 'precio' => 1000]],
         ])->assertSessionHasNoErrors();
         $venta = Venta::firstOrFail();
+        // El cobro en efectivo entra en la caja de quien cobra: hace falta tenerla abierta.
+        $this->post(route('caja.abrir'), ['monto_inicial' => 0]);
         $efectivo = MetodoPago::firstOrCreate(['codigo' => 'efectivo'], ['nombre' => 'Efectivo', 'activo' => true]);
 
         $this->post(route('cuentas.cliente.cobrar', $cliente), ['metodo_pago_id' => $efectivo->id, 'monto' => 400])
