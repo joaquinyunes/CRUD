@@ -50,7 +50,7 @@ class VentaService
         }
 
         $pagos = $datos['metodos_pago'] ?? [];
-        $detalles = $this->construirDetalles($datos['detalles']);
+        $detalles = $this->construirDetalles($datos['detalles'], $autorId ?? auth()->id());
         $totales = CalculadorTotales::calcular(
             $detalles->all(),
             $datos['descuento_tipo'] ?? null,
@@ -127,16 +127,19 @@ class VentaService
             $this->caja->exigirSesionPropia(auth()->id(), 'metodos_pago');
         }
 
-        Transaccion::en(function () use ($venta, $datos, $pagos) {
+        $detalles = $this->construirDetalles($datos['detalles'], auth()->id());
+        $totales = CalculadorTotales::calcular(
+            $detalles->all(),
+            $datos['descuento_tipo'] ?? null,
+            (float) ($datos['descuento'] ?? 0)
+        );
+
+        // Editar también respeta el límite de crédito (sin contar dos veces lo que esta venta ya debe).
+        $this->verificarCredito($cliente, $totales['total'], $pagos, $venta);
+
+        Transaccion::en(function () use ($venta, $datos, $pagos, $detalles, $totales) {
             $this->bloquearParaCambiar($venta);
             $this->stockDoc->revertirVenta($venta);
-
-            $detalles = $this->construirDetalles($datos['detalles']);
-            $totales = CalculadorTotales::calcular(
-                $detalles->all(),
-                $datos['descuento_tipo'] ?? null,
-                (float) ($datos['descuento'] ?? 0)
-            );
 
             $this->verificarDescuento($totales, auth()->id());
 
@@ -205,15 +208,19 @@ class VentaService
      * @param  array<int,array<string,mixed>>  $detalles
      * @return Collection<int,array{producto_id:mixed,cantidad:int,precio:float,costo_unitario:float,subtotal:float}>
      */
-    public function construirDetalles(array $detalles): Collection
+    public function construirDetalles(array $detalles, ?int $autorId = null): Collection
     {
-        $costos = Producto::whereIn('id', collect($detalles)->pluck('producto_id')->all())
-            ->get()
-            ->mapWithKeys(fn (Producto $producto) => [$producto->id => $producto->precio_compra]);
+        $productos = Producto::whereIn('id', collect($detalles)->pluck('producto_id')->all())->get()->keyBy('id');
+        $costos = $productos->map(fn (Producto $producto) => $producto->precio_compra);
 
-        return collect($detalles)->map(function (array $item) use ($costos): array {
+        // M9: el precio lo pone el sistema. Solo quien tiene `ventas.precio_libre` puede cobrar otro
+        // (sin autor —un proceso interno— se respeta el precio que llega).
+        $autor = $autorId ? User::with('role')->find($autorId) : null;
+        $precioLibre = $autor === null || (bool) $autor->role?->tienePermiso('ventas.precio_libre');
+
+        return collect($detalles)->map(function (array $item) use ($costos, $productos, $precioLibre): array {
             $cantidad = (int) $item['cantidad'];
-            $precio = round((float) $item['precio'], 2);
+            $precio = round((float) ($precioLibre ? $item['precio'] : ($productos[$item['producto_id']]?->precio_venta ?? $item['precio'])), 2);
 
             return [
                 'producto_id'    => $item['producto_id'],
@@ -359,7 +366,7 @@ class VentaService
      *
      * @throws ReglaDeNegocioException
      */
-    private function verificarCredito(Cliente $cliente, float $total, array $pagos): void
+    private function verificarCredito(Cliente $cliente, float $total, array $pagos, ?Venta $editada = null): void
     {
         $limite = (float) $cliente->limite_credito;
 
@@ -368,7 +375,8 @@ class VentaService
         }
 
         $aPagar = collect($pagos)->sum(fn ($pago) => (float) ($pago['monto'] ?? 0));
-        $proyectado = $cliente->saldo() + max(0, $total - $aPagar);
+        $yaDebida = $editada && $editada->cliente_id === $cliente->id ? max(0, $editada->saldoPendiente()) : 0;
+        $proyectado = $cliente->saldo() - $yaDebida + max(0, $total - $aPagar);
 
         if ($proyectado > $limite + 0.01) {
             throw new ReglaDeNegocioException(

@@ -61,6 +61,7 @@ class PermissionSeeder extends Seeder
         'ventas.exportar',
         'ventas.gestionar_todas',
         'ventas.descuento_libre',
+        'ventas.precio_libre',
 
         'compras.ver',
         'compras.crear',
@@ -124,7 +125,7 @@ class PermissionSeeder extends Seeder
             'categorias.ver', 'categorias.crear', 'categorias.editar',
             'clientes.ver', 'clientes.crear', 'clientes.editar', 'clientes.exportar',
             'proveedores.ver', 'proveedores.crear', 'proveedores.editar',
-            'ventas.ver', 'ventas.crear', 'ventas.editar', 'ventas.exportar', 'ventas.gestionar_todas', 'ventas.descuento_libre',
+            'ventas.ver', 'ventas.crear', 'ventas.editar', 'ventas.exportar', 'ventas.gestionar_todas', 'ventas.descuento_libre', 'ventas.precio_libre',
             'compras.ver', 'compras.crear', 'compras.editar', 'compras.exportar', 'compras.gestionar_todas',
             'stock.ver', 'stock.ajustar',
             'depositos.ver', 'depositos.gestionar',
