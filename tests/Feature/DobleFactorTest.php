@@ -48,7 +48,7 @@ class DobleFactorTest extends TestCase
     {
         $usuario = $this->usuario();
 
-        $this->actingAs($usuario)->post(route('doble-factor.iniciar'))
+        $this->actingAs($usuario)->post(route('doble-factor.iniciar'), ['password' => 'password'])
             ->assertSessionHas('codigos_recuperacion');
 
         $usuario->refresh();
@@ -206,5 +206,29 @@ class DobleFactorTest extends TestCase
             ->assertRedirect(route('dashboard', absolute: false));
 
         $this->assertAuthenticatedAs($usuario);
+    }
+
+    public function test_iniciar_y_regenerar_piden_la_contrasenha_y_no_pisan_un_doble_factor_activo(): void
+    {
+        $usuario = $this->conDobleFactor();
+        $secretoAntes = $usuario->two_factor_secret;
+
+        $this->actingAs($usuario)->post(route('doble-factor.iniciar'), ['password' => 'password'])
+            ->assertSessionHasErrors('password', errorBag: 'dobleFactor');
+        $this->actingAs($usuario)->post(route('doble-factor.codigos'))->assertSessionHasErrors('password', errorBag: 'dobleFactor');
+        $this->actingAs($usuario)->post(route('doble-factor.codigos'), ['password' => 'mala'])->assertSessionHasErrors('password', errorBag: 'dobleFactor');
+
+        $this->assertSame($secretoAntes, $usuario->fresh()->two_factor_secret);
+
+        $this->actingAs($usuario)->post(route('doble-factor.codigos'), ['password' => 'password'])->assertSessionHas('codigos_recuperacion');
+    }
+
+    public function test_iniciar_sin_contrasenha_no_genera_nada(): void
+    {
+        $usuario = $this->usuario();
+
+        $this->actingAs($usuario)->post(route('doble-factor.iniciar'))->assertSessionHasErrors('password', errorBag: 'dobleFactor');
+
+        $this->assertNull($usuario->fresh()->two_factor_secret);
     }
 }

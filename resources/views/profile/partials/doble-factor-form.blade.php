@@ -49,7 +49,10 @@
         <div class="mt-4 flex items-center gap-4">
             <form method="POST" action="{{ route('doble-factor.codigos') }}">
                 @csrf
-                <x-secondary-button type="submit">Generar códigos nuevos</x-secondary-button>
+                <x-input-label for="password_cod" value="Contraseña" />
+                <x-text-input id="password_cod" name="password" type="password" class="mt-1 block w-full" />
+                <x-input-error :messages="$errors->dobleFactor->get('password')" class="mt-2" />
+                <x-secondary-button type="submit" class="mt-2">Generar códigos nuevos</x-secondary-button>
             </form>
         </div>
 
@@ -95,7 +98,10 @@
 
         <form method="POST" action="{{ route('doble-factor.iniciar') }}" class="mt-4">
             @csrf
-            <x-primary-button>Activar doble factor</x-primary-button>
+            <x-input-label for="password_ini" value="Contraseña (para confirmar que sos vos)" />
+            <x-text-input id="password_ini" name="password" type="password" class="mt-1 block w-full md:w-3/4" />
+            <x-input-error :messages="$errors->dobleFactor->get('password')" class="mt-2" />
+            <x-primary-button class="mt-4">Activar doble factor</x-primary-button>
         </form>
 
     @endif

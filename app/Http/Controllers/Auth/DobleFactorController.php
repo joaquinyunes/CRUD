@@ -23,6 +23,14 @@ class DobleFactorController extends Controller
      */
     public function iniciar(Request $request): RedirectResponse
     {
+        // Con la contraseña: una sesión abierta y robada no puede cambiar el segundo factor.
+        $request->validateWithBag('dobleFactor', ['password' => ['required', 'current_password']]);
+
+        // Reemplazar un doble factor activo es desactivarlo antes (también con contraseña).
+        if ($request->user()->tieneDobleFactor()) {
+            return back()->withErrors(['password' => 'Ya tenés el doble factor activo: desactivalo primero.'], 'dobleFactor');
+        }
+
         $codigos = $this->dobleFactor->iniciarAlta($request->user());
 
         return back()->with('codigos_recuperacion', $codigos);
@@ -59,6 +67,8 @@ class DobleFactorController extends Controller
 
     public function regenerarCodigos(Request $request): RedirectResponse
     {
+        $request->validateWithBag('dobleFactor', ['password' => ['required', 'current_password']]);
+
         $codigos = $this->dobleFactor->regenerarCodigosDeRecuperacion($request->user());
 
         return back()->with('codigos_recuperacion', $codigos);

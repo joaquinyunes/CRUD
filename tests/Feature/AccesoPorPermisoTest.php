@@ -188,7 +188,7 @@ class AccesoPorPermisoTest extends TestCase
             'nombre' => 'viejo.pdf', 'ruta' => 'archivos/viejo.pdf', 'tipo' => 'application/pdf',
             'tamano' => 8, 'user_id' => User::factory()->create()->id,
         ]);
-        $usuario = $this->usuarioCon('archivos.ver', 'archivos.gestionar');
+        $usuario = $this->usuarioCon('archivos.ver', 'archivos.gestionar', 'archivos.gestionar_todas');
 
         $this->actingAs($usuario)->get(route('archivos.download', $archivo))->assertOk();
 
