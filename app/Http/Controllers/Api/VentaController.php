@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\VentaRequest;
 use App\Http\Resources\VentaResource;
 use App\Models\Venta;
-use App\Services\StockDocumentoService;
 use App\Services\VentaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,7 +17,6 @@ use Illuminate\Validation\ValidationException;
 class VentaController extends Controller
 {
     public function __construct(
-        private StockDocumentoService $stockDoc,
         private VentaService $ventas,
     ) {}
 

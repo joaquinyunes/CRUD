@@ -10,7 +10,6 @@ use App\Models\Deposito;
 use App\Models\MetodoPago;
 use App\Models\User;
 use App\Models\Venta;
-use App\Services\StockDocumentoService;
 use App\Services\VentaService;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +19,6 @@ use Illuminate\View\View;
 class VentaController extends Controller
 {
     public function __construct(
-        private StockDocumentoService $stockDoc,
         private VentaService $ventas,
     ) {}
 

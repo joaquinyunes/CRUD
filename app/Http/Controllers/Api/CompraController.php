@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CompraRequest;
 use App\Models\Compra;
 use App\Services\CompraService;
-use App\Services\StockDocumentoService;
 use App\Support\Mongo\Transaccion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +16,6 @@ use Illuminate\Validation\ValidationException;
 class CompraController extends Controller
 {
     public function __construct(
-        private StockDocumentoService $stockDoc,
         private CompraService $compras,
     ) {}
 

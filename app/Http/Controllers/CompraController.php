@@ -10,7 +10,6 @@ use App\Models\Deposito;
 use App\Models\MetodoPago;
 use App\Models\Proveedor;
 use App\Services\CompraService;
-use App\Services\StockDocumentoService;
 use App\Support\Mongo\Transaccion;
 use App\Support\Orden;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +19,6 @@ use Illuminate\View\View;
 class CompraController extends Controller
 {
     public function __construct(
-        private StockDocumentoService $stockDoc,
         private CompraService $compras,
     ) {}
 
