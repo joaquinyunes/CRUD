@@ -13,6 +13,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Venta;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -68,8 +69,10 @@ class VisibilidadYTopesTest extends TestCase
         $this->actingAs($beto)->get(route('compras.index'))->assertOk()->assertDontSee($compra->numero);
         $this->actingAs($beto)->get(route('pdf.compra', $compra->id))->assertForbidden();
         $this->actingAs($beto, 'sanctum')->getJson("/api/compras/{$compra->id}")->assertForbidden();
+        Auth::shouldUse('web');  // actingAs(..., 'sanctum') deja esa guarda por defecto
         $this->actingAs($beto, 'sanctum')->deleteJson("/api/compras/{$compra->id}")->assertForbidden();
         $this->actingAs($beto, 'sanctum')->getJson('/api/compras?buscar='.$compra->numero)->assertOk()->assertJsonCount(0, 'data');
+        Auth::shouldUse('web');
 
         $this->actingAs($ana)->get(route('compras.show', $compra))->assertOk();
     }

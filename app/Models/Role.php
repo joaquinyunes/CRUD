@@ -74,11 +74,43 @@ class Role extends ModeloMongo
         return $comodin === null ? [] : self::where('permission_ids', $comodin)->pluck('id')->all();
     }
 
+    /**
+     * Cambia los permisos del rol y deja la huella en la auditoría con el antes y el
+     * después en claves legibles. (`sync()` solo toca el campo `permission_ids` y el
+     * rastro automático no lo registraba: quién le dio qué a un rol no quedaba escrito.)
+     *
+     * @param  array<int,int>  $permissionIds
+     */
     public function sincronizarPermisos(array $permissionIds): void
     {
-        $this->permissions()->sync($permissionIds);
+        $antes = $this->claves();
 
+        $this->permissions()->sync($permissionIds);
         self::olvidarClaves($this->id);
+
+        $despues = $this->claves();
+
+        if ($antes !== $despues) {
+            Auditoria::create([
+                'user_id'         => auth()->id(),
+                'ip'              => app()->runningInConsole() ? 'consola' : (request()->ip() ?? 'desconocida'),
+                'accion'          => 'permisos_modificados',
+                'modelo_afectado' => static::class,
+                'modelo_id'       => $this->getKey(),
+                'valor_anterior'  => ['permisos' => $antes],
+                'valor_nuevo'     => ['permisos' => $despues],
+                'created_at'      => now(),
+            ]);
+        }
+    }
+
+    /** @return list<string> claves ordenadas, siempre releídas de la base */
+    private function claves(): array
+    {
+        $claves = $this->permissions()->pluck('clave')->all();
+        sort($claves);
+
+        return $claves;
     }
 
     /**

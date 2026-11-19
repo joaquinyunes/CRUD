@@ -61,8 +61,7 @@ class RoleController extends Controller
             ->pluck('id')
             ->toArray();
 
-        $role->permissions()->sync($permisosIds);
-        Role::olvidarClaves($role->id);
+        $role->sincronizarPermisos($permisosIds);
 
         return redirect()
             ->route('roles.index')

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\ReglaDeNegocioException;
+use App\Models\Auditoria;
 use App\Support\Mongo\Conexion;
 use App\Support\Mongo\Transaccion;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -36,6 +37,9 @@ class BackupService
 
     /** Colecciones que no son datos del negocio: no deben volver con una restauración. */
     private const EXCLUIDAS = ['personal_access_tokens', 'password_reset_tokens'];
+
+    /** El rastro de auditoría se respalda, pero restaurar nunca lo reemplaza: no se borra el pasado restaurando. */
+    private const NO_SE_RESTAURAN = ['auditoria'];
 
     private const LOTE = 500;
 
@@ -105,7 +109,7 @@ class BackupService
             Transaccion::en(function () use ($gz, $colecciones) {
                 $opciones = $this->opciones();
 
-                foreach ($colecciones as $coleccion) {
+                foreach (array_diff($colecciones, self::NO_SE_RESTAURAN) as $coleccion) {
                     $this->base()->selectCollection($coleccion)->deleteMany([], $opciones);
                 }
 
@@ -114,6 +118,25 @@ class BackupService
         } finally {
             gzclose($gz);
         }
+
+        // La auditoría no se restauró y los contadores sí: el de ids de auditoría tiene que
+        // quedar por encima de lo que ya existe, o la próxima entrada chocaría con una vieja.
+        $ultimaAuditoria = (int) Auditoria::max('_id');
+        $this->base()->selectCollection('contadores')->updateOne(
+            ['_id' => 'id:auditoria'],
+            ['$max'   => ['ultimo' => $ultimaAuditoria]],
+            ['upsert' => true]
+        );
+
+        Auditoria::create([
+            'user_id'         => auth()->id(),
+            'ip'              => app()->runningInConsole() ? 'consola' : (request()->ip() ?? 'desconocida'),
+            'accion'          => 'restaurar_backup',
+            'modelo_afectado' => self::class,
+            'modelo_id'       => 0,
+            'valor_nuevo'     => ['archivo' => basename($rutaArchivo)],
+            'created_at'      => now(),
+        ]);
 
         // Los permisos de cada rol están cacheados, y ya no son los mismos.
         Cache::flush();
@@ -247,6 +270,11 @@ class BackupService
             if (! preg_match('/^\{"t":("(?:[^"\\\\]|\\\\.)*"),"f":(\{.*\})\}\s*$/s', $linea, $partes)
                 || ! isset($conocidas[json_decode($partes[1])])) {
                 throw new ReglaDeNegocioException('El respaldo está dañado o no pertenece a este sistema.', 'backup_file');
+            }
+
+            // Validada la línea, lo que no se restaura se salta.
+            if (in_array(json_decode($partes[1]), self::NO_SE_RESTAURAN, true)) {
+                continue;
             }
 
             if (json_decode($partes[1]) !== $coleccion || count($lote) >= self::LOTE) {
