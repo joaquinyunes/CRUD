@@ -9,6 +9,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Session\Middleware\AuthenticateSession;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -31,7 +32,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Una cuenta desactivada deja de servir en el acto, tenga sesión abierta
         // o un token de API ya emitido.
-        $middleware->web(append: [EnsureUserIsActive::class, ExigirDobleFactorAdmin::class]);
+        // AuthenticateSession: cambiar la contraseña invalida las sesiones abiertas en otros equipos.
+        $middleware->web(append: [AuthenticateSession::class, EnsureUserIsActive::class, ExigirDobleFactorAdmin::class]);
         $middleware->api(append: [EnsureUserIsActive::class]);
 
         // Global y no del grupo web: también las respuestas 404 y las de error los llevan.

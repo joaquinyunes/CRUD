@@ -50,7 +50,8 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Un token robado no sirve para siempre: vence a las 8 horas (480 min) salvo que se configure otro valor.
+    'expiration' => (int) env('SANCTUM_EXPIRATION', 480),
 
     /*
     |--------------------------------------------------------------------------
