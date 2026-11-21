@@ -35,4 +35,13 @@ class VerificadorDePresencia extends DatabasePresenceVerifier
 
         return parent::getMultiCount($collection, $column, $values, $extra);
     }
+
+    /**
+     * Desde Laravel 13.4x el verificador convierte los enteros a texto antes de comparar
+     * (pensado para SQL). En MongoDB "5" no es 5: los ids numéricos se dejan como número.
+     */
+    protected function prepareValue($value)
+    {
+        return is_int($value) ? $value : parent::prepareValue($value);
+    }
 }
