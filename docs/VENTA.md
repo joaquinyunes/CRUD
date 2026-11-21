@@ -38,3 +38,28 @@ Costo de infraestructura que sostiene el Mensual (referencia, no es margen): Ren
 - Lo que sí cambia, y es lo que hay que probar con un comprador: no se paga por usuario ni por comprobante, los datos y el código son del cliente, el sistema se adapta al rubro, y las integraciones locales las controla él. Si el comprador compara solo precio, pierde el sistema.
 - Para que la tabla favorezca, hay tres caminos que decide el dueño: bajar el Completo (p. ej. Instalación 3.000 + Mensual 120 = USD 7.320 a 3 años), vender por rubro con funciones que las suscripciones no tienen, o venderlo a quien necesita muchos usuarios/CUIT/puntos de venta (donde la suscripción escala: Contabilium cobra USD 18 por punto de venta y USD 50 por CUIT extra al mes).
 - **Nota sobre lo comparado:** Contabilium y Colppy son sistemas de facturación y contabilidad con stock; no son iguales a este ERP (que no factura). Comparar con el sistema del **rubro elegido** (Fudo, Tiendanube, etc.) cuando haya rubro, leyendo su precio ese día.
+
+
+---
+
+## V2 por rubro: comercio chico — kiosco, almacén, ferretería (leído el 21/11/2026)
+
+**Rubro elegido: comercio chico con stock y caja (kiosco, maxikiosco, ferretería de barrio).** Es el que mejor encaja con lo que el sistema ya hace (ventas, stock por depósito, caja con arqueo, cuenta corriente, roles) y el que tiene un competidor con precio público claro.
+
+Competidor: **YoFacturo** (yo-facturo.com/kioscos y /punto-de-venta, páginas «Actualizado: 10 de noviembre de 2026»). Precios mensuales en pesos; la página no aclara si incluyen IVA. Prueba gratis de 30 días sin tarjeta. Dólar oficial venta **ARS 1.570** (dolarapi.com, 05/11/2026).
+
+| Plan de YoFacturo | Mensual | 36 meses | En USD | Qué trae (según su página) |
+|---|---|---|---|---|
+| Emprendedor | ARS 20.000 (16.000/mes pagando el año) | 720.000 (anual: 576.000) | **USD 459** (anual: 367) | POS y factura electrónica ARCA, caja y stock, clientes, cobro por Mercado Pago; un punto de venta |
+| Básico | ARS 50.000 | 1.800.000 | **USD 1.146** | + roles y permisos, proveedores, presupuestos, cuentas de clientes, integraciones (lo más parecido a este sistema) |
+| Completo | ARS 75.000 | 2.700.000 | **USD 1.720** | + tienda online propia, fidelización, catálogo QR |
+| **Este sistema, Instalación + Mensual** | USD 120 | — | **USD 7.320** | sin factura electrónica propia (la da un proveedor certificado) |
+| **Este sistema, Completo** | USD 10.000 + 24 × 120 | — | **USD 12.880** | ídem, con integraciones |
+
+Extras de YoFacturo (mensual): asistente IA 15.000, mensajería IA 25.000, repartidores 30.000, multi-identidad fiscal 30.000.
+
+### Conclusión sobre este rubro
+- **El sistema propio sale 6 a 16 veces más caro que la suscripción** (USD 7.320–12.880 contra USD 459–1.146) y **no trae factura electrónica**, que es lo primero que pide un kiosco. **USD 10.000 no se sostiene en este rubro**: un kiosco paga USD 13–32 por mes y no compra un sistema.
+- Lo que *no* da la suscripción y sí este sistema: datos y código propios, sin cuota por usuario ni por caja, adaptación a la forma de trabajar del negocio. Eso vale para **ferreterías/distribuidoras medianas** (varios depósitos, muchas cuentas corrientes de clientes, 5+ usuarios), no para un kiosco.
+- Recomendación: no vender el «Completo» a un comercio chico. Si el piloto es un comercio chico, ofrecer **Instalación reducida + Mensual** y asumir que es un caso de referencia, no el producto de USD 10.000. El comprador de USD 10.000 es un negocio que hoy paga más de USD 150/mes en suscripciones y herramientas sueltas (Premium de YoFacturo: desde ARS 150.000 ≈ USD 96/mes, 36 meses ≈ USD 3.440).
+- Antes de poner un precio final: validar con un comercio real cuánto paga hoy y qué le falta.

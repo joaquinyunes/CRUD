@@ -32,3 +32,12 @@ Ordenado por lo que desbloquea. Lo marcado ⛔ frena la venta.
 ## 4. Integraciones (E7, paquete Completo)
 - Elegir **proveedor de facturación certificado y contador matriculado**; recién ahí implementar `FacturacionProvider` real (el contrato y el comprobante interno ya están; el sistema nunca escribe un CAE a mano).
 - Mercado Pago y WhatsApp: credenciales del cliente; **no están hechos** en este proyecto.
+
+## 5. Revisión de seguridad independiente (nov 2026)
+- Empujar `fix/revision-seguridad` ya está hecho (main = esa rama). Falta **asignar los permisos nuevos** a los roles que corresponda (Roles): `ventas.precio_libre`, `caja.egreso_libre`, `devoluciones.reembolsar`, `archivos.gestionar_todas`.
+- Revisar en la instancia real ventas/compras con devoluciones registradas **antes** de los arreglos (stock inflado).
+- Un SMTP real (`MAIL_MAILER=smtp`) para producción; el mailer `log` deja los enlaces de «olvidé mi contraseña» en los logs.
+
+## 6. Piloto y precio (V10, V2)
+- Elegir el comercio piloto con `docs/PILOTO.md` y fijar **X**, el mínimo que aceptás cobrar. Ojo: en comercio chico (kiosco) el sistema no compite por precio (`docs/VENTA.md`, sección por rubro).
+- Pasos de la lista «Check de proyectos» que dependen de Render/Atlas (`crud-erp-5` a `crud-erp-9`, y las líneas de «Salida» sobre `/up` en Render y la prueba en producción) **no se tildan hasta que lo hagas**.

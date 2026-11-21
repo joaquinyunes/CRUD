@@ -1,4 +1,4 @@
-> **Actualización 08/11/2026:** el estado vigente está en `PLAN-VENTA-10K.md` (rama `integracion`: 285/285 tests, `composer audit` 0, PHPStan/Pint verdes) y los pendientes del dueño en `docs/PENDIENTES-USUARIO.md`. Lo de abajo es el estado del 31/10.
+> **Actualización 08/11/2026:** el estado vigente está en `PLAN-VENTA-10K.md` (rama `integracion`: 285/285 tests, `composer audit` 0, PHPStan/Pint verdes) y los pendientes del dueño en `docs/PENDIENTES-DEL-USUARIO.md`. Lo de abajo es el estado del 31/10.
 
 > Archivo vivo: qué se hizo y qué falta en este proyecto. Misma base que `soluciones-repos/ESTADO-PROYECTOS/crud-erp.md` (31/10/2026). Cada sesión lo actualiza al terminar.
 

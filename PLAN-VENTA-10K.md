@@ -1,5 +1,5 @@
 # crud-erp (ERP Laravel) — plan de venta (actualizado 08/11/2026)
-Leé primero `..\PLAN-VENTA-10K.md` (veredicto, paquetes **S** y **V**). Rama de trabajo: `integracion` (= `mongodb` fases 0–8 + `chore/seguridad-ci` + esta tanda). **Es un ERP genérico: no vender sin rubro** (el jurado 3 pidió una sola frase y un solo comprador). Lo que te toca a vos: [`docs/PENDIENTES-USUARIO.md`](docs/PENDIENTES-USUARIO.md).
+Leé primero `..\PLAN-VENTA-10K.md` (veredicto, paquetes **S** y **V**). Rama de trabajo: `integracion` (= `mongodb` fases 0–8 + `chore/seguridad-ci` + esta tanda). **Es un ERP genérico: no vender sin rubro** (el jurado 3 pidió una sola frase y un solo comprador). Lo que te toca a vos: [`docs/PENDIENTES-DEL-USUARIO.md`](docs/PENDIENTES-DEL-USUARIO.md).
 
 ## Números reales (corridos el 08/11/2026, PHP 8.3.35, MongoDB 8.2.6 replica set local)
 | Verificación | Resultado |
