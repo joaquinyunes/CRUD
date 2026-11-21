@@ -42,3 +42,6 @@ Leé primero `..\PLAN-VENTA-10K.md` (veredicto, paquetes **S** y **V**). Rama de
 
 ## Revisión de seguridad independiente (19–20/11/2026)
 Rama local `fix/revision-seguridad` (sin empujar: GitHub pide verificar el correo). H1–H4, M1–M10 y B1–B5 arreglados con test: ver `docs/SEGURIDAD.md`. **334 / 334 tests pasan · 1.270 aserciones · 6 min 6 s · PHPStan 0 errores · Pint verde.**
+
+## Cierre de código (21/11/2026)
+`main` = ae89b5b. **339 / 339 tests · 1.293 aserciones · PHPStan 0 · Pint verde · composer audit 0 · npm audit --omit=dev 0.** Revisión adversaria final: dashboard sin ganancia para quien no ve costos, conversión de presupuesto con candado. `FacturacionSimulada` agregada. V2 por rubro, kit del piloto (`docs/PILOTO.md`), demo y página de venta de ferretería listos. Sigue sin tildarse: imagen Docker (E4), script `--local` (V4) y todo lo de Atlas/Render/proveedor de facturación (del usuario: `docs/PENDIENTES-DEL-USUARIO.md`).
