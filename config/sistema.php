@@ -5,6 +5,10 @@
  * (que el contenedor corre al arrancar); en la demo no se usan.
  */
 return [
+    // Proveedor de facturación: «interno» (comprobante sin CAE, el actual) o «simulado» (ensayo).
+    // Un proveedor certificado real se agrega acá cuando el dueño elija uno con su contador.
+    'facturacion' => ['proveedor' => env('FACTURACION_PROVEEDOR', 'interno')],
+
     // Entorno de demostración (V3): muestra un cartel «DEMO» en todas las pantallas.
     'demo' => filter_var(env('DEMO_MODE', false), FILTER_VALIDATE_BOOLEAN),
 

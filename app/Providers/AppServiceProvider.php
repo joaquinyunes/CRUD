@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Contracts\FacturacionProvider;
 use App\Models\PersonalAccessToken;
 use App\Services\Facturacion\FacturacionInterna;
+use App\Services\Facturacion\FacturacionSimulada;
 use App\Services\StockService;
 use App\Support\ConfiguracionSegura;
 use App\Support\Mongo\Conexion;
@@ -27,7 +28,11 @@ class AppServiceProvider extends ServiceProvider
 
         // Hasta elegir proveedor certificado (y contador), el comprobante es interno y sin CAE.
         // Para enchufar uno: bind(FacturacionProvider::class, MiProveedor::class) acá.
-        $this->app->bind(FacturacionProvider::class, FacturacionInterna::class);
+        // FACTURACION_PROVEEDOR=simulado solo para ensayar el flujo (nunca en producción).
+        $this->app->bind(FacturacionProvider::class, fn ($app) => match (config('sistema.facturacion.proveedor')) {
+            'simulado' => new FacturacionSimulada($app->isProduction()),
+            default    => new FacturacionInterna,
+        });
 
         // exists:/unique: con ids numéricos sobre MongoDB (ver VerificadorDePresencia).
         $this->app->extend('validation.presence', fn ($verificador, $app) => new VerificadorDePresencia($app['db']));
