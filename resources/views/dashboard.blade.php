@@ -65,6 +65,8 @@
         @endif
     </div>
 
+    {{-- La ganancia y el margen salen del costo de la mercadería: solo para quien ve costos. --}}
+    @if(auth()->user()->puedeVerCostos())
     <div class="r-kpi" data-reveal="fade-up" data-reveal-delay="0.15">
         <div class="r-kpi-value r-kpi-moss" style="font-size:1.75rem; color:#059669;">${{ number_format($gananciaMes, 0, ',', '.') }}</div>
         <div class="r-kpi-label">Ganancia del Mes</div>
@@ -79,6 +81,8 @@
         <div class="r-kpi-value r-kpi-marigold" style="font-size:1.75rem;">{{ number_format($margenMes, 1, ',', '.') }}%</div>
         <div class="r-kpi-label">Margen de Ganancia</div>
     </div>
+
+    @endif
 
     <div class="r-kpi" data-reveal="fade-up" data-reveal-delay="0.25">
         <div class="r-kpi-value" style="font-size:1.75rem;">${{ number_format($ticketPromedio, 0, ',', '.') }}</div>
@@ -125,7 +129,7 @@
 </div>
 
 {{-- Top Productos Rentables --}}
-@if($topRentables->count())
+@if($topRentables->count() && auth()->user()->puedeVerCostos())
 <div class="r-card-flat r-mb-8" data-reveal="fade-up" data-reveal-delay="0">
     <h3 class="r-body" style="font-weight:600; margin-bottom:var(--space-4);">
         <span style="display:inline-block; width:8px; height:8px; background:#059669; border-radius:50; margin-right:8px;"></span>

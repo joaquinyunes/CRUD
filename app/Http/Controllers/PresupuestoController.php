@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ReglaDeNegocioException;
 use App\Http\Requests\PresupuestoRequest;
 use App\Models\Cliente;
 use App\Models\Presupuesto;
@@ -9,6 +10,7 @@ use App\Models\Producto;
 use App\Models\Setting;
 use App\Models\Venta;
 use App\Support\CalculadorTotales;
+use App\Support\Mongo\Bloqueo;
 use App\Support\Mongo\Transaccion;
 use App\Support\NumeradorDocumentos;
 use App\Support\Orden;
@@ -166,40 +168,54 @@ class PresupuestoController extends Controller
 
         $presupuesto->load('detalles');
 
-        $venta = Transaccion::en(function () use ($presupuesto) {
-            $costos = Producto::whereIn('id', $presupuesto->detalles->pluck('producto_id'))->pluck('precio_compra', 'id');
+        try {
+            $venta = Transaccion::en(function () use ($presupuesto) {
+                // Candado: dos pedidos de conversión a la vez no duplican la venta.
+                Bloqueo::tomar($presupuesto, ['venta_id' => null], 'Este presupuesto ya fue convertido.');
 
-            $venta = Venta::create([
-                'numero'         => NumeradorDocumentos::proximo('ventas', Setting::obtener('ventas_prefijo_numero', 'VTA'), (int) Setting::obtener('ventas_cantidad_digitos', '5')),
-                'cliente_id'     => $presupuesto->cliente_id,
-                'fecha'          => now()->toDateString(),
-                'subtotal'       => $presupuesto->subtotal,
-                'descuento'      => $presupuesto->descuento,
-                'descuento_tipo' => $presupuesto->descuento_tipo,
-                'impuesto'       => $presupuesto->impuesto,
-                'total_final'    => $presupuesto->total,
-                'total'          => $presupuesto->total,
-                'estado'         => 'pendiente',
-                'user_id'        => auth()->id(),
-            ]);
-
-            foreach ($presupuesto->detalles as $d) {
-                $venta->detalles()->create([
-                    'producto_id'    => $d->producto_id,
-                    'cantidad'       => $d->cantidad,
-                    'precio'         => $d->precio,
-                    'costo_unitario' => round((float) ($costos[$d->producto_id] ?? 0), 2),
-                    'subtotal'       => $d->subtotal,
-                ]);
-            }
-
-            $presupuesto->update(['estado' => 'convertido', 'venta_id' => $venta->id]);
-
-            return $venta;
-        });
+                return $this->crearVentaDesde($presupuesto);
+            });
+        } catch (ReglaDeNegocioException $e) {
+            return back()->withErrors(['general' => $e->getMessage()]);
+        }
 
         return redirect()->route('ventas.edit', $venta)
             ->with('success', 'Venta creada desde el presupuesto. Revisá y confirmá para descontar stock.');
+    }
+
+    private function crearVentaDesde(Presupuesto $presupuesto): Venta
+    {
+
+        $costos = Producto::whereIn('id', $presupuesto->detalles->pluck('producto_id'))->pluck('precio_compra', 'id');
+
+        $venta = Venta::create([
+            'numero'         => NumeradorDocumentos::proximo('ventas', Setting::obtener('ventas_prefijo_numero', 'VTA'), (int) Setting::obtener('ventas_cantidad_digitos', '5')),
+            'cliente_id'     => $presupuesto->cliente_id,
+            'fecha'          => now()->toDateString(),
+            'subtotal'       => $presupuesto->subtotal,
+            'descuento'      => $presupuesto->descuento,
+            'descuento_tipo' => $presupuesto->descuento_tipo,
+            'impuesto'       => $presupuesto->impuesto,
+            'total_final'    => $presupuesto->total,
+            'total'          => $presupuesto->total,
+            'estado'         => 'pendiente',
+            'user_id'        => auth()->id(),
+        ]);
+
+        foreach ($presupuesto->detalles as $d) {
+            $venta->detalles()->create([
+                'producto_id'    => $d->producto_id,
+                'cantidad'       => $d->cantidad,
+                'precio'         => $d->precio,
+                'costo_unitario' => round((float) ($costos[$d->producto_id] ?? 0), 2),
+                'subtotal'       => $d->subtotal,
+            ]);
+        }
+
+        $presupuesto->update(['estado' => 'convertido', 'venta_id' => $venta->id]);
+
+        return $venta;
+
     }
 
     private function construirDetalles(array $detalles): Collection
